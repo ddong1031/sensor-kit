@@ -205,6 +205,7 @@ public class SensoroDeviceConnection {
                             freshCache();
                             break;
                         case CmdType.CMD_W_CFG:
+                            LogUtils.loge("parseCharacteristicWrite CMD_W_CFG");
                             writeCallbackHashMap.get(cmdType).onWriteFailure(ResultCode.SYSTEM_ERROR, CmdType.CMD_NULL);
                             break;
                         default:
@@ -228,6 +229,7 @@ public class SensoroDeviceConnection {
                             freshCache();
                             break;
                         case CmdType.CMD_W_CFG:
+                            LogUtils.loge("没有成功 666");
                             writeCallbackHashMap.get(cmdType).onWriteFailure(ResultCode.SYSTEM_ERROR, CmdType.CMD_NULL);
                             break;
                         default:
@@ -464,6 +466,7 @@ public class SensoroDeviceConnection {
                     if (retCode == ResultCode.CODE_DEVICE_SUCCESS) {
                         writeCallbackHashMap.get(cmdType).onWriteSuccess(null, CmdType.CMD_SET_ZERO);
                     } else {
+                        LogUtils.loge("CMD_SET_ZERO失败");
                         writeCallbackHashMap.get(cmdType).onWriteFailure(retCode, CmdType.CMD_SET_ZERO);
                     }
                 }
@@ -474,6 +477,7 @@ public class SensoroDeviceConnection {
                     if (retCode == ResultCode.CODE_DEVICE_SUCCESS) {
                         writeCallbackHashMap.get(cmdType).onWriteSuccess(null, CmdType.CMD_NULL);
                     } else {
+                        LogUtils.loge("CMD_W_CFG 失败");
                         writeCallbackHashMap.get(cmdType).onWriteFailure(retCode, CmdType.CMD_NULL);
                     }
                 }
@@ -516,6 +520,7 @@ public class SensoroDeviceConnection {
         if (retCode == ResultCode.CODE_DEVICE_SUCCESS) {
             writeCallbackHashMap.get(CmdType.CMD_SET_ELEC_CMD).onWriteSuccess(null, CmdType.CMD_SET_ELEC_CMD);
         } else {
+            LogUtils.loge("解析电表命令失败");
             writeCallbackHashMap.get(CmdType.CMD_SET_ELEC_CMD).onWriteFailure(retCode, CmdType.CMD_SET_ELEC_CMD);
         }
     }
@@ -526,6 +531,7 @@ public class SensoroDeviceConnection {
         if (retCode == ResultCode.CODE_DEVICE_SUCCESS) {
             writeCallbackHashMap.get(CmdType.CMD_SET_SMOKE).onWriteSuccess(null, CmdType.CMD_SET_SMOKE);
         } else {
+            LogUtils.loge("解析烟感失败");
             writeCallbackHashMap.get(CmdType.CMD_SET_SMOKE).onWriteFailure(retCode, CmdType.CMD_SET_SMOKE);
         }
     }
@@ -550,12 +556,14 @@ public class SensoroDeviceConnection {
                             writeCallbackHashMap.get(CmdType.CMD_SIGNAL).onWriteSuccess(null, CmdType.CMD_SIGNAL);
                             //指令发送成功,可以正常接收数据
                         } else {
+                            LogUtils.loge("信号失败");
                             writeCallbackHashMap.get(CmdType.CMD_SIGNAL).onWriteFailure(0, CmdType.CMD_SIGNAL);
                         }
                     }
                     writeCallbackHashMap.get(CmdType.CMD_SIGNAL).onWriteSuccess(msgCfg, CmdType.CMD_SIGNAL);
                 } catch (InvalidProtocolBufferException e) {
                     e.printStackTrace();
+                    LogUtils.loge("信号catch");
                     writeCallbackHashMap.get(CmdType.CMD_SIGNAL).onWriteFailure(0, CmdType.CMD_SIGNAL);
                     LogUtils.loge("parseSignalData catch");
                     freshCache();
@@ -1501,7 +1509,7 @@ public class SensoroDeviceConnection {
                     sensoroSensorTest.acrelFires.cmd = acrelData.getCmd();
                 }
                 sensoroSensorTest.acrelFires.hasIct = acrelData.hasIct();
-                if(acrelData.hasIct()){
+                if (acrelData.hasIct()) {
                     sensoroSensorTest.acrelFires.ict = acrelData.getIct();
                 }
                 sensoroSensorTest.acrelFires.hasCt = acrelData.hasCt();
@@ -2041,6 +2049,7 @@ public class SensoroDeviceConnection {
 
     public void writeData05Configuration(SensoroDevice sensoroDevice, SensoroWriteCallback
             writeCallback) {
+        LogUtils.loge("writeData05Configuration，开始写数据");
         writeCallbackHashMap.put(CmdType.CMD_W_CFG, writeCallback);
         MsgNode1V1M5.MsgNode.Builder msgNodeBuilder = MsgNode1V1M5.MsgNode.newBuilder();
         SensoroSensor sensoroSensorTest = sensoroDevice.getSensoroSensorTest();
@@ -2362,7 +2371,7 @@ public class SensoroDeviceConnection {
                 builder.setCt(sensoroSensorTest.acrelFires.ct);
             }
 //            if (sensoroSensorTest.acrelFires.hasCmd) {
-                builder.setCmd(sensoroSensorTest.acrelFires.cmd);
+            builder.setCmd(sensoroSensorTest.acrelFires.cmd);
 //            }
             msgNodeBuilder.setAcrelData(builder);
 
@@ -2443,8 +2452,11 @@ public class SensoroDeviceConnection {
         int resultCode = bluetoothLEHelper4.writeConfigurations(total_data, CmdType.CMD_W_CFG,
                 BluetoothLEHelper4.GattInfo.SENSORO_DEVICE_WRITE_CHAR_UUID);
         if (resultCode != ResultCode.SUCCESS) {
+            LogUtils.loge("写数据失败 writeData05Configuration");
             writeCallback.onWriteFailure(resultCode, CmdType.CMD_NULL);
         }
+        LogUtils.loge("写入到最后一步");
+
     }
 
     public void writeSmokeCmd(MsgNode1V1M5.AppParam.Builder builder, SensoroWriteCallback writeCallback) {
@@ -2496,6 +2508,7 @@ public class SensoroDeviceConnection {
         int resultCode = bluetoothLEHelper4.writeConfigurations(total_data, cmdType, BluetoothLEHelper4.GattInfo
                 .SENSORO_DEVICE_WRITE_CHAR_UUID);
         if (resultCode != ResultCode.SUCCESS) {
+            LogUtils.loge("writeData05Cmd 失败");
             writeCallback.onWriteFailure(resultCode, CmdType.CMD_NULL);
         }
     }
@@ -3038,6 +3051,7 @@ public class SensoroDeviceConnection {
         int resultCode = bluetoothLEHelper4.writeConfigurations(total_data, CmdType.CMD_W_CFG,
                 BluetoothLEHelper4.GattInfo.SENSORO_DEVICE_WRITE_CHAR_UUID);
         if (resultCode != ResultCode.SUCCESS) {
+            LogUtils.loge("writeData05ChannelMask失败");
             writeCallback.onWriteFailure(ResultCode.CODE_DEVICE_DFU_ERROR, CmdType.CMD_NULL);
         }
     }
