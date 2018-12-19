@@ -23,7 +23,6 @@ public class SensoroAcrelFires implements Serializable {
     public boolean hasCmd;
     public boolean hasIct;
     public boolean hasCt;
-    public boolean hasTest;
 
 
     public int connectSw;
