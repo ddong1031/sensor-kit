@@ -14,6 +14,7 @@ import android.util.Log;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.sensoro.libbleserver.ble.bean.SensoroAcrelFires;
+import com.sensoro.libbleserver.ble.bean.SensoroBaymax;
 import com.sensoro.libbleserver.ble.bean.SensoroCayManData;
 import com.sensoro.libbleserver.ble.proto.MsgNode1V1M5;
 import com.sensoro.libbleserver.ble.scanner.SensoroUUID;
@@ -168,6 +169,7 @@ public class SensoroDeviceConnection {
         public void onCharacteristicWrite(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
             super.onCharacteristicWrite(gatt, characteristic, status);
             bluetoothLEHelper4.bluetoothGatt = gatt;
+            LogUtils.loge("onCharacteristicWrite");
             parseCharacteristicWrite(characteristic, status);
 
         }
@@ -195,6 +197,7 @@ public class SensoroDeviceConnection {
                 int cmdType = bluetoothLEHelper4.getSendCmdType();
                 if (status == BluetoothGatt.GATT_SUCCESS) {
                     bluetoothLEHelper4.sendPacket(characteristic);
+                    LogUtils.loge("onCharacteristicWrite char sendPacket");
                 } else {
                     Log.v(TAG, "onCharacteristicWrite failure" + status);
                     // failure
@@ -219,6 +222,8 @@ public class SensoroDeviceConnection {
                 int cmdType = bluetoothLEHelper4.getSendCmdType();
                 if (status == BluetoothGatt.GATT_SUCCESS) {
                     bluetoothLEHelper4.sendPacket(characteristic);
+                    LogUtils.loge("onCharacteristicWrite single sendPacket");
+
                 } else {
                     Log.v(TAG, "onCharacteristicWrite failure" + status);
                     // failure
@@ -244,6 +249,7 @@ public class SensoroDeviceConnection {
         public void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
             super.onCharacteristicRead(gatt, characteristic, status);
             bluetoothLEHelper4.bluetoothGatt = gatt;
+            LogUtils.loge("onCharacteristicRead");
             parseCharacteristicRead(characteristic, status);
         }
 
@@ -270,6 +276,7 @@ public class SensoroDeviceConnection {
                         } catch (Exception e) {
                             e.printStackTrace();
                             sensoroConnectionCallback.onConnectedFailure(ResultCode.PARSE_ERROR);
+                            LogUtils.loge("parseCharacteristicRead onConnectedFailure");
                         } finally {
                             handler.removeCallbacks(connectTimeoutRunnable);
                         }
@@ -291,6 +298,7 @@ public class SensoroDeviceConnection {
             super.onCharacteristicChanged(gatt, characteristic);
             bluetoothLEHelper4.bluetoothGatt = gatt;
             try {
+                LogUtils.loge("onCharacteristicChanged");
                 parseChangedData(characteristic);
             } catch (InvalidProtocolBufferException e) {
                 e.printStackTrace();
@@ -450,6 +458,7 @@ public class SensoroDeviceConnection {
             }
         }
         int cmdType = bluetoothLEHelper4.getSendCmdType();
+        LogUtils.loge("parseChangedData cmdType"+cmdType+" 大小 "+data.length);
         switch (cmdType) {
             case CmdType.CMD_SET_ELEC_CMD:
                 parseElecData(characteristic);
@@ -501,6 +510,18 @@ public class SensoroDeviceConnection {
                         LogUtils.loge("数据写入 catch");
                         freshCache();
                         sensoroConnectionCallback.onConnectedFailure(ResultCode.PARSE_ERROR);
+                    }
+                }
+            case CmdType.CMD_SET_BAYMAX_CMD:
+                LogUtils.loge("进入baymax");
+                if (data.length >= 4) {
+                    LogUtils.loge("进来了");
+                    byte retCode = data[3];
+                    if (retCode == ResultCode.CODE_DEVICE_SUCCESS) {
+                        writeCallbackHashMap.get(cmdType).onWriteSuccess(null, CmdType.CMD_SET_BAYMAX_CMD);
+                    } else {
+                        LogUtils.loge("CMD_SET_ZERO失败");
+                        writeCallbackHashMap.get(cmdType).onWriteFailure(retCode, CmdType.CMD_SET_BAYMAX_CMD);
                     }
                 }
                 break;
@@ -1516,50 +1537,102 @@ public class SensoroDeviceConnection {
                 if (acrelData.hasCt()) {
                     sensoroSensorTest.acrelFires.ct = acrelData.getCt();
                 }
+            }
+            //嘉德 自研烟感
+            boolean hasCaymanData = msgNode.hasCaymanData();
+            LogUtils.loge("parseData05 ww "+hasCaymanData);
+            sensoroSensorTest.hasCayMan = hasCaymanData;
+            if (hasCaymanData) {
+                MsgNode1V1M5.Cayman caymanData = msgNode.getCaymanData();
+                sensoroSensorTest.cayManData = new SensoroCayManData();
+                sensoroSensorTest.cayManData.hasIsSmoke = caymanData.hasIsSmoke();
+                if (caymanData.hasIsSmoke()) {
+                    sensoroSensorTest.cayManData.isSmoke = caymanData.getIsSmoke();
+                }
+                sensoroSensorTest.cayManData.hasIsMoved = caymanData.hasIsMoved();
+                if (caymanData.hasIsMoved()) {
+                    sensoroSensorTest.cayManData.isMoved = caymanData.getIsMoved();
+                }
+                sensoroSensorTest.cayManData.hasValueOfTem = caymanData.hasValueOfTem();
+                if (caymanData.hasValueOfTem()) {
+                    sensoroSensorTest.cayManData.valueOfTem = caymanData.getValueOfTem();
+                }
+                sensoroSensorTest.cayManData.hasValueOfHum = caymanData.hasValueOfHum();
+                if (caymanData.hasValueOfHum()) {
+                    sensoroSensorTest.cayManData.valueOfHum = caymanData.getValueOfHum();
+                }
+                sensoroSensorTest.cayManData.hasAlarmOfHighTem = caymanData.hasAlarmOfHighTem();
+                if (caymanData.hasAlarmOfHighTem()) {
+                    sensoroSensorTest.cayManData.alarmOfHighTem = caymanData.getAlarmOfHighTem();
+                }
+                sensoroSensorTest.cayManData.hasAlarmOfLowTem = caymanData.hasAlarmOfLowTem();
+                if (caymanData.hasAlarmOfLowTem()) {
+                    sensoroSensorTest.cayManData.alarmOfLowTem = caymanData.getAlarmOfLowTem();
+                }
+                sensoroSensorTest.cayManData.hasAlarmOfHighHum = caymanData.hasAlarmOfHighHum();
+                if (caymanData.hasAlarmOfHighHum()) {
+                    sensoroSensorTest.cayManData.alarmOfHighHum = caymanData.getAlarmOfHighHum();
+                }
+                sensoroSensorTest.cayManData.hasAlarmOfLowHum = caymanData.hasAlarmOfLowHum();
+                if (caymanData.hasAlarmOfLowHum()) {
+                    sensoroSensorTest.cayManData.alarmOfLowHum = caymanData.getAlarmOfLowHum();
+                }
+                sensoroSensorTest.cayManData.hasCmd = caymanData.hasCmd();
+                if (caymanData.hasCmd()) {
+                    sensoroSensorTest.cayManData.cmd = caymanData.getCmd();
+                }
 
-                //嘉德 自研烟感
-                boolean hasCaymanData = msgNode.hasCaymanData();
-                sensoroSensorTest.hasCayMan = hasCaymanData;
-                if (hasCaymanData) {
-                    MsgNode1V1M5.Cayman caymanData = msgNode.getCaymanData();
-                    sensoroSensorTest.cayManData = new SensoroCayManData();
-                    sensoroSensorTest.cayManData.hasIsSmoke = caymanData.hasIsSmoke();
-                    if (caymanData.hasIsSmoke()) {
-                        sensoroSensorTest.cayManData.isSmoke = caymanData.getIsSmoke();
-                    }
-                    sensoroSensorTest.cayManData.hasIsMoved = caymanData.hasIsMoved();
-                    if (caymanData.hasIsMoved()) {
-                        sensoroSensorTest.cayManData.isMoved = caymanData.getIsMoved();
-                    }
-                    sensoroSensorTest.cayManData.hasValueOfTem = caymanData.hasValueOfTem();
-                    if (caymanData.hasValueOfTem()) {
-                        sensoroSensorTest.cayManData.valueOfTem = caymanData.getValueOfTem();
-                    }
-                    sensoroSensorTest.cayManData.hasValueOfHum = caymanData.hasValueOfHum();
-                    if (caymanData.hasValueOfHum()) {
-                        sensoroSensorTest.cayManData.valueOfHum = caymanData.getValueOfHum();
-                    }
-                    sensoroSensorTest.cayManData.hasAlarmOfHighTem = caymanData.hasAlarmOfHighTem();
-                    if (caymanData.hasAlarmOfHighTem()) {
-                        sensoroSensorTest.cayManData.alarmOfHighTem = caymanData.getAlarmOfHighTem();
-                    }
-                    sensoroSensorTest.cayManData.hasAlarmOfLowTem = caymanData.hasAlarmOfLowTem();
-                    if (caymanData.hasAlarmOfLowTem()) {
-                        sensoroSensorTest.cayManData.alarmOfLowTem = caymanData.getAlarmOfLowTem();
-                    }
-                    sensoroSensorTest.cayManData.hasAlarmOfHighHum = caymanData.hasAlarmOfHighHum();
-                    if (caymanData.hasAlarmOfHighHum()) {
-                        sensoroSensorTest.cayManData.alarmOfHighHum = caymanData.getAlarmOfHighHum();
-                    }
-                    sensoroSensorTest.cayManData.hasAlarmOfLowHum = caymanData.hasAlarmOfLowHum();
-                    if (caymanData.hasAlarmOfLowHum()) {
-                        sensoroSensorTest.cayManData.alarmOfLowHum = caymanData.getAlarmOfLowHum();
-                    }
-                    sensoroSensorTest.cayManData.hasCmd = caymanData.hasCmd();
-                    if (caymanData.hasCmd()) {
-                        sensoroSensorTest.cayManData.cmd = caymanData.getCmd();
-                    }
-
+            }
+            //baymax ch4 lpg
+            boolean hasBaymaxData = msgNode.hasBaymaxData();
+            LogUtils.loge("parseData05 dd "+hasBaymaxData);
+            sensoroSensorTest.hasBaymax = hasBaymaxData;
+            if(hasBaymaxData){
+                MsgNode1V1M5.Baymax baymaxData = msgNode.getBaymaxData();
+                sensoroSensorTest.baymax = new SensoroBaymax();
+                sensoroSensorTest.baymax.hasGasDensity = baymaxData.hasGasDensity();
+                if (baymaxData.hasGasDensity()) {
+                    sensoroSensorTest.baymax.gasDensity = baymaxData.getGasDensity();
+                }
+                sensoroSensorTest.baymax.hasGasDensityL1 = baymaxData.hasGasDensityL1();
+                if (baymaxData.hasGasDensityL1()) {
+                    sensoroSensorTest.baymax.gasDensityL1 = baymaxData.getGasDensityL1();
+                }
+                sensoroSensorTest.baymax.hasGasDensityL2 = baymaxData.hasGasDensityL2();
+                if (baymaxData.hasGasDensityL2()) {
+                    sensoroSensorTest.baymax.gasDensityL2 = baymaxData.getGasDensityL2();
+                }
+                sensoroSensorTest.baymax.hasGasDensityL3 = baymaxData.hasGasDensityL3();
+                if (baymaxData.hasGasDensityL3()) {
+                    sensoroSensorTest.baymax.gasDensityL3 = baymaxData.getGasDensityL3();
+                }
+                sensoroSensorTest.baymax.hasGasDisassembly = baymaxData.hasGasDisassembly();
+                if (baymaxData.hasGasDisassembly()) {
+                    sensoroSensorTest.baymax.gasDisassembly = baymaxData.getGasDisassembly();
+                }
+                sensoroSensorTest.baymax.hasGasLosePwr = baymaxData.hasGasLosePwr();
+                if (baymaxData.hasGasLosePwr()) {
+                    sensoroSensorTest.baymax.gasLosePwr = baymaxData.getGasLosePwr();
+                }
+                sensoroSensorTest.baymax.hasGasEMValve = baymaxData.hasGasEMValve();
+                if (baymaxData.hasGasEMValve()) {
+                    sensoroSensorTest.baymax.gasEMValve = baymaxData.getGasEMValve();
+                }
+                sensoroSensorTest.baymax.hasGasDeviceStatus = baymaxData.hasGasDeviceStatus();
+                if (baymaxData.hasGasDeviceStatus()) {
+                    sensoroSensorTest.baymax.gasDeviceStatus = baymaxData.getGasDeviceStatus();
+                }
+                sensoroSensorTest.baymax.hasGasDeviceOpState = baymaxData.hasGasDeviceOpState();
+                if (baymaxData.hasGasDeviceOpState()) {
+                    sensoroSensorTest.baymax.gasDeviceOpState = baymaxData.getGasDeviceOpState();
+                }
+                sensoroSensorTest.baymax.hasGasDeviceComsDown = baymaxData.hasGasDeviceComsDown();
+                if (baymaxData.hasGasDeviceComsDown()) {
+                    sensoroSensorTest.baymax.gasDeviceComsDown = baymaxData.getGasDeviceComsDown();
+                }
+                sensoroSensorTest.baymax.hasGasDeviceCMD = baymaxData.hasGasDeviceCMD();
+                if (baymaxData.hasGasDeviceCMD()) {
+                    sensoroSensorTest.baymax.gasDeviceCMD = baymaxData.getGasDeviceCMD();
                 }
             }
             sensoroDevice.setSensoroSensorTest(sensoroSensorTest);
@@ -2410,6 +2483,45 @@ public class SensoroDeviceConnection {
             msgNodeBuilder.setCaymanData(builder);
         }
 
+        //baymax ch4 lpg
+        if (sensoroSensorTest.hasBaymax) {
+            MsgNode1V1M5.Baymax.Builder builder = MsgNode1V1M5.Baymax.newBuilder();
+            if (sensoroSensorTest.baymax.hasGasDensity) {
+                builder.setGasDensity(sensoroSensorTest.baymax.gasDensity);
+            }
+            if (sensoroSensorTest.baymax.hasGasDensityL1) {
+                builder.setGasDensityL1(sensoroSensorTest.baymax.gasDensityL1);
+            }
+            if (sensoroSensorTest.baymax.hasGasDensityL2) {
+                builder.setGasDensityL2(sensoroSensorTest.baymax.gasDensityL2);
+            }
+            if (sensoroSensorTest.baymax.hasGasDensityL3) {
+                builder.setGasDensityL3(sensoroSensorTest.baymax.gasDensityL3);
+            }
+            if (sensoroSensorTest.baymax.hasGasDisassembly) {
+                builder.setGasDisassembly(sensoroSensorTest.baymax.gasDisassembly);
+            }
+            if (sensoroSensorTest.baymax.hasGasLosePwr) {
+                builder.setGasLosePwr(sensoroSensorTest.baymax.gasLosePwr);
+            }
+            if (sensoroSensorTest.baymax.hasGasEMValve) {
+                builder.setGasEMValve(sensoroSensorTest.baymax.gasEMValve);
+            }
+            if (sensoroSensorTest.baymax.hasGasDeviceStatus) {
+                builder.setGasDeviceStatus(sensoroSensorTest.baymax.gasDeviceStatus);
+            }
+            if (sensoroSensorTest.baymax.hasGasDeviceOpState) {
+                builder.setGasDeviceOpState(sensoroSensorTest.baymax.gasDeviceOpState);
+            }
+            if (sensoroSensorTest.baymax.hasGasDeviceComsDown) {
+                builder.setGasDeviceComsDown(sensoroSensorTest.baymax.gasDeviceComsDown);
+            }
+            if (sensoroSensorTest.baymax.hasGasDeviceCMD) {
+                builder.setGasDeviceCMD(sensoroSensorTest.baymax.gasDeviceCMD);
+            }
+            msgNodeBuilder.setBaymaxData(builder);
+        }
+
         if (sensoroDevice.hasAppParam()) {
             MsgNode1V1M5.AppParam.Builder appBuilder = MsgNode1V1M5.AppParam.newBuilder();
             if (sensoroDevice.hasUploadInterval()) {
@@ -3023,6 +3135,14 @@ public class SensoroDeviceConnection {
         writeData05Cmd(data, CmdType.CMD_SET_ACREL_CMD, writeCallback);
     }
 
+    public void writeCaymanCmd(MsgNode1V1M5.Cayman.Builder builder, SensoroWriteCallback writeCallback) {
+        writeCallbackHashMap.put(CmdType.CMD_SET_CAYMAN_CMD, writeCallback);
+        MsgNode1V1M5.MsgNode.Builder msgNodeBuilder = MsgNode1V1M5.MsgNode.newBuilder();
+        msgNodeBuilder.setCaymanData(builder);
+        byte[] data = msgNodeBuilder.build().toByteArray();
+        writeData05Cmd(data, CmdType.CMD_SET_CAYMAN_CMD, writeCallback);
+    }
+
     public void setOnSensoroDirectWriteDfuCallBack(SensoroDirectWriteDfuCallBack sensoroDirectWriteDfuCallBack) {
         this.sensoroDirectWriteDfuCallBack = sensoroDirectWriteDfuCallBack;
     }
@@ -3054,6 +3174,14 @@ public class SensoroDeviceConnection {
             LogUtils.loge("writeData05ChannelMask失败");
             writeCallback.onWriteFailure(ResultCode.CODE_DEVICE_DFU_ERROR, CmdType.CMD_NULL);
         }
+    }
+
+    public void writeBaymaxCmd(MsgNode1V1M5.Baymax.Builder builder, SensoroWriteCallback writeCallback) {
+        writeCallbackHashMap.put(CmdType.CMD_SET_BAYMAX_CMD, writeCallback);
+        MsgNode1V1M5.MsgNode.Builder msgNodeBuilder = MsgNode1V1M5.MsgNode.newBuilder();
+        msgNodeBuilder.setBaymaxData(builder);
+        byte[] data = msgNodeBuilder.build().toByteArray();
+        writeData05Cmd(data, CmdType.CMD_SET_BAYMAX_CMD, writeCallback);
     }
 
     enum ListenType implements Serializable {

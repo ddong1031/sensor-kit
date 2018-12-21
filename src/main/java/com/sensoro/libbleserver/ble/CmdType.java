@@ -46,6 +46,8 @@ public class CmdType {
     public static final int CMD_SET_ELEC_CMD = 0x20;
     public static final int CMD_SET_MANTUN_CMD = 0x21;
     public static final int CMD_SET_ACREL_CMD = 0x22;
+    public static final int CMD_SET_CAYMAN_CMD = 0x23;
+    public static final int CMD_SET_BAYMAX_CMD = 0x24;
     //电表命令
     public static final int CMD_ELEC_RESET = 0x100;
     public static final int CMD_ELEC_RESTORE = 0x101;
@@ -66,4 +68,6 @@ public class CmdType {
     public static final int CMD_CAYMAN_SELEF_CHECK = 0x113;
     public static final int CMD_CAYMAN_RESET = 0x114;
     public static final int CMD_CAYMAN_CLEAR_SOUND = 0x115;
+
+
 }
