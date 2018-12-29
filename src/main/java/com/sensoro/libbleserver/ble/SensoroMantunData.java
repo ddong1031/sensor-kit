@@ -11,8 +11,7 @@ public class SensoroMantunData implements Serializable{
     public boolean hasTempVal;
     public boolean hasStatus;
     public boolean hasSwOnOff;
-    public boolean hasTemp1Outside;
-    public boolean hasTemp2Contact;
+    public boolean hasId;
 
     public boolean hasVolHighTh;
     public boolean hasVolLowTh;
@@ -20,8 +19,6 @@ public class SensoroMantunData implements Serializable{
     public boolean hasTempTh;
     public boolean hasCurrentTh;
     public boolean hasPowerTh;
-    public boolean hasTemp1OutsideTh;
-    public boolean hasTemp2ContactTh;
     public boolean hasAttribute;
     public boolean hasCmd;
 
@@ -34,8 +31,7 @@ public class SensoroMantunData implements Serializable{
     public int tempVal;
     public int status;
     public int swOnOff;
-    public int temp1Outside;
-    public int temp2Contact;
+    public int id;
 
     public int volHighTh;
     public int volLowTh;
@@ -43,8 +39,6 @@ public class SensoroMantunData implements Serializable{
     public int tempTh;
     public int currentTh;
     public int powerTh;
-    public int temp1OutsideTh;
-    public int temp2ContactTh;
     public int attribute;
     public int cmd;
 }
