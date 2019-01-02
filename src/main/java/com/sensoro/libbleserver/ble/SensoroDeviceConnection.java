@@ -2962,8 +2962,9 @@ public class SensoroDeviceConnection {
 
     }
 
-    public void writeCmd(SensoroWriteCallback writeCallback) {
+    public void writeUpgradeCmd(SensoroWriteCallback writeCallback) {
         writeCallbackHashMap.put(CmdType.CMD_W_CFG, writeCallback);
+
         switch (dataVersion) {
             case DATA_VERSION_03: {
                 ProtoMsgCfgV1U1.MsgCfgV1u1.Builder msgCfgBuilder = ProtoMsgCfgV1U1.MsgCfgV1u1.newBuilder();
