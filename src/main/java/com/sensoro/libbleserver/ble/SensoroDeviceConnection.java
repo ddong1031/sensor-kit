@@ -458,7 +458,7 @@ public class SensoroDeviceConnection {
             }
         }
         int cmdType = bluetoothLEHelper4.getSendCmdType();
-        LogUtils.loge("parseChangedData cmdType"+cmdType+" 大小 "+data.length);
+        LogUtils.loge("parseChangedData cmdType" + cmdType + " 大小 " + data.length);
         switch (cmdType) {
             case CmdType.CMD_SET_ELEC_CMD:
                 parseElecData(characteristic);
@@ -1353,6 +1353,12 @@ public class SensoroDeviceConnection {
                 if (hasVolLowTh) {
                     sensoroSensorTest.elecFireData.volLowTh = fireData.getVolLowTh();
                 }
+                boolean hasCmd = fireData.hasCmd();
+                sensoroSensorTest.elecFireData.hasCmd = hasCmd;
+                if (hasCmd) {
+                    sensoroSensorTest.elecFireData.cmd = fireData.getCmd();
+                }
+
             }
 
             boolean hasMtunData = msgNode.hasMtunData();
@@ -1540,7 +1546,7 @@ public class SensoroDeviceConnection {
             }
             //嘉德 自研烟感
             boolean hasCaymanData = msgNode.hasCaymanData();
-            LogUtils.loge("parseData05 ww "+hasCaymanData);
+            LogUtils.loge("parseData05 ww " + hasCaymanData);
             sensoroSensorTest.hasCayMan = hasCaymanData;
             if (hasCaymanData) {
                 MsgNode1V1M5.Cayman caymanData = msgNode.getCaymanData();
@@ -1585,9 +1591,9 @@ public class SensoroDeviceConnection {
             }
             //baymax ch4 lpg
             boolean hasBaymaxData = msgNode.hasBaymaxData();
-            LogUtils.loge("parseData05 dd "+hasBaymaxData);
+            LogUtils.loge("parseData05 dd " + hasBaymaxData);
             sensoroSensorTest.hasBaymax = hasBaymaxData;
-            if(hasBaymaxData){
+            if (hasBaymaxData) {
                 MsgNode1V1M5.Baymax baymaxData = msgNode.getBaymaxData();
                 sensoroSensorTest.baymax = new SensoroBaymax();
                 sensoroSensorTest.baymax.hasGasDensity = baymaxData.hasGasDensity();
@@ -2317,6 +2323,9 @@ public class SensoroDeviceConnection {
             }
             if (sensoroSensorTest.elecFireData.hasVolLowTh) {
                 builder.setVolLowTh(sensoroSensorTest.elecFireData.volLowTh);
+            }
+            if (sensoroSensorTest.elecFireData.hasCmd) {
+                builder.setCmd(sensoroSensorTest.elecFireData.cmd);
             }
             msgNodeBuilder.setFireData(builder);
         }

@@ -11,6 +11,7 @@ public final class SensoroFireData implements Serializable {
     public boolean hasLoadTh;
     public boolean hasVolHighTh;
     public boolean hasVolLowTh;
+    public boolean hasCmd;
 
 
     //
@@ -21,4 +22,5 @@ public final class SensoroFireData implements Serializable {
     public int loadTh;
     public int volHighTh;
     public int volLowTh;
+    public int cmd;
 }
