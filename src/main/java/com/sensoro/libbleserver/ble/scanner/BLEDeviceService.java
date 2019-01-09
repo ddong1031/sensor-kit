@@ -1,7 +1,10 @@
 package com.sensoro.libbleserver.ble.scanner;
 
 import android.app.Service;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Binder;
 import android.os.Handler;
 import android.os.IBinder;
@@ -12,6 +15,7 @@ import android.util.Log;
 
 import com.sensoro.libbleserver.ble.BLEDevice;
 import com.sensoro.libbleserver.ble.BLEDeviceFactory;
+import com.sensoro.libbleserver.ble.utils.LogUtils;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -46,7 +50,21 @@ public class BLEDeviceService extends Service implements BLEScanCallback {
 //        bleScanner.setScanPeriod(BLEDeviceManager.FOREGROUND_SCAN_PERIOD);
         bleScanner.setScanPeriod(2000);
         bleScanner.setBetweenScanPeriod(BLEDeviceManager.FOREGROUND_BETWEEN_SCAN_PERIOD);
-        bleScanner.start();
+
+    }
+
+    public void startScan(){
+        if(bleScanner != null){
+            bleScanner.start();
+        }
+
+    }
+
+    public void stopScan(){
+        if(bleScanner != null){
+            bleScanner.stop();
+        }
+
     }
 
     @Override
@@ -196,6 +214,7 @@ public class BLEDeviceService extends Service implements BLEScanCallback {
                         BLEDeviceFactory deviceFactory = new BLEDeviceFactory(scanBLEResult);
                         BLEDevice bleDevice = deviceFactory.create();
                         if (bleDevice != null) {//&& bleDevice.getSn().equals("10310117C5A3FD2D")
+                            String sn = bleDevice.getSn();
                             processScanDevice(bleDevice);
                         }
                     }

@@ -22,10 +22,10 @@ public class BLEDeviceManager {
     private static final int SERVICE_STATE_UNBINDING = 1;
     private static final int SERVICE_STATE_BOUND = 2;
     private static final int SERVICE_STATE_BINDING = 3;
-    static final long DEFAULT_FOREGROUND_SCAN_PERIOD = 1100; // 默认前台device扫描时间
+    static final long DEFAULT_FOREGROUND_SCAN_PERIOD = 7*1000; // 默认前台device扫描时间
     static final long DEFAULT_FOREGROUND_BETWEEN_SCAN_PERIOD = 0; // 默认前台device扫描时间间隔
-    static final long DEFAULT_BACKGROUND_SCAN_PERIOD = 1100; // 默认后台device扫描时间
-    static final long DEFAULT_BACKGROUND_BETWEEN_SCAN_PERIOD = 8 * 1000; // 默认后台device扫描时间间隔
+    static final long DEFAULT_BACKGROUND_SCAN_PERIOD = 7*1000; // 默认后台device扫描时间
+    static final long DEFAULT_BACKGROUND_BETWEEN_SCAN_PERIOD = 2* 1000; // 默认后台device扫描时间间隔
     static final long DEFAULT_UPDATE_DEVICE_PERIOD = 1000; // device定时更新时间间隔
 
     static volatile long FOREGROUND_SCAN_PERIOD = DEFAULT_FOREGROUND_SCAN_PERIOD;
@@ -222,6 +222,23 @@ public class BLEDeviceManager {
 
     public BluetoothAdapter getBluetoothAdapter() {
         return bluetoothAdapter;
+    }
+
+    /**
+     * 进入后台停止扫描
+     */
+    public void stopScan() {
+        if (bleDeviceService != null) {
+            bleDeviceService.stopScan();
+        }
+    }
+
+    //进入前台开始扫描
+    public void startScan(){
+        if (bleDeviceService != null) {
+            bleDeviceService.startScan();
+        }
+
     }
 
     /**

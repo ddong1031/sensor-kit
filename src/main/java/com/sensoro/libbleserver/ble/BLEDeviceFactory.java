@@ -1,10 +1,12 @@
 package com.sensoro.libbleserver.ble;
 
 import android.os.ParcelUuid;
+import android.util.Log;
 
 import com.sensoro.libbleserver.ble.scanner.BLEFilter;
 import com.sensoro.libbleserver.ble.scanner.ScanBLEResult;
 import com.sensoro.libbleserver.ble.scanner.SensoroUUID;
+import com.sensoro.libbleserver.ble.utils.LogUtils;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -592,7 +594,7 @@ public class BLEDeviceFactory {
             }
 
             bleDevice.setSn(SensoroUUID.parseSN(sn));
-
+            Log.e("zxh",":parse::"+bleDevice.getSn()+">>"+bleDevice.getSn().contains("BB8F"));
             byte[] hardware = new byte[2];
             System.arraycopy(device_data, 8, hardware, 0, hardware.length);
             int hardwareCode = (int) hardware[0] & 0xff;
