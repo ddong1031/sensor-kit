@@ -17,6 +17,8 @@ import android.content.Context;
 import android.util.Log;
 
 import com.sensoro.libbleserver.ble.scanner.BLEDeviceManager;
+import com.sensoro.libbleserver.ble.chipeupgrade.SampleGattAttributes;
+import com.sensoro.libbleserver.ble.utils.LogUtils;
 
 import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
@@ -25,6 +27,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.regex.Pattern;
+
+import static android.content.ContentValues.TAG;
 
 public class BluetoothLEHelper4 implements Serializable {
     private static final String PASSWORD_KEY = "CtKnQ8BVb3C2khd6HQv6FFBuoHzxWi";
@@ -39,6 +43,9 @@ public class BluetoothLEHelper4 implements Serializable {
     private int sendPacketNumber = 1;
     private int sendCmdType = -1;
     protected BluetoothGattService sensoroService = null;
+    //bingbang tracker 人员定位器升级所需要的
+    private BluetoothGattCharacteristic mAmotaRxChar;
+    private BluetoothGattCharacteristic mAmotaTxChar;
 
     public BluetoothLEHelper4(Context context) {
         this.context = context;
@@ -460,7 +467,14 @@ public class BluetoothLEHelper4 implements Serializable {
      * @param writeBytes
      * @return
      */
-    private int writeCharacteristic(BluetoothGattCharacteristic writeChar, byte[] writeBytes) {
+    public int writeCharacteristic(BluetoothGattCharacteristic writeChar, byte[] writeBytes) {
+        String s = "";
+        for (byte writeByte : writeBytes) {
+            LogUtils.loge("发送信号数据"+Integer.toHexString(writeByte));
+            s = s+Integer.toHexString(writeByte);
+        }
+        LogUtils.loge("发送信号数据"+s);
+
         if (writeChar == null || writeBytes == null || writeBytes.length < 0 || writeBytes.length > 20) {
             return ResultCode.SYSTEM_ERROR;
         } else {
@@ -469,6 +483,59 @@ public class BluetoothLEHelper4 implements Serializable {
             return ResultCode.SUCCESS;
         }
     }
+
+    public boolean writeChipECharacteristic(byte[] writeBytes) {
+        if (mAmotaRxChar == null || writeBytes == null || writeBytes.length < 0 || writeBytes.length > 20) {
+            return false;
+        } else {
+            mAmotaRxChar.setValue(writeBytes);
+            bluetoothGatt.writeCharacteristic(mAmotaRxChar);
+            return true;
+        }
+    }
+
+    public boolean initChipEServices(List<BluetoothGattService> gattServiceList) {
+        for (BluetoothGattService bluetoothGattService : gattServiceList) {
+
+            List<BluetoothGattCharacteristic> characteristics = bluetoothGattService.getCharacteristics();
+            for (BluetoothGattCharacteristic characteristic : characteristics) {
+                String uuid = characteristic.getUuid().toString();
+                if (uuid.equals(SampleGattAttributes.ATT_UUID_AMOTA_RX)) {
+//                    LogUtils.loge(TAG, "Ambiq OTA RX Characteristic found");
+                    mAmotaRxChar = characteristic;
+                } else if (uuid.equals(SampleGattAttributes.ATT_UUID_AMOTA_TX)) {
+//                    Log.i(TAG, "Ambiq OTA TX Characteristic found");
+                    mAmotaTxChar = characteristic;
+                }
+            }
+
+        }
+
+        if(mAmotaTxChar != null){
+            setCharacteristicNotification(mAmotaTxChar,true);
+        }
+
+        return mAmotaTxChar != null && mAmotaRxChar != null;
+    }
+
+    public void setCharacteristicNotification(BluetoothGattCharacteristic characteristic,
+                                              boolean enabled) {
+        if (bluetoothAdapter == null || bluetoothAdapter == null) {
+            Log.w(TAG, "BluetoothAdapter not initialized");
+            return;
+        }
+        bluetoothGatt.setCharacteristicNotification(characteristic, enabled);
+
+        // This is specific to Heart Rate Measurement.
+        if (GattInfo.UUID_HEART_RATE_MEASUREMENT.equals(characteristic.getUuid()) ||
+                GattInfo.UUID_AMOTA_TX.equals(characteristic.getUuid())) {
+            BluetoothGattDescriptor descriptor = characteristic.getDescriptor(
+                    UUID.fromString(SampleGattAttributes.CLIENT_CHARACTERISTIC_CONFIG));
+            descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
+            bluetoothGatt.writeDescriptor(descriptor);
+        }
+    }
+
 
     public static class GattInfo {
         public static final UUID SENSORO_DEVICE_SERVICE_UUID = UUID.fromString("DEAE0300-7A4E-1BA2-834A-50A30CCAE0E4");
@@ -489,6 +556,12 @@ public class BluetoothLEHelper4 implements Serializable {
                 ("DEAE0401-7A4E-1BA2-834A-50A30CCAE0E4");
         public static final UUID SENSORO_STATION_READ_CHAR_UUID = UUID.fromString
                 ("DEAE0401-7A4E-1BA2-834A-50A30CCAE0E4");
+
+        //bigbang 人员定位器
+        public final static UUID UUID_HEART_RATE_MEASUREMENT =
+                UUID.fromString(SampleGattAttributes.HEART_RATE_MEASUREMENT);
+        public final static UUID UUID_AMOTA_TX =
+                UUID.fromString(SampleGattAttributes.ATT_UUID_AMOTA_TX);
 
     }
 }

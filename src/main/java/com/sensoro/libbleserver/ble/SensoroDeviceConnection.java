@@ -1,5 +1,6 @@
 package com.sensoro.libbleserver.ble;
 
+import android.app.Activity;
 import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCallback;
 import android.bluetooth.BluetoothGattCharacteristic;
@@ -21,10 +22,12 @@ import com.sensoro.libbleserver.ble.scanner.SensoroUUID;
 import com.sensoro.libbleserver.ble.proto.ProtoMsgCfgV1U1;
 import com.sensoro.libbleserver.ble.proto.ProtoMsgTest1U1;
 import com.sensoro.libbleserver.ble.proto.ProtoStd1U1;
+import com.sensoro.libbleserver.ble.chipeupgrade.ChipEUpgradeThread;
 import com.sensoro.libbleserver.ble.utils.LogUtils;
 
 import java.io.Serializable;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -39,7 +42,8 @@ public class SensoroDeviceConnection {
     public static final byte DATA_VERSION_04 = 0x04;
     public static final byte DATA_VERSION_05 = 0x05;
     private static final String TAG = SensoroDeviceConnection.class.getSimpleName();
-    private static final long CONNECT_TIME_OUT = 10000; // 1 minute connect timeout
+    private static final long CONNECT_TIME_OUT = 8*1000; // 1 minute connect timeout
+    private boolean isChipE = false;
     private boolean isDfu = false;
     private Context context;
     private Handler handler = new Handler(Looper.getMainLooper());
@@ -65,10 +69,9 @@ public class SensoroDeviceConnection {
         @Override
         public void run() {
             reConnectDevice(ResultCode.TASK_TIME_OUT, "连接超时");
-
-
         }
     };
+
     private final BluetoothGattCallback bluetoothGattCallback = new BluetoothGattCallback() {
 
         @Override
@@ -90,12 +93,23 @@ public class SensoroDeviceConnection {
                     count = 0;
                 } else {
                     LogUtils.loge("连接状态connected 没有成功");
-                    reConnectDevice(ResultCode.BLUETOOTH_ERROR, "连接失败 bluetoothgatt");
+                    if(count < 3){
+                        reConnectDevice(ResultCode.BLUETOOTH_ERROR, "连接失败 bluetoothgatt");
+                    }else{
+                        count = 0;
+                    }
+
+
 
                 }
             } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
+                if(count < 3){
+                    reConnectDevice(ResultCode.BLUETOOTH_ERROR, "连接失败 disconnect");
+                }else{
+                    count = 0;
+                }
                 LogUtils.loge("连接失败 disconnect");
-                reConnectDevice(ResultCode.BLUETOOTH_ERROR, "连接失败 disconnect");
+
 
             }
 
@@ -112,14 +126,23 @@ public class SensoroDeviceConnection {
                 if (bluetoothLEHelper4.checkGattServices(gattServiceList, BluetoothLEHelper4.GattInfo
                         .SENSORO_DEVICE_SERVICE_UUID)) {
                     trySleepThread(10);
-                    if (!isContainSignal) {
+                    if(isChipE){
+                        if (bluetoothLEHelper4.initChipEServices(gattServiceList)) {
+                            LogUtils.loge("初始化chipe服务成功");
+                            listenType = ListenType.SENSOR_CHIP_E;
+                        }else{
+                            LogUtils.loge("初始化chipe服务失败");
+                            listenType = ListenType.UNKNOWN;
+                            disconnect();
+                        }
+                    }else if (!isContainSignal) {
                         listenType = ListenType.READ_CHAR;
                         bluetoothLEHelper4.listenDescriptor(BluetoothLEHelper4.GattInfo.SENSORO_DEVICE_READ_CHAR_UUID);
                     } else {
                         listenType = ListenType.SIGNAL_CHAR;
                         bluetoothLEHelper4.listenSignalChar(BluetoothLEHelper4.GattInfo.SENSORO_DEVICE_SIGNAL_UUID);
                     }
-                } else {
+                }else {
                     sensoroConnectionCallback.onConnectedFailure(ResultCode.SYSTEM_ERROR);
                     LogUtils.loge("不能升级");
                     freshCache();
@@ -140,9 +163,16 @@ public class SensoroDeviceConnection {
                     switch (listenType) {
                         case SIGNAL_CHAR:
                             // 监听读特征成功
-                            listenType = ListenType.READ_CHAR;
-                            bluetoothLEHelper4.listenDescriptor(BluetoothLEHelper4.GattInfo
-                                    .SENSORO_DEVICE_READ_CHAR_UUID);
+//                            listenType = ListenType.READ_CHAR;
+//                            bluetoothLEHelper4.listenDescriptor(BluetoothLEHelper4.GattInfo
+//                                    .SENSORO_DEVICE_READ_CHAR_UUID);
+                            UUID auth_uu = BluetoothLEHelper4.GattInfo.SENSORO_DEVICE_AUTHORIZATION_CHAR_UUID;
+                            int resultC= bluetoothLEHelper4.requireWritePermission(password, auth_uu);
+                            if (resultC != ResultCode.SUCCESS) {
+                                sensoroConnectionCallback.onConnectedFailure(resultC);
+                                LogUtils.loge("写密码失败");
+                                freshCache();
+                            }
                             break;
                         case READ_CHAR:
                             UUID auth_uuid = BluetoothLEHelper4.GattInfo.SENSORO_DEVICE_AUTHORIZATION_CHAR_UUID;
@@ -153,6 +183,12 @@ public class SensoroDeviceConnection {
                                 LogUtils.loge("写密码失败");
                                 freshCache();
                             }
+                            break;
+                        case SENSOR_CHIP_E:
+                            //chipe_升级 只是这种情况下，bledevice 回传null
+                            LogUtils.loge("onDescriptorWrite chip_e");
+                            sensoroConnectionCallback.onConnectedSuccess(null,0);
+
                             break;
                         default:
                             sensoroConnectionCallback.onConnectedFailure(ResultCode.SYSTEM_ERROR);
@@ -176,10 +212,21 @@ public class SensoroDeviceConnection {
 
         private void parseCharacteristicWrite(BluetoothGattCharacteristic characteristic, int status) {
             // check pwd
-            if (characteristic.getUuid().equals(BluetoothLEHelper4.GattInfo.SENSORO_DEVICE_AUTHORIZATION_CHAR_UUID)) {
+           if(isChipE){
+               if (status == BluetoothGatt.GATT_SUCCESS) {
+                   chipEUpgradeThread.setGATTWriteComplete();
+               }else{
+                   LogUtils.loge("chipe write 失败");
+               }
+
+           }
+           if (characteristic.getUuid().equals(BluetoothLEHelper4.GattInfo.SENSORO_DEVICE_AUTHORIZATION_CHAR_UUID)) {
                 if (status == BluetoothGatt.GATT_SUCCESS) {
-                    bluetoothLEHelper4.listenOnCharactertisticRead(BluetoothLEHelper4.GattInfo
-                            .SENSORO_DEVICE_READ_CHAR_UUID);
+                    if(isContainSignal){
+                        sensoroConnectionCallback.onConnectedSuccess(null, CmdType.CMD_NULL);
+                    }else{
+                        bluetoothLEHelper4.listenOnCharactertisticRead(BluetoothLEHelper4.GattInfo.SENSORO_DEVICE_READ_CHAR_UUID);
+                    }
                 } else if (status == BluetoothGatt.GATT_WRITE_NOT_PERMITTED) {
                     sensoroConnectionCallback.onConnectedFailure(ResultCode.PASSWORD_ERR);
                     LogUtils.loge("parseCharacteristicWrite，密码错误");
@@ -254,22 +301,26 @@ public class SensoroDeviceConnection {
         }
 
         private void parseCharacteristicRead(BluetoothGattCharacteristic characteristic, int status) {
-            if (characteristic.getUuid().equals(BluetoothLEHelper4.GattInfo.SENSORO_DEVICE_READ_CHAR_UUID)) {
+            if(isChipE){
+                chipEUpgradeThread.otaCmdResponse(characteristic.getValue());
+            }else if (characteristic.getUuid().equals(BluetoothLEHelper4.GattInfo.SENSORO_DEVICE_READ_CHAR_UUID)) {
                 if (status == BluetoothGatt.GATT_SUCCESS) {
                     byte value[] = characteristic.getValue();
                     //如果value 长度小于20,说明是个完整短包
+                    LogUtils.loge("read GATT_SUCCESS");
                     byte[] total_data = new byte[2];
                     System.arraycopy(value, 0, total_data, 0, total_data.length);
                     buffer_total_length = SensoroUUID.bytesToInt(total_data, 0) - 1;//数据包长度
                     byte[] version_data = new byte[1];
                     System.arraycopy(value, 2, version_data, 0, version_data.length);
                     dataVersion = version_data[0];
+                    LogUtils.loge("version = "+ dataVersion);
                     byteBuffer = ByteBuffer.allocate(buffer_total_length); //减去version一个字节长度
                     byte[] data = new byte[value.length - 3];//第一包数据
                     System.arraycopy(value, 3, data, 0, data.length);
                     byteBuffer.put(data);
-
                     if (buffer_total_length <= (value.length - 3)) { //一次性数据包
+                        LogUtils.loge("一包数据");
                         try {
                             byte[] final_data = byteBuffer.array();
                             parseData(final_data);
@@ -280,7 +331,9 @@ public class SensoroDeviceConnection {
                         } finally {
                             handler.removeCallbacks(connectTimeoutRunnable);
                         }
-                    } else { //多包数据
+                    } else {
+                        //多包数据
+                        LogUtils.loge("多包数据");
                         if (tempBuffer != null) {//先出现change再出现read情况
                             byteBuffer.put(tempBuffer.array());
                             tempBuffer.clear();
@@ -299,6 +352,12 @@ public class SensoroDeviceConnection {
             bluetoothLEHelper4.bluetoothGatt = gatt;
             try {
                 LogUtils.loge("onCharacteristicChanged");
+                byte[] value = characteristic.getValue();
+                String s = "";
+                for (int i = 0; i < value.length; i++) {
+                    s = s+String.format("%02x",value[i]);
+                }
+                LogUtils.loge("onCharacteristicChanged :"+s);
                 parseChangedData(characteristic);
             } catch (InvalidProtocolBufferException e) {
                 e.printStackTrace();
@@ -306,9 +365,10 @@ public class SensoroDeviceConnection {
         }
     };
     private SensoroDirectWriteDfuCallBack sensoroDirectWriteDfuCallBack;
+    private ChipEUpgradeThread chipEUpgradeThread;
 
     private void reConnectDevice(int resultCode, String msg) {
-        if (count < 6) {
+        if (count < 3) {
             count++;
             freshCache();
             LogUtils.loge("count:::" + count);
@@ -320,8 +380,8 @@ public class SensoroDeviceConnection {
             }, 500);
 
         } else {
-            count = 0;
             freshCache();
+            handler.removeCallbacksAndMessages(connectTimeoutRunnable);
             sensoroConnectionCallback.onConnectedFailure(resultCode);
             LogUtils.loge(msg);
         }
@@ -340,6 +400,11 @@ public class SensoroDeviceConnection {
         writeCallbackHashMap = new HashMap<>();
         this.isContainSignal = false;
         this.macAddress = macAddress;
+    }
+
+    public SensoroDeviceConnection(Activity mActivity, String macAddress, boolean isContainSignal, boolean isDfu, boolean isChipE) {
+        this(mActivity,macAddress,isContainSignal,isDfu);
+        this.isChipE = isChipE;
     }
 
     public SensoroDeviceConnection(Context context, String macAddress, boolean isContainSignal, boolean isDfu) {
@@ -386,7 +451,6 @@ public class SensoroDeviceConnection {
 
         initData();
         // 开始连接，启动连接超时
-        handler.postDelayed(connectTimeoutRunnable, CONNECT_TIME_OUT);
         if (bluetoothLEHelper4 != null) {
             bluetoothLEHelper4.close();
         }
@@ -407,8 +471,11 @@ public class SensoroDeviceConnection {
 
     private void connectDevice(final SensoroConnectionCallback sensoroConnectionCallback) {
         handler.postDelayed(connectTimeoutRunnable, CONNECT_TIME_OUT);
+        LogUtils.loge("连接超时发送222");
         if (Looper.myLooper() == Looper.getMainLooper()) {
+
             if (!bluetoothLEHelper4.connect(macAddress, bluetoothGattCallback)) {
+
                 sensoroConnectionCallback.onConnectedFailure(ResultCode.INVALID_PARAM);
                 LogUtils.loge("连接失败");
                 freshCache();
@@ -429,6 +496,7 @@ public class SensoroDeviceConnection {
 
     private void connectDevice() {
         handler.postDelayed(connectTimeoutRunnable, CONNECT_TIME_OUT);
+        LogUtils.loge("超时连接发送 333");
         if (Looper.myLooper() == Looper.getMainLooper()) {
             if (!bluetoothLEHelper4.connect(macAddress, bluetoothGattCallback)) {
                 LogUtils.loge("连接失败 无参数");
@@ -449,85 +517,93 @@ public class SensoroDeviceConnection {
 
     private void parseChangedData(BluetoothGattCharacteristic characteristic) throws InvalidProtocolBufferException {
         byte[] data = characteristic.getValue();
-        UUID uuid = characteristic.getUuid();
-        if (uuid.equals(BluetoothLEHelper4.GattInfo.SENSORO_DEVICE_READ_CHAR_UUID)) { //出现先change后read情况
-            if (byteBuffer == null) {
-                buffer_data_length += data.length;
-                tempBuffer = ByteBuffer.allocate(data.length);
-                tempBuffer.put(data);
+        if(isChipE){
+            chipEUpgradeThread.otaCmdResponse(data);
+        }else{
+            UUID uuid = characteristic.getUuid();
+            if (uuid.equals(BluetoothLEHelper4.GattInfo.SENSORO_DEVICE_READ_CHAR_UUID)) { //出现先change后read情况
+                if (byteBuffer == null) {
+                    buffer_data_length += data.length;
+                    tempBuffer = ByteBuffer.allocate(data.length);
+                    tempBuffer.put(data);
+                }
+            }
+            int cmdType = bluetoothLEHelper4.getSendCmdType();
+            LogUtils.loge("parseChangedData cmdType" + cmdType + " 大小 " + data.length);
+            switch (cmdType) {
+                case CmdType.CMD_SET_ELEC_CMD:
+                    parseElecData(characteristic);
+                    break;
+                case CmdType.CMD_SET_SMOKE:
+                    parseSmokeData(characteristic);
+                    break;
+                case CmdType.CMD_SIGNAL:
+                    parseSignalData(characteristic);
+                    break;
+                case CmdType.CMD_SET_ZERO:
+                    if (data.length >= 4) {
+                        byte retCode = data[3];
+                        if (retCode == ResultCode.CODE_DEVICE_SUCCESS) {
+                            writeCallbackHashMap.get(cmdType).onWriteSuccess(null, CmdType.CMD_SET_ZERO);
+                        } else {
+                            LogUtils.loge("CMD_SET_ZERO失败");
+                            writeCallbackHashMap.get(cmdType).onWriteFailure(retCode, CmdType.CMD_SET_ZERO);
+                        }
+                    }
+                    break;
+                case CmdType.CMD_W_CFG:
+                    if (data.length >= 4) {
+                        byte retCode = data[3];
+                        if (retCode == ResultCode.CODE_DEVICE_SUCCESS) {
+                            writeCallbackHashMap.get(cmdType).onWriteSuccess(null, CmdType.CMD_NULL);
+                        } else {
+                            LogUtils.loge("CMD_W_CFG 失败");
+                            writeCallbackHashMap.get(cmdType).onWriteFailure(retCode, CmdType.CMD_NULL);
+                        }
+                    }
+                    break;
+                case CmdType.CMD_R_CFG:
+                    //格式: length + version + retCode, 当数据为多包的情况下,onCharacteristicRead接收的第一个包数据不完整,因此,
+                    // onCharacteristicChanged会不断被接收到数据,直到每次接收到的数据累加等于length
+                    //多包的情况下,可将第一次包的数据放到BufferByte里
+                    //数据是否写入成功
+                    LogUtils.loge("CMD_R_CFG");
+                    if (byteBuffer != null) {
+                        try {
+                            byteBuffer.put(data);
+                            buffer_data_length += data.length;
+                            if (buffer_data_length == buffer_total_length) {
+                                LogUtils.loge("CMD_R_CFG 解析");
+                                byte array[] = byteBuffer.array();
+                                parseData(array);
+                                handler.removeCallbacks(connectTimeoutRunnable);
+                            }
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                            LogUtils.loge("数据写入 catch");
+                            freshCache();
+                            sensoroConnectionCallback.onConnectedFailure(ResultCode.PARSE_ERROR);
+                        }
+                    }
+                    break;
+                case CmdType.CMD_SET_BAYMAX_CMD:
+                    LogUtils.loge("进入baymax");
+                    if (data.length >= 4) {
+                        LogUtils.loge("进来了");
+                        byte retCode = data[3];
+                        if (retCode == ResultCode.CODE_DEVICE_SUCCESS) {
+                            writeCallbackHashMap.get(cmdType).onWriteSuccess(null, CmdType.CMD_SET_BAYMAX_CMD);
+                        } else {
+                            LogUtils.loge("CMD_SET_ZERO失败");
+                            writeCallbackHashMap.get(cmdType).onWriteFailure(retCode, CmdType.CMD_SET_BAYMAX_CMD);
+                        }
+                    }
+                    break;
+                default:
+                    break;
             }
         }
-        int cmdType = bluetoothLEHelper4.getSendCmdType();
-        LogUtils.loge("parseChangedData cmdType" + cmdType + " 大小 " + data.length);
-        switch (cmdType) {
-            case CmdType.CMD_SET_ELEC_CMD:
-                parseElecData(characteristic);
-                break;
-            case CmdType.CMD_SET_SMOKE:
-                parseSmokeData(characteristic);
-                break;
-            case CmdType.CMD_SIGNAL:
-                parseSignalData(characteristic);
-                break;
-            case CmdType.CMD_SET_ZERO:
-                if (data.length >= 4) {
-                    byte retCode = data[3];
-                    if (retCode == ResultCode.CODE_DEVICE_SUCCESS) {
-                        writeCallbackHashMap.get(cmdType).onWriteSuccess(null, CmdType.CMD_SET_ZERO);
-                    } else {
-                        LogUtils.loge("CMD_SET_ZERO失败");
-                        writeCallbackHashMap.get(cmdType).onWriteFailure(retCode, CmdType.CMD_SET_ZERO);
-                    }
-                }
-                break;
-            case CmdType.CMD_W_CFG:
-                if (data.length >= 4) {
-                    byte retCode = data[3];
-                    if (retCode == ResultCode.CODE_DEVICE_SUCCESS) {
-                        writeCallbackHashMap.get(cmdType).onWriteSuccess(null, CmdType.CMD_NULL);
-                    } else {
-                        LogUtils.loge("CMD_W_CFG 失败");
-                        writeCallbackHashMap.get(cmdType).onWriteFailure(retCode, CmdType.CMD_NULL);
-                    }
-                }
-                break;
-            case CmdType.CMD_R_CFG:
-                //格式: length + version + retCode, 当数据为多包的情况下,onCharacteristicRead接收的第一个包数据不完整,因此,
-                // onCharacteristicChanged会不断被接收到数据,直到每次接收到的数据累加等于length
-                //多包的情况下,可将第一次包的数据放到BufferByte里
-                //数据是否写入成功
-                if (byteBuffer != null) {
-                    try {
-                        byteBuffer.put(data);
-                        buffer_data_length += data.length;
-                        if (buffer_data_length == buffer_total_length) {
-                            byte array[] = byteBuffer.array();
-                            parseData(array);
-                            handler.removeCallbacks(connectTimeoutRunnable);
-                        }
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                        LogUtils.loge("数据写入 catch");
-                        freshCache();
-                        sensoroConnectionCallback.onConnectedFailure(ResultCode.PARSE_ERROR);
-                    }
-                }
-            case CmdType.CMD_SET_BAYMAX_CMD:
-                LogUtils.loge("进入baymax");
-                if (data.length >= 4) {
-                    LogUtils.loge("进来了");
-                    byte retCode = data[3];
-                    if (retCode == ResultCode.CODE_DEVICE_SUCCESS) {
-                        writeCallbackHashMap.get(cmdType).onWriteSuccess(null, CmdType.CMD_SET_BAYMAX_CMD);
-                    } else {
-                        LogUtils.loge("CMD_SET_ZERO失败");
-                        writeCallbackHashMap.get(cmdType).onWriteFailure(retCode, CmdType.CMD_SET_BAYMAX_CMD);
-                    }
-                }
-                break;
-            default:
-                break;
-        }
+
     }
 
     /**
@@ -559,12 +635,20 @@ public class SensoroDeviceConnection {
 
     private void parseSignalData(BluetoothGattCharacteristic characteristic) {
         if (!isBodyData) {
+            LogUtils.loge("信号数据解析");
             isBodyData = true;
             byte value[] = characteristic.getValue();
+            String s = "";
+            for (int i = 0; i < value.length; i++) {
+                s = s+String.format("%x",value[i]);
+            }
+            LogUtils.loge("信号数据"+s);
             //如果value 长度小于20,说明是个完整短包
             byte[] total_data = new byte[2];
+
             System.arraycopy(value, 0, total_data, 0, total_data.length);
             signalBuffer_total_length = SensoroUUID.bytesToInt(total_data, 0) - 1;//数据包长度
+            LogUtils.loge("signalBuffer_total_length"+signalBuffer_total_length);
             byte[] data = new byte[value.length - 3];//第一包数据
             System.arraycopy(value, 3, data, 0, data.length);
             signalByteBuffer = ByteBuffer.allocate(signalBuffer_total_length); //减去version一个字节长度
@@ -572,9 +656,11 @@ public class SensoroDeviceConnection {
             if (signalBuffer_total_length == (value.length - 3)) { //一次性数据包检验
                 try {
                     ProtoMsgTest1U1.MsgTest msgCfg = ProtoMsgTest1U1.MsgTest.parseFrom(data);
+                    LogUtils.loge("packetNUm:::"+msgCfg.getPacketNumber());
                     if (msgCfg.hasRetCode()) {
                         if (msgCfg.getRetCode() == 0) {
                             writeCallbackHashMap.get(CmdType.CMD_SIGNAL).onWriteSuccess(null, CmdType.CMD_SIGNAL);
+                            LogUtils.loge("信号数据成功");
                             //指令发送成功,可以正常接收数据
                         } else {
                             LogUtils.loge("信号失败");
@@ -584,7 +670,11 @@ public class SensoroDeviceConnection {
                     writeCallbackHashMap.get(CmdType.CMD_SIGNAL).onWriteSuccess(msgCfg, CmdType.CMD_SIGNAL);
                 } catch (InvalidProtocolBufferException e) {
                     e.printStackTrace();
-                    LogUtils.loge("信号catch");
+                    String d = "";
+                    for (byte datum : data) {
+                        d = d+ String.format("%x"+datum);
+                    }
+                    LogUtils.loge("信号catch"+d);
                     writeCallbackHashMap.get(CmdType.CMD_SIGNAL).onWriteFailure(0, CmdType.CMD_SIGNAL);
                     LogUtils.loge("parseSignalData catch");
                     freshCache();
@@ -594,20 +684,25 @@ public class SensoroDeviceConnection {
                 }
             } else {
                 signalBuffer_data_length += (value.length - 3);
+                LogUtils.loge("信号数据长度不对");
             }
         } else {
             if (signalByteBuffer != null) {
                 try {
                     byte value[] = characteristic.getValue();
                     signalByteBuffer.put(value);
+                    LogUtils.loge("拼接信号数据");
                     signalBuffer_data_length += value.length;
+                   LogUtils.loge("signalBuffer_data_length = "+signalBuffer_data_length);
                     if (signalBuffer_data_length == signalBuffer_total_length) {
                         final byte array[] = signalByteBuffer.array();
                         ProtoMsgTest1U1.MsgTest msgCfg = ProtoMsgTest1U1.MsgTest.parseFrom(array);
+                        LogUtils.loge("packetNUm:::"+msgCfg.getPacketNumber());
                         writeCallbackHashMap.get(CmdType.CMD_SIGNAL).onWriteSuccess(msgCfg, CmdType.CMD_SIGNAL);
                         isBodyData = false;
                         signalByteBuffer.clear();
                         signalBuffer_data_length = 0;
+                        LogUtils.loge("信号数据清空");
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -1361,286 +1456,17 @@ public class SensoroDeviceConnection {
 
             }
 
-            boolean hasMtunData = msgNode.hasMtunData();
-            sensoroSensorTest.hasMantunData = hasMtunData;
-            if (hasMtunData) {
-                MsgNode1V1M5.MantunData mtunData = msgNode.getMtunData();
-                sensoroSensorTest.mantunData = new SensoroMantunData();
-                boolean hasVolVal = mtunData.hasVolVal();
-                sensoroSensorTest.mantunData.hasVolVal = hasVolVal;
-                if (hasVolVal) {
-                    sensoroSensorTest.mantunData.volVal = mtunData.getVolVal();
-                }
-                boolean hasCurrVal = mtunData.hasCurrVal();
-                sensoroSensorTest.mantunData.hasCurrVal = hasCurrVal;
-                if (hasCurrVal) {
-                    sensoroSensorTest.mantunData.currVal = mtunData.getCurrVal();
-                }
-                boolean hasLeakageVal = mtunData.hasLeakageVal();
-                sensoroSensorTest.mantunData.hasLeakageVal = hasLeakageVal;
-                if (hasLeakageVal) {
-                    sensoroSensorTest.mantunData.leakageVal = mtunData.getLeakageVal();
-                }
-                boolean hasPowerVal = mtunData.hasPowerVal();
-                sensoroSensorTest.mantunData.hasPowerVal = hasPowerVal;
-                if (hasPowerVal) {
-                    sensoroSensorTest.mantunData.powerVal = mtunData.getPowerVal();
-                }
-                boolean hasKwhVal = mtunData.hasKwhVal();
-                sensoroSensorTest.mantunData.hasKwhVal = hasKwhVal;
-                if (hasKwhVal) {
-                    sensoroSensorTest.mantunData.kwhVal = mtunData.getKwhVal();
-                }
+            //曼顿电气火灾
+            parseMantunData(msgNode, sensoroSensorTest);
 
-                boolean hasTempVal = mtunData.hasTempVal();
-                sensoroSensorTest.mantunData.hasTempVal = hasTempVal;
-                if (hasTempVal) {
-                    sensoroSensorTest.mantunData.tempVal = mtunData.getTempVal();
-                }
-                boolean hasStatus = mtunData.hasStatus();
-                sensoroSensorTest.mantunData.hasStatus = hasStatus;
-                if (hasStatus) {
-                    sensoroSensorTest.mantunData.status = mtunData.getStatus();
-                }
-                boolean hasSwOnOff = mtunData.hasSwOnOff();
-                sensoroSensorTest.mantunData.hasSwOnOff = hasSwOnOff;
-                if (hasSwOnOff) {
-                    sensoroSensorTest.mantunData.swOnOff = mtunData.getSwOnOff();
-                }
-                boolean hasTemp1Outside = mtunData.hasTemp1Outside();
-                sensoroSensorTest.mantunData.hasTemp1Outside = hasTemp1Outside;
-                if (hasTemp1Outside) {
-                    sensoroSensorTest.mantunData.temp1Outside = mtunData.getTemp1Outside();
-                }
-                boolean hasTemp2Contact = mtunData.hasTemp2Contact();
-                sensoroSensorTest.mantunData.hasTemp2Contact = hasTemp2Contact;
-                if (hasTemp2Contact) {
-                    sensoroSensorTest.mantunData.temp2Contact = mtunData.getTemp2Contact();
-                }
-                boolean hasVolHighTh = mtunData.hasVolHighTh();
-                sensoroSensorTest.mantunData.hasVolHighTh = hasVolHighTh;
-                if (hasVolHighTh) {
-                    sensoroSensorTest.mantunData.volHighTh = mtunData.getVolHighTh();
-                }
-                boolean hasVolLowTh = mtunData.hasVolLowTh();
-                sensoroSensorTest.mantunData.hasVolLowTh = hasVolLowTh;
-                if (hasVolLowTh) {
-                    sensoroSensorTest.mantunData.volLowTh = mtunData.getVolLowTh();
-                }
-                boolean hasLeakageTh = mtunData.hasLeakageTh();
-                sensoroSensorTest.mantunData.hasLeakageTh = hasLeakageTh;
-                if (hasLeakageTh) {
-                    sensoroSensorTest.mantunData.leakageTh = mtunData.getLeakageTh();
-                }
-                boolean hasTempTh = mtunData.hasTempTh();
-                sensoroSensorTest.mantunData.hasTempTh = hasTempTh;
-                if (hasTempTh) {
-                    sensoroSensorTest.mantunData.tempTh = mtunData.getTempTh();
-                }
-                boolean hasCurrentTh = mtunData.hasCurrentTh();
-                sensoroSensorTest.mantunData.hasCurrentTh = hasCurrentTh;
-                if (hasCurrentTh) {
-                    sensoroSensorTest.mantunData.currentTh = mtunData.getCurrentTh();
-                }
-                boolean hasPowerTh = mtunData.hasPowerTh();
-                sensoroSensorTest.mantunData.hasPowerTh = hasPowerTh;
-                if (hasPowerTh) {
-                    sensoroSensorTest.mantunData.powerTh = mtunData.getPowerTh();
-                }
-                boolean hasTemp1OutsideTh = mtunData.hasTemp1OutsideTh();
-                sensoroSensorTest.mantunData.hasTemp1OutsideTh = hasTemp1OutsideTh;
-                if (hasTemp1OutsideTh) {
-                    sensoroSensorTest.mantunData.temp1OutsideTh = mtunData.getTemp1OutsideTh();
-                }
-                boolean hasTemp2ContactTh = mtunData.hasTemp2ContactTh();
-                sensoroSensorTest.mantunData.hasTemp2ContactTh = hasTemp2ContactTh;
-                if (hasTemp2ContactTh) {
-                    sensoroSensorTest.mantunData.temp2ContactTh = mtunData.getTemp2ContactTh();
-                }
-                boolean hasAttribute = mtunData.hasAttribute();
-                sensoroSensorTest.mantunData.hasAttribute = hasAttribute;
-                if (hasAttribute) {
-                    sensoroSensorTest.mantunData.attribute = mtunData.getAttribute();
-                }
-                boolean hasCmd = mtunData.hasCmd();
-                sensoroSensorTest.mantunData.hasCmd = hasCmd;
-                if (hasCmd) {
-                    sensoroSensorTest.mantunData.cmd = mtunData.getCmd();
-                }
 
-            }
             //安科瑞三相电
-            boolean hasAcrelData = msgNode.hasAcrelData();
-            sensoroSensorTest.hasAcrelFires = hasAcrelData;
-            if (hasAcrelData) {
-                MsgNode1V1M5.AcrelData acrelData = msgNode.getAcrelData();
-                sensoroSensorTest.acrelFires = new SensoroAcrelFires();
-                sensoroSensorTest.acrelFires.hasConnectSw = acrelData.hasConnectSw();
-                if (acrelData.hasConnectSw()) {
-                    sensoroSensorTest.acrelFires.connectSw = acrelData.getConnectSw();
-                }
-                sensoroSensorTest.acrelFires.hasChEnable = acrelData.hasChEnable();
-                if (acrelData.hasChEnable()) {
-                    sensoroSensorTest.acrelFires.chEnable = acrelData.getChEnable();
-                }
-                sensoroSensorTest.acrelFires.hasLeakageTh = acrelData.hasLeakageTh();
-                if (acrelData.hasLeakageTh()) {
-                    sensoroSensorTest.acrelFires.leakageTh = acrelData.getLeakageTh();
-                }
-                sensoroSensorTest.acrelFires.hasT1Th = acrelData.hasT1Th();
-                if (acrelData.hasT1Th()) {
-                    sensoroSensorTest.acrelFires.t1Th = acrelData.getT1Th();
-                }
-                sensoroSensorTest.acrelFires.hasT2Th = acrelData.hasT2Th();
-                if (acrelData.hasT2Th()) {
-                    sensoroSensorTest.acrelFires.t2Th = acrelData.getT2Th();
-                }
-                sensoroSensorTest.acrelFires.hasT3Th = acrelData.hasT3Th();
-                if (acrelData.hasT3Th()) {
-                    sensoroSensorTest.acrelFires.t3Th = acrelData.getT3Th();
-                }
-                sensoroSensorTest.acrelFires.hasT4Th = acrelData.hasT4Th();
-                if (acrelData.hasT4Th()) {
-                    sensoroSensorTest.acrelFires.t4Th = acrelData.getT4Th();
-                }
-                sensoroSensorTest.acrelFires.hasPasswd = acrelData.hasPasswd();
-                if (acrelData.hasPasswd()) {
-                    sensoroSensorTest.acrelFires.passwd = acrelData.getPasswd();
-                }
-                sensoroSensorTest.acrelFires.hasValHighSet = acrelData.hasValHighSet();
-                if (acrelData.hasValHighSet()) {
-                    sensoroSensorTest.acrelFires.valHighSet = acrelData.getValHighSet();
-                }
-                sensoroSensorTest.acrelFires.hasValLowSet = acrelData.hasValLowSet();
-                if (acrelData.hasValLowSet()) {
-                    sensoroSensorTest.acrelFires.valLowSet = acrelData.getValLowSet();
-                }
-                sensoroSensorTest.acrelFires.hasCurrHighSet = acrelData.hasCurrHighSet();
-                if (acrelData.hasCurrHighSet()) {
-                    sensoroSensorTest.acrelFires.currHighSet = acrelData.getCurrHighSet();
-                }
-                sensoroSensorTest.acrelFires.hasValHighType = acrelData.hasValHighType();
-                if (acrelData.hasValHighType()) {
-                    sensoroSensorTest.acrelFires.valHighType = acrelData.getValHighType();
-                }
-                sensoroSensorTest.acrelFires.hasValLowType = acrelData.hasValLowType();
-                if (acrelData.hasValLowType()) {
-                    sensoroSensorTest.acrelFires.valLowType = acrelData.getValLowType();
-                }
-                sensoroSensorTest.acrelFires.hasCurrHighType = acrelData.hasCurrHighType();
-                if (acrelData.hasCurrHighType()) {
-                    sensoroSensorTest.acrelFires.currHighType = acrelData.getCurrHighType();
-                }
-                sensoroSensorTest.acrelFires.hasCmd = acrelData.hasCmd();
-                if (acrelData.hasCmd()) {
-                    sensoroSensorTest.acrelFires.cmd = acrelData.getCmd();
-                }
-                sensoroSensorTest.acrelFires.hasIct = acrelData.hasIct();
-                if (acrelData.hasIct()) {
-                    sensoroSensorTest.acrelFires.ict = acrelData.getIct();
-                }
-                sensoroSensorTest.acrelFires.hasCt = acrelData.hasCt();
-                if (acrelData.hasCt()) {
-                    sensoroSensorTest.acrelFires.ct = acrelData.getCt();
-                }
-            }
+            parseAcrelFires(msgNode, sensoroSensorTest);
             //嘉德 自研烟感
-            boolean hasCaymanData = msgNode.hasCaymanData();
-            LogUtils.loge("parseData05 ww " + hasCaymanData);
-            sensoroSensorTest.hasCayMan = hasCaymanData;
-            if (hasCaymanData) {
-                MsgNode1V1M5.Cayman caymanData = msgNode.getCaymanData();
-                sensoroSensorTest.cayManData = new SensoroCayManData();
-                sensoroSensorTest.cayManData.hasIsSmoke = caymanData.hasIsSmoke();
-                if (caymanData.hasIsSmoke()) {
-                    sensoroSensorTest.cayManData.isSmoke = caymanData.getIsSmoke();
-                }
-                sensoroSensorTest.cayManData.hasIsMoved = caymanData.hasIsMoved();
-                if (caymanData.hasIsMoved()) {
-                    sensoroSensorTest.cayManData.isMoved = caymanData.getIsMoved();
-                }
-                sensoroSensorTest.cayManData.hasValueOfTem = caymanData.hasValueOfTem();
-                if (caymanData.hasValueOfTem()) {
-                    sensoroSensorTest.cayManData.valueOfTem = caymanData.getValueOfTem();
-                }
-                sensoroSensorTest.cayManData.hasValueOfHum = caymanData.hasValueOfHum();
-                if (caymanData.hasValueOfHum()) {
-                    sensoroSensorTest.cayManData.valueOfHum = caymanData.getValueOfHum();
-                }
-                sensoroSensorTest.cayManData.hasAlarmOfHighTem = caymanData.hasAlarmOfHighTem();
-                if (caymanData.hasAlarmOfHighTem()) {
-                    sensoroSensorTest.cayManData.alarmOfHighTem = caymanData.getAlarmOfHighTem();
-                }
-                sensoroSensorTest.cayManData.hasAlarmOfLowTem = caymanData.hasAlarmOfLowTem();
-                if (caymanData.hasAlarmOfLowTem()) {
-                    sensoroSensorTest.cayManData.alarmOfLowTem = caymanData.getAlarmOfLowTem();
-                }
-                sensoroSensorTest.cayManData.hasAlarmOfHighHum = caymanData.hasAlarmOfHighHum();
-                if (caymanData.hasAlarmOfHighHum()) {
-                    sensoroSensorTest.cayManData.alarmOfHighHum = caymanData.getAlarmOfHighHum();
-                }
-                sensoroSensorTest.cayManData.hasAlarmOfLowHum = caymanData.hasAlarmOfLowHum();
-                if (caymanData.hasAlarmOfLowHum()) {
-                    sensoroSensorTest.cayManData.alarmOfLowHum = caymanData.getAlarmOfLowHum();
-                }
-                sensoroSensorTest.cayManData.hasCmd = caymanData.hasCmd();
-                if (caymanData.hasCmd()) {
-                    sensoroSensorTest.cayManData.cmd = caymanData.getCmd();
-                }
-
-            }
+            parseCaymanData(msgNode, sensoroSensorTest);
             //baymax ch4 lpg
-            boolean hasBaymaxData = msgNode.hasBaymaxData();
-            LogUtils.loge("parseData05 dd " + hasBaymaxData);
-            sensoroSensorTest.hasBaymax = hasBaymaxData;
-            if (hasBaymaxData) {
-                MsgNode1V1M5.Baymax baymaxData = msgNode.getBaymaxData();
-                sensoroSensorTest.baymax = new SensoroBaymax();
-                sensoroSensorTest.baymax.hasGasDensity = baymaxData.hasGasDensity();
-                if (baymaxData.hasGasDensity()) {
-                    sensoroSensorTest.baymax.gasDensity = baymaxData.getGasDensity();
-                }
-                sensoroSensorTest.baymax.hasGasDensityL1 = baymaxData.hasGasDensityL1();
-                if (baymaxData.hasGasDensityL1()) {
-                    sensoroSensorTest.baymax.gasDensityL1 = baymaxData.getGasDensityL1();
-                }
-                sensoroSensorTest.baymax.hasGasDensityL2 = baymaxData.hasGasDensityL2();
-                if (baymaxData.hasGasDensityL2()) {
-                    sensoroSensorTest.baymax.gasDensityL2 = baymaxData.getGasDensityL2();
-                }
-                sensoroSensorTest.baymax.hasGasDensityL3 = baymaxData.hasGasDensityL3();
-                if (baymaxData.hasGasDensityL3()) {
-                    sensoroSensorTest.baymax.gasDensityL3 = baymaxData.getGasDensityL3();
-                }
-                sensoroSensorTest.baymax.hasGasDisassembly = baymaxData.hasGasDisassembly();
-                if (baymaxData.hasGasDisassembly()) {
-                    sensoroSensorTest.baymax.gasDisassembly = baymaxData.getGasDisassembly();
-                }
-                sensoroSensorTest.baymax.hasGasLosePwr = baymaxData.hasGasLosePwr();
-                if (baymaxData.hasGasLosePwr()) {
-                    sensoroSensorTest.baymax.gasLosePwr = baymaxData.getGasLosePwr();
-                }
-                sensoroSensorTest.baymax.hasGasEMValve = baymaxData.hasGasEMValve();
-                if (baymaxData.hasGasEMValve()) {
-                    sensoroSensorTest.baymax.gasEMValve = baymaxData.getGasEMValve();
-                }
-                sensoroSensorTest.baymax.hasGasDeviceStatus = baymaxData.hasGasDeviceStatus();
-                if (baymaxData.hasGasDeviceStatus()) {
-                    sensoroSensorTest.baymax.gasDeviceStatus = baymaxData.getGasDeviceStatus();
-                }
-                sensoroSensorTest.baymax.hasGasDeviceOpState = baymaxData.hasGasDeviceOpState();
-                if (baymaxData.hasGasDeviceOpState()) {
-                    sensoroSensorTest.baymax.gasDeviceOpState = baymaxData.getGasDeviceOpState();
-                }
-                sensoroSensorTest.baymax.hasGasDeviceComsDown = baymaxData.hasGasDeviceComsDown();
-                if (baymaxData.hasGasDeviceComsDown()) {
-                    sensoroSensorTest.baymax.gasDeviceComsDown = baymaxData.getGasDeviceComsDown();
-                }
-                sensoroSensorTest.baymax.hasGasDeviceCMD = baymaxData.hasGasDeviceCMD();
-                if (baymaxData.hasGasDeviceCMD()) {
-                    sensoroSensorTest.baymax.gasDeviceCMD = baymaxData.getGasDeviceCMD();
-                }
-            }
+            parseBaymaxCh4Lpg(msgNode, sensoroSensorTest);
+
             sensoroDevice.setSensoroSensorTest(sensoroSensorTest);
             sensoroDevice.setDataVersion(DATA_VERSION_05);
             sensoroDevice.setHasSensorParam(true);
@@ -1774,6 +1600,283 @@ public class SensoroDeviceConnection {
 
         LogUtils.loge("parseData05  onConnectedSuccess");
         sensoroConnectionCallback.onConnectedSuccess(sensoroDevice, CmdType.CMD_NULL);
+    }
+
+    private void parseBaymaxCh4Lpg(MsgNode1V1M5.MsgNode msgNode, SensoroSensor sensoroSensorTest) {
+        boolean hasBaymaxData = msgNode.hasBaymaxData();
+        LogUtils.loge("parseData05 dd " + hasBaymaxData);
+        sensoroSensorTest.hasBaymax = hasBaymaxData;
+        if (hasBaymaxData) {
+            MsgNode1V1M5.Baymax baymaxData = msgNode.getBaymaxData();
+            sensoroSensorTest.baymax = new SensoroBaymax();
+            sensoroSensorTest.baymax.hasGasDensity = baymaxData.hasGasDensity();
+            if (baymaxData.hasGasDensity()) {
+                sensoroSensorTest.baymax.gasDensity = baymaxData.getGasDensity();
+            }
+            sensoroSensorTest.baymax.hasGasDensityL1 = baymaxData.hasGasDensityL1();
+            if (baymaxData.hasGasDensityL1()) {
+                sensoroSensorTest.baymax.gasDensityL1 = baymaxData.getGasDensityL1();
+            }
+            sensoroSensorTest.baymax.hasGasDensityL2 = baymaxData.hasGasDensityL2();
+            if (baymaxData.hasGasDensityL2()) {
+                sensoroSensorTest.baymax.gasDensityL2 = baymaxData.getGasDensityL2();
+            }
+            sensoroSensorTest.baymax.hasGasDensityL3 = baymaxData.hasGasDensityL3();
+            if (baymaxData.hasGasDensityL3()) {
+                sensoroSensorTest.baymax.gasDensityL3 = baymaxData.getGasDensityL3();
+            }
+            sensoroSensorTest.baymax.hasGasDisassembly = baymaxData.hasGasDisassembly();
+            if (baymaxData.hasGasDisassembly()) {
+                sensoroSensorTest.baymax.gasDisassembly = baymaxData.getGasDisassembly();
+            }
+            sensoroSensorTest.baymax.hasGasLosePwr = baymaxData.hasGasLosePwr();
+            if (baymaxData.hasGasLosePwr()) {
+                sensoroSensorTest.baymax.gasLosePwr = baymaxData.getGasLosePwr();
+            }
+            sensoroSensorTest.baymax.hasGasEMValve = baymaxData.hasGasEMValve();
+            if (baymaxData.hasGasEMValve()) {
+                sensoroSensorTest.baymax.gasEMValve = baymaxData.getGasEMValve();
+            }
+            sensoroSensorTest.baymax.hasGasDeviceStatus = baymaxData.hasGasDeviceStatus();
+            if (baymaxData.hasGasDeviceStatus()) {
+                sensoroSensorTest.baymax.gasDeviceStatus = baymaxData.getGasDeviceStatus();
+            }
+            sensoroSensorTest.baymax.hasGasDeviceOpState = baymaxData.hasGasDeviceOpState();
+            if (baymaxData.hasGasDeviceOpState()) {
+                sensoroSensorTest.baymax.gasDeviceOpState = baymaxData.getGasDeviceOpState();
+            }
+            sensoroSensorTest.baymax.hasGasDeviceComsDown = baymaxData.hasGasDeviceComsDown();
+            if (baymaxData.hasGasDeviceComsDown()) {
+                sensoroSensorTest.baymax.gasDeviceComsDown = baymaxData.getGasDeviceComsDown();
+            }
+            sensoroSensorTest.baymax.hasGasDeviceCMD = baymaxData.hasGasDeviceCMD();
+            if (baymaxData.hasGasDeviceCMD()) {
+                sensoroSensorTest.baymax.gasDeviceCMD = baymaxData.getGasDeviceCMD();
+            }
+        }
+    }
+
+    private void parseCaymanData(MsgNode1V1M5.MsgNode msgNode, SensoroSensor sensoroSensorTest) {
+        boolean hasCaymanData = msgNode.hasCaymanData();
+        LogUtils.loge("parseData05 ww " + hasCaymanData);
+        sensoroSensorTest.hasCayMan = hasCaymanData;
+        if (hasCaymanData) {
+            MsgNode1V1M5.Cayman caymanData = msgNode.getCaymanData();
+            sensoroSensorTest.cayManData = new SensoroCayManData();
+            sensoroSensorTest.cayManData.hasIsSmoke = caymanData.hasIsSmoke();
+            if (caymanData.hasIsSmoke()) {
+                sensoroSensorTest.cayManData.isSmoke = caymanData.getIsSmoke();
+            }
+            sensoroSensorTest.cayManData.hasIsMoved = caymanData.hasIsMoved();
+            if (caymanData.hasIsMoved()) {
+                sensoroSensorTest.cayManData.isMoved = caymanData.getIsMoved();
+            }
+            sensoroSensorTest.cayManData.hasValueOfTem = caymanData.hasValueOfTem();
+            if (caymanData.hasValueOfTem()) {
+                sensoroSensorTest.cayManData.valueOfTem = caymanData.getValueOfTem();
+            }
+            sensoroSensorTest.cayManData.hasValueOfHum = caymanData.hasValueOfHum();
+            if (caymanData.hasValueOfHum()) {
+                sensoroSensorTest.cayManData.valueOfHum = caymanData.getValueOfHum();
+            }
+            sensoroSensorTest.cayManData.hasAlarmOfHighTem = caymanData.hasAlarmOfHighTem();
+            if (caymanData.hasAlarmOfHighTem()) {
+                sensoroSensorTest.cayManData.alarmOfHighTem = caymanData.getAlarmOfHighTem();
+            }
+            sensoroSensorTest.cayManData.hasAlarmOfLowTem = caymanData.hasAlarmOfLowTem();
+            if (caymanData.hasAlarmOfLowTem()) {
+                sensoroSensorTest.cayManData.alarmOfLowTem = caymanData.getAlarmOfLowTem();
+            }
+            sensoroSensorTest.cayManData.hasAlarmOfHighHum = caymanData.hasAlarmOfHighHum();
+            if (caymanData.hasAlarmOfHighHum()) {
+                sensoroSensorTest.cayManData.alarmOfHighHum = caymanData.getAlarmOfHighHum();
+            }
+            sensoroSensorTest.cayManData.hasAlarmOfLowHum = caymanData.hasAlarmOfLowHum();
+            if (caymanData.hasAlarmOfLowHum()) {
+                sensoroSensorTest.cayManData.alarmOfLowHum = caymanData.getAlarmOfLowHum();
+            }
+            sensoroSensorTest.cayManData.hasCmd = caymanData.hasCmd();
+            if (caymanData.hasCmd()) {
+                sensoroSensorTest.cayManData.cmd = caymanData.getCmd();
+            }
+
+        }
+    }
+
+    private void parseAcrelFires(MsgNode1V1M5.MsgNode msgNode, SensoroSensor sensoroSensorTest) {
+        boolean hasAcrelData = msgNode.hasAcrelData();
+        sensoroSensorTest.hasAcrelFires = hasAcrelData;
+        if (hasAcrelData) {
+            MsgNode1V1M5.AcrelData acrelData = msgNode.getAcrelData();
+            sensoroSensorTest.acrelFires = new SensoroAcrelFires();
+            sensoroSensorTest.acrelFires.hasConnectSw = acrelData.hasConnectSw();
+            if (acrelData.hasConnectSw()) {
+                sensoroSensorTest.acrelFires.connectSw = acrelData.getConnectSw();
+            }
+            sensoroSensorTest.acrelFires.hasChEnable = acrelData.hasChEnable();
+            if (acrelData.hasChEnable()) {
+                sensoroSensorTest.acrelFires.chEnable = acrelData.getChEnable();
+            }
+            sensoroSensorTest.acrelFires.hasLeakageTh = acrelData.hasLeakageTh();
+            if (acrelData.hasLeakageTh()) {
+                sensoroSensorTest.acrelFires.leakageTh = acrelData.getLeakageTh();
+            }
+            sensoroSensorTest.acrelFires.hasT1Th = acrelData.hasT1Th();
+            if (acrelData.hasT1Th()) {
+                sensoroSensorTest.acrelFires.t1Th = acrelData.getT1Th();
+            }
+            sensoroSensorTest.acrelFires.hasT2Th = acrelData.hasT2Th();
+            if (acrelData.hasT2Th()) {
+                sensoroSensorTest.acrelFires.t2Th = acrelData.getT2Th();
+            }
+            sensoroSensorTest.acrelFires.hasT3Th = acrelData.hasT3Th();
+            if (acrelData.hasT3Th()) {
+                sensoroSensorTest.acrelFires.t3Th = acrelData.getT3Th();
+            }
+            sensoroSensorTest.acrelFires.hasT4Th = acrelData.hasT4Th();
+            if (acrelData.hasT4Th()) {
+                sensoroSensorTest.acrelFires.t4Th = acrelData.getT4Th();
+            }
+            sensoroSensorTest.acrelFires.hasPasswd = acrelData.hasPasswd();
+            if (acrelData.hasPasswd()) {
+                sensoroSensorTest.acrelFires.passwd = acrelData.getPasswd();
+            }
+            sensoroSensorTest.acrelFires.hasValHighSet = acrelData.hasValHighSet();
+            if (acrelData.hasValHighSet()) {
+                sensoroSensorTest.acrelFires.valHighSet = acrelData.getValHighSet();
+            }
+            sensoroSensorTest.acrelFires.hasValLowSet = acrelData.hasValLowSet();
+            if (acrelData.hasValLowSet()) {
+                sensoroSensorTest.acrelFires.valLowSet = acrelData.getValLowSet();
+            }
+            sensoroSensorTest.acrelFires.hasCurrHighSet = acrelData.hasCurrHighSet();
+            if (acrelData.hasCurrHighSet()) {
+                sensoroSensorTest.acrelFires.currHighSet = acrelData.getCurrHighSet();
+            }
+            sensoroSensorTest.acrelFires.hasValHighType = acrelData.hasValHighType();
+            if (acrelData.hasValHighType()) {
+                sensoroSensorTest.acrelFires.valHighType = acrelData.getValHighType();
+            }
+            sensoroSensorTest.acrelFires.hasValLowType = acrelData.hasValLowType();
+            if (acrelData.hasValLowType()) {
+                sensoroSensorTest.acrelFires.valLowType = acrelData.getValLowType();
+            }
+            sensoroSensorTest.acrelFires.hasCurrHighType = acrelData.hasCurrHighType();
+            if (acrelData.hasCurrHighType()) {
+                sensoroSensorTest.acrelFires.currHighType = acrelData.getCurrHighType();
+            }
+            sensoroSensorTest.acrelFires.hasCmd = acrelData.hasCmd();
+            if (acrelData.hasCmd()) {
+                sensoroSensorTest.acrelFires.cmd = acrelData.getCmd();
+            }
+            sensoroSensorTest.acrelFires.hasIct = acrelData.hasIct();
+            if (acrelData.hasIct()) {
+                sensoroSensorTest.acrelFires.ict = acrelData.getIct();
+            }
+            sensoroSensorTest.acrelFires.hasCt = acrelData.hasCt();
+            if (acrelData.hasCt()) {
+                sensoroSensorTest.acrelFires.ct = acrelData.getCt();
+            }
+        }
+    }
+
+    private void parseMantunData(MsgNode1V1M5.MsgNode msgNode, SensoroSensor sensoroSensorTest) {
+        List<MsgNode1V1M5.MantunData> mtunDataList = msgNode.getMtunDataList();
+        if (mtunDataList != null && mtunDataList.size() > 0) {
+            ArrayList<SensoroMantunData> sensoroMantunDatas = new ArrayList<>();
+            for (MsgNode1V1M5.MantunData mantunData : mtunDataList) {
+                SensoroMantunData smd= new SensoroMantunData();
+                boolean hasVolVal = mantunData.hasVolVal();
+                smd.hasVolVal = hasVolVal;
+                if (hasVolVal) {
+                    smd.volVal = mantunData.getVolVal();
+                }
+                boolean hasCurrVal = mantunData.hasCurrVal();
+                smd.hasCurrVal = hasCurrVal;
+                if (hasCurrVal) {
+                    smd.currVal = mantunData.getCurrVal();
+                }
+                boolean hasLeakageVal = mantunData.hasLeakageVal();
+                smd.hasLeakageVal = hasLeakageVal;
+                if (hasLeakageVal) {
+                    smd.leakageVal = mantunData.getLeakageVal();
+                }
+                boolean hasPowerVal = mantunData.hasPowerVal();
+                smd.hasPowerVal = hasPowerVal;
+                if (hasPowerVal) {
+                    smd.powerVal = mantunData.getPowerVal();
+                }
+                boolean hasKwhVal = mantunData.hasKwhVal();
+                smd.hasKwhVal = hasKwhVal;
+                if (hasKwhVal) {
+                    smd.kwhVal = mantunData.getKwhVal();
+                }
+
+                boolean hasTempVal = mantunData.hasTempVal();
+                smd.hasTempVal = hasTempVal;
+                if (hasTempVal) {
+                    smd.tempVal = mantunData.getTempVal();
+                }
+                boolean hasStatus = mantunData.hasStatus();
+                smd.hasStatus = hasStatus;
+                if (hasStatus) {
+                    smd.status = mantunData.getStatus();
+                }
+                boolean hasSwOnOff = mantunData.hasSwOnOff();
+                smd.hasSwOnOff = hasSwOnOff;
+                if (hasSwOnOff) {
+                    smd.swOnOff = mantunData.getSwOnOff();
+                }
+                boolean hasId = mantunData.hasId();
+                smd.hasId = hasId;
+                if(hasId){
+                    smd.id = mantunData.getId();
+                }
+                boolean hasVolHighTh = mantunData.hasVolHighTh();
+                smd.hasVolHighTh = hasVolHighTh;
+                if (hasVolHighTh) {
+                    smd.volHighTh = mantunData.getVolHighTh();
+                }
+                boolean hasVolLowTh = mantunData.hasVolLowTh();
+                smd.hasVolLowTh = hasVolLowTh;
+                if (hasVolLowTh) {
+                    smd.volLowTh = mantunData.getVolLowTh();
+                }
+                boolean hasLeakageTh = mantunData.hasLeakageTh();
+                smd.hasLeakageTh = hasLeakageTh;
+                if (hasLeakageTh) {
+                    smd.leakageTh = mantunData.getLeakageTh();
+                }
+                boolean hasTempTh = mantunData.hasTempTh();
+                smd.hasTempTh = hasTempTh;
+                if (hasTempTh) {
+                    smd.tempTh = mantunData.getTempTh();
+                }
+                boolean hasCurrentTh = mantunData.hasCurrentTh();
+                smd.hasCurrentTh = hasCurrentTh;
+                if (hasCurrentTh) {
+                    smd.currentTh = mantunData.getCurrentTh();
+                }
+                boolean hasPowerTh = mantunData.hasPowerTh();
+                smd.hasPowerTh = hasPowerTh;
+                if (hasPowerTh) {
+                    smd.powerTh = mantunData.getPowerTh();
+                }
+
+                boolean hasAttribute = mantunData.hasAttribute();
+                smd.hasAttribute = hasAttribute;
+                if (hasAttribute) {
+                    smd.attribute = mantunData.getAttribute();
+                }
+                boolean hasCmd = mantunData.hasCmd();
+                smd.hasCmd = hasCmd;
+                if (hasCmd) {
+                    smd.cmd = mantunData.getCmd();
+                }
+                sensoroMantunDatas.add(smd);
+            }
+            sensoroSensorTest.mantunDatas = sensoroMantunDatas;
+        }
     }
 
     private void parseData(byte[] data) {
@@ -2330,70 +2433,64 @@ public class SensoroDeviceConnection {
             msgNodeBuilder.setFireData(builder);
         }
         //曼顿电气火灾传感器支持
-        if (sensoroSensorTest.hasMantunData) {
-            MsgNode1V1M5.MantunData.Builder builder = MsgNode1V1M5.MantunData.newBuilder();
-            if (sensoroSensorTest.mantunData.hasVolVal) {
-                builder.setVolVal(sensoroSensorTest.mantunData.volVal);
-            }
-            if (sensoroSensorTest.mantunData.hasCurrVal) {
-                builder.setCurrVal(sensoroSensorTest.mantunData.currVal);
-            }
-            if (sensoroSensorTest.mantunData.hasLeakageVal) {
-                builder.setLeakageVal(sensoroSensorTest.mantunData.leakageVal);
-            }
-            if (sensoroSensorTest.mantunData.hasPowerVal) {
-                builder.setPowerVal(sensoroSensorTest.mantunData.powerVal);
-            }
-            if (sensoroSensorTest.mantunData.hasKwhVal) {
-                builder.setKwhVal(sensoroSensorTest.mantunData.kwhVal);
-            }
-            if (sensoroSensorTest.mantunData.hasTempVal) {
-                builder.setTempVal(sensoroSensorTest.mantunData.tempVal);
-            }
-            if (sensoroSensorTest.mantunData.hasStatus) {
-                builder.setStatus(sensoroSensorTest.mantunData.status);
-            }
-            if (sensoroSensorTest.mantunData.hasSwOnOff) {
-                builder.setSwOnOff(sensoroSensorTest.mantunData.swOnOff);
-            }
-            if (sensoroSensorTest.mantunData.hasTemp1Outside) {
-                builder.setTemp1Outside(sensoroSensorTest.mantunData.temp1Outside);
-            }
-            if (sensoroSensorTest.mantunData.hasTemp2Contact) {
-                builder.setTemp2Contact(sensoroSensorTest.mantunData.temp2Contact);
-            }
-            if (sensoroSensorTest.mantunData.hasVolHighTh) {
-                builder.setVolHighTh(sensoroSensorTest.mantunData.volHighTh);
-            }
-            if (sensoroSensorTest.mantunData.hasVolLowTh) {
-                builder.setVolLowTh(sensoroSensorTest.mantunData.volLowTh);
-            }
-            if (sensoroSensorTest.mantunData.hasLeakageTh) {
-                builder.setLeakageTh(sensoroSensorTest.mantunData.leakageTh);
-            }
-            if (sensoroSensorTest.mantunData.hasTempTh) {
-                builder.setTempTh(sensoroSensorTest.mantunData.tempTh);
-            }
-            if (sensoroSensorTest.mantunData.hasCurrentTh) {
-                builder.setCurrentTh(sensoroSensorTest.mantunData.currentTh);
-            }
-            if (sensoroSensorTest.mantunData.hasPowerTh) {
-                builder.setPowerTh(sensoroSensorTest.mantunData.powerTh);
-            }
-            if (sensoroSensorTest.mantunData.hasTemp1OutsideTh) {
-                builder.setTemp1OutsideTh(sensoroSensorTest.mantunData.temp1OutsideTh);
-            }
-            if (sensoroSensorTest.mantunData.hasTemp2ContactTh) {
-                builder.setTemp2ContactTh(sensoroSensorTest.mantunData.temp2ContactTh);
-            }
-            if (sensoroSensorTest.mantunData.hasAttribute) {
-                builder.setAttribute(sensoroSensorTest.mantunData.attribute);
-            }
-            if (sensoroSensorTest.mantunData.hasCmd) {
-                builder.setCmd(sensoroSensorTest.mantunData.cmd);
-            }
-            msgNodeBuilder.setMtunData(builder);
+        if (sensoroSensorTest.mantunDatas!= null && sensoroSensorTest.mantunDatas.size() > 0 ) {
+            for (SensoroMantunData mantunData : sensoroSensorTest.mantunDatas) {
+                MsgNode1V1M5.MantunData.Builder builder = MsgNode1V1M5.MantunData.newBuilder();
+                if (mantunData.hasVolVal) {
+                    builder.setVolVal(mantunData.volVal);
+                }
+                if (mantunData.hasCurrVal) {
+                    builder.setCurrVal(mantunData.currVal);
+                }
+                if (mantunData.hasLeakageVal) {
+                    builder.setLeakageVal(mantunData.leakageVal);
+                }
+                if (mantunData.hasPowerVal) {
+                    builder.setPowerVal(mantunData.powerVal);
+                }
+                if (mantunData.hasKwhVal) {
+                    builder.setKwhVal(mantunData.kwhVal);
+                }
+                if (mantunData.hasTempVal) {
+                    builder.setTempVal(mantunData.tempVal);
+                }
+                if (mantunData.hasStatus) {
+                    builder.setStatus(mantunData.status);
+                }
+                if (mantunData.hasSwOnOff) {
+                    builder.setSwOnOff(mantunData.swOnOff);
+                }
+                if (mantunData.hasId) {
+                    builder.setId(mantunData.id);
+                }
+                if (mantunData.hasVolHighTh) {
+                    builder.setVolHighTh(mantunData.volHighTh);
+                }
+                if (mantunData.hasVolLowTh) {
+                    builder.setVolLowTh(mantunData.volLowTh);
+                }
+                if (mantunData.hasLeakageTh) {
+                    builder.setLeakageTh(mantunData.leakageTh);
+                }
+                if (mantunData.hasTempTh) {
+                    builder.setTempTh(mantunData.tempTh);
+                }
+                if (mantunData.hasCurrentTh) {
+                    builder.setCurrentTh(mantunData.currentTh);
+                }
+                if (mantunData.hasPowerTh) {
+                    builder.setPowerTh(mantunData.powerTh);
+                }
 
+                if (mantunData.hasAttribute) {
+                    builder.setAttribute(mantunData.attribute);
+                }
+                if (mantunData.hasCmd) {
+                    builder.setCmd(mantunData.cmd);
+                }
+
+               msgNodeBuilder.addMtunData(builder);
+            }
         }
 
         //安科瑞三相电
@@ -2967,8 +3064,17 @@ public class SensoroDeviceConnection {
         }
 
     }
+    public void writeUpgradeCmd(String filePath, int status,SensoroWriteCallback writeCallback) {
+//        writeCallbackHashMap.put(CmdType.CMD_W_CFG, writeCallback);
+        switch (status){
+            case 1:
+                chipEUpgradeThread = new ChipEUpgradeThread(writeCallback, filePath, bluetoothLEHelper4);
+                chipEUpgradeThread.start();
+                break;
+        }
+    }
 
-    public void writeCmd(SensoroWriteCallback writeCallback) {
+    public void writeUpgradeCmd(SensoroWriteCallback writeCallback) {
         writeCallbackHashMap.put(CmdType.CMD_W_CFG, writeCallback);
         switch (dataVersion) {
             case DATA_VERSION_03: {
@@ -3059,7 +3165,7 @@ public class SensoroDeviceConnection {
         }
     }
 
-    public void writeSignalData(int freq, int dr, int txPower, int interval, SensoroWriteCallback writeCallback) {
+    public void writeSignalData(int freq, int dr, int txPower, int interval, final SensoroWriteCallback writeCallback) {
         writeCallbackHashMap.put(CmdType.CMD_SIGNAL, writeCallback);
         switch (dataVersion) {
             default: {
@@ -3067,14 +3173,14 @@ public class SensoroDeviceConnection {
                 builder.setUplinkFreq(freq);
 //                builder.setUplinkDR(dr);
 //                builder.setUplinkTxPower(txPower);
-                builder.setUplinkInterval(interval);
+//                builder.setUplinkInterval(interval);
                 ProtoMsgTest1U1.MsgTest msgTest = builder.build();
                 byte[] data = msgTest.toByteArray();
                 int data_length = data.length;
 
                 int total_length = data_length + 3;
 
-                byte[] total_data = new byte[total_length];
+                final byte[] total_data = new byte[total_length];
 
                 byte[] length_data = SensoroUUID.intToByteArray(data_length + 1, 2);
 
@@ -3083,12 +3189,20 @@ public class SensoroDeviceConnection {
                 System.arraycopy(length_data, 0, total_data, 0, 2);
                 System.arraycopy(version_data, 0, total_data, 2, 1);
                 System.arraycopy(data, 0, total_data, 3, data_length);
+                LogUtils.loge("信号测试发送");
+                Handler handler = new Handler(Looper.getMainLooper());
+                handler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        int resultCode = bluetoothLEHelper4.writeConfigurations(total_data, CmdType.CMD_SIGNAL,
+                                BluetoothLEHelper4.GattInfo.SENSORO_DEVICE_SIGNAL_UUID);
+                        if (resultCode != ResultCode.SUCCESS) {
+                            writeCallback.onWriteFailure(resultCode, CmdType.CMD_NULL);
+                        }
+                    }
+                });
 
-                int resultCode = bluetoothLEHelper4.writeConfigurations(total_data, CmdType.CMD_SIGNAL,
-                        BluetoothLEHelper4.GattInfo.SENSORO_DEVICE_SIGNAL_UUID);
-                if (resultCode != ResultCode.SUCCESS) {
-                    writeCallback.onWriteFailure(resultCode, CmdType.CMD_NULL);
-                }
+
             }
             break;
         }
@@ -3109,7 +3223,7 @@ public class SensoroDeviceConnection {
     }
 
     public void freshCache() {
-        trySleepThread(10);
+        trySleepThread(200);
         if (bluetoothLEHelper4 != null) {
             bluetoothLEHelper4.close();
         }
@@ -3131,7 +3245,7 @@ public class SensoroDeviceConnection {
     public void writeMantunCmd(MsgNode1V1M5.MantunData.Builder builder, SensoroWriteCallback writeCallback) {
         writeCallbackHashMap.put(CmdType.CMD_SET_MANTUN_CMD, writeCallback);
         MsgNode1V1M5.MsgNode.Builder msgNodeBuilder = MsgNode1V1M5.MsgNode.newBuilder();
-        msgNodeBuilder.setMtunData(builder);
+        msgNodeBuilder.addMtunData(builder);
         byte[] data = msgNodeBuilder.build().toByteArray();
         writeData05Cmd(data, CmdType.CMD_SET_MANTUN_CMD, writeCallback);
     }
@@ -3193,7 +3307,8 @@ public class SensoroDeviceConnection {
         writeData05Cmd(data, CmdType.CMD_SET_BAYMAX_CMD, writeCallback);
     }
 
+
     enum ListenType implements Serializable {
-        SENSOR_CHAR, READ_CHAR, SIGNAL_CHAR, UNKNOWN;
+        SENSOR_CHAR, READ_CHAR, SIGNAL_CHAR,SENSOR_CHIP_E, UNKNOWN;
     }
 }

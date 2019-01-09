@@ -69,5 +69,6 @@ public class CmdType {
     public static final int CMD_CAYMAN_RESET = 0x114;
     public static final int CMD_CAYMAN_CLEAR_SOUND = 0x115;
 
-
+    //人员定位器 升级
+    public static int CMD_BB_TRACKER_UPGRADE = 0x116;
 }

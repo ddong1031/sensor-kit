@@ -8,6 +8,8 @@ import com.sensoro.libbleserver.ble.bean.SensoroBaymax;
 import com.sensoro.libbleserver.ble.bean.SensoroCayManData;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by sensoro on 17/1/19.
@@ -49,7 +51,8 @@ public class SensoroSensor extends BLEDevice implements Parcelable, Cloneable {
     public SensoroData waterPressure;
     public SensoroData multiTemperature;
     public SensoroFireData elecFireData;
-    public SensoroMantunData mantunData;
+    public ArrayList<SensoroMantunData> mantunDatas;//曼顿电气火灾
+
     public SensoroAcrelFires acrelFires;// 安科瑞三相电
     public SensoroCayManData cayManData;//嘉德 自研烟感
     public SensoroBaymax baymax;//baymax ch4 lpg
@@ -87,7 +90,6 @@ public class SensoroSensor extends BLEDevice implements Parcelable, Cloneable {
     public boolean hasMultiTemp;
     public boolean hasMethane;
     public boolean hasFireData;
-    public boolean hasMantunData;
     public boolean hasAcrelFires;
     public boolean hasCayMan;
     public boolean hasBaymax;
@@ -131,8 +133,8 @@ public class SensoroSensor extends BLEDevice implements Parcelable, Cloneable {
             elecFireData = (SensoroFireData) serializable;
         }
         Serializable mantun = in.readSerializable();
-        if(mantun instanceof SensoroMantunData){
-            mantunData = (SensoroMantunData) mantun;
+        if(mantun instanceof ArrayList){
+            mantunDatas = (ArrayList<SensoroMantunData>) mantun;
         }
 
         Serializable  acrelFir = in.readSerializable();
@@ -182,7 +184,6 @@ public class SensoroSensor extends BLEDevice implements Parcelable, Cloneable {
         hasMultiTemp = in.readByte() != 0;
         hasMethane = in.readByte() != 0;
         hasFireData = in.readByte() != 0;
-        hasMantunData = in.readByte() != 0;
         hasAcrelFires = in.readByte() != 0;
         hasCayMan = in.readByte() != 0;
         hasBaymax = in.readByte() != 0;
@@ -225,7 +226,7 @@ public class SensoroSensor extends BLEDevice implements Parcelable, Cloneable {
         parcel.writeSerializable(gas);
         parcel.writeSerializable(waterPressure);
         parcel.writeSerializable(elecFireData);
-        parcel.writeSerializable(mantunData);
+        parcel.writeSerializable(mantunDatas);
         parcel.writeSerializable(acrelFires);
         parcel.writeSerializable(cayManData);
         parcel.writeSerializable(baymax);
@@ -264,7 +265,6 @@ public class SensoroSensor extends BLEDevice implements Parcelable, Cloneable {
         parcel.writeByte((byte) (hasMultiTemp ? 1 : 0));
         parcel.writeByte((byte) (hasMethane ? 1 : 0));
         parcel.writeByte((byte) (hasFireData ? 1 : 0));
-        parcel.writeByte((byte)(hasMantunData?1:0));
         parcel.writeByte((byte)(hasAcrelFires?1:0));
         parcel.writeByte((byte)(hasCayMan?1:0));
         parcel.writeByte((byte) (hasBaymax?1:0));
