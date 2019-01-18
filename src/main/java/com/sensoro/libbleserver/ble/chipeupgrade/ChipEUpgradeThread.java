@@ -1,5 +1,8 @@
 package com.sensoro.libbleserver.ble.chipeupgrade;
 
+import android.os.Handler;
+import android.os.Looper;
+
 import com.sensoro.libbleserver.ble.BluetoothLEHelper4;
 import com.sensoro.libbleserver.ble.CmdType;
 import com.sensoro.libbleserver.ble.SensoroWriteCallback;
@@ -27,6 +30,7 @@ public class ChipEUpgradeThread extends Thread {
     private final int AMOTA_HEADER_SIZE_IN_PKT = AMOTA_LENGTH_SIZE_IN_PKT + AMOTA_CMD_SIZE_IN_PKT;
     private boolean mStopOta;
     private int mFileOffset;
+    private final Handler mainHandler = new Handler(Looper.getMainLooper());
 
     public ChipEUpgradeThread(SensoroWriteCallback writeCallback, String upgradeFilePath, BluetoothLEHelper4 bluetoothLEHelper4) {
         this.upgradeFilePath = upgradeFilePath;
@@ -36,15 +40,28 @@ public class ChipEUpgradeThread extends Thread {
         cmdResponseSemaphore = new Semaphore(0);
     }
 
+    private void runOnMainThread(Runnable run) {
+        if (Looper.myLooper() == Looper.getMainLooper()) {
+            run.run();
+        } else {
+            mainHandler.post(run);
+        }
+    }
+
     @Override
     public void run() {
         if (writeCallback == null) {
-            LogUtils.loge("bigbangTracker","回调为空");
+            LogUtils.loge("bigbangTracker", "回调为空");
             return;
         }
 
         if (upgradeFilePath == null) {
-            writeCallback.onWriteFailure(0, CmdType.CMD_BB_TRACKER_UPGRADE);
+            runOnMainThread(new Runnable() {
+                @Override
+                public void run() {
+                    writeCallback.onWriteFailure(0, CmdType.CMD_BB_TRACKER_UPGRADE);
+                }
+            });
             return;
         }
 
@@ -54,7 +71,12 @@ public class ChipEUpgradeThread extends Thread {
             mFileSize = mFsInput.available();
             if (mFileSize == 0) {
                 mFsInput.close();
-                writeCallback.onWriteFailure(1, CmdType.CMD_BB_TRACKER_UPGRADE);
+                runOnMainThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        writeCallback.onWriteFailure(1, CmdType.CMD_BB_TRACKER_UPGRADE);
+                    }
+                });
                 return;
             }
 
@@ -68,16 +90,25 @@ public class ChipEUpgradeThread extends Thread {
             setFileOffset();
             if (!sendFwData()) {
                 LogUtils.loge("bigbangTracker", "send FW Data failed");
-                writeCallback.onWriteFailure(4, CmdType.CMD_BB_TRACKER_UPGRADE);
+                runOnMainThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        writeCallback.onWriteFailure(4, CmdType.CMD_BB_TRACKER_UPGRADE);
+                    }
+                });
                 mFsInput.close();
                 return;
             }
 
 
-            if (!sendVerifyCmd())
-            {
+            if (!sendVerifyCmd()) {
                 LogUtils.loge("bigbangTracker", "send FW verify cmd failed");
-                writeCallback.onWriteFailure(5, CmdType.CMD_BB_TRACKER_UPGRADE);
+                runOnMainThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        writeCallback.onWriteFailure(5, CmdType.CMD_BB_TRACKER_UPGRADE);
+                    }
+                });
                 mFsInput.close();
                 return;
             }
@@ -86,10 +117,20 @@ public class ChipEUpgradeThread extends Thread {
             sendResetCmd();
 
             mFsInput.close();
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
-            writeCallback.onWriteFailure(6,CmdType.CMD_BB_TRACKER_UPGRADE);
+            try {
+                mFsInput.close();
+            } catch (IOException e1) {
+                e1.printStackTrace();
+            }
+            runOnMainThread(new Runnable() {
+                @Override
+                public void run() {
+                    writeCallback.onWriteFailure(6, CmdType.CMD_BB_TRACKER_UPGRADE);
+                }
+            });
+
         }
         LogUtils.loge("bigbangTracker", "exit startOtaUpdate");
     }
@@ -113,7 +154,7 @@ public class ChipEUpgradeThread extends Thread {
     }
 
     private boolean sendFwData() {
-        int fwDataSize = mFileSize;
+        final int fwDataSize = mFileSize;
         int ret = -1;
         int offset = mFileOffset;
 
@@ -134,12 +175,22 @@ public class ChipEUpgradeThread extends Thread {
                 return false;
             }
             offset += ret;
-            writeCallback.onWriteSuccess((offset * 100) / fwDataSize,CmdType.CMD_BB_TRACKER_UPGRADE);
+            final int finalOffset = offset;
+            runOnMainThread(new Runnable() {
+                @Override
+                public void run() {
+                    writeCallback.onWriteSuccess((finalOffset * 100) / fwDataSize, CmdType.CMD_BB_TRACKER_UPGRADE);
+                }
+            });
+
         }
-
-        LogUtils.loge("bigbangTracker", "send firmware data complete");
-        writeCallback.onWriteSuccess(101,CmdType.CMD_BB_TRACKER_UPGRADE);
-
+        runOnMainThread(new Runnable() {
+            @Override
+            public void run() {
+                LogUtils.loge("bigbangTracker", "send firmware data complete");
+                writeCallback.onWriteSuccess(101, CmdType.CMD_BB_TRACKER_UPGRADE);
+            }
+        });
         return true;
     }
 
@@ -175,7 +226,12 @@ public class ChipEUpgradeThread extends Thread {
         ret = mFsInput.read(fwHeaderRead);
         if (ret < 48) {
             LogUtils.loge("bigbangTracker", "invalid packed firmware length");
-            writeCallback.onWriteFailure(2,CmdType.CMD_W_CFG);
+            runOnMainThread(new Runnable() {
+                @Override
+                public void run() {
+                    writeCallback.onWriteFailure(2, CmdType.CMD_W_CFG);
+                }
+            });
             return false;
         }
 
@@ -194,7 +250,7 @@ public class ChipEUpgradeThread extends Thread {
 
     public String formatHex2String(byte[] data) {
         final StringBuilder stringBuilder = new StringBuilder(data.length);
-        for(byte byteChar : data)
+        for (byte byteChar : data)
             stringBuilder.append(String.format("%02X ", byteChar));
         return stringBuilder.toString();
     }
@@ -206,8 +262,8 @@ public class ChipEUpgradeThread extends Thread {
         byte[] packet = new byte[packetLength];
 
         // fill data + checksum length
-        packet[0] = (byte)(len + AMOTA_CRC_SIZE_IN_PKT);
-        packet[1] = (byte)((len + AMOTA_CRC_SIZE_IN_PKT) >> 8);
+        packet[0] = (byte) (len + AMOTA_CRC_SIZE_IN_PKT);
+        packet[1] = (byte) ((len + AMOTA_CRC_SIZE_IN_PKT) >> 8);
         packet[2] = cmdData;
 
         if (len != 0) {
@@ -219,19 +275,25 @@ public class ChipEUpgradeThread extends Thread {
 
         // append crc into packet
         // crc is always 0 if there is no data only command
-        packet[AMOTA_HEADER_SIZE_IN_PKT + len] = ((byte)(checksum));
-        packet[AMOTA_HEADER_SIZE_IN_PKT + len + 1] = ((byte)(checksum >> 8));
-        packet[AMOTA_HEADER_SIZE_IN_PKT + len + 2] = ((byte)(checksum >> 16));
-        packet[AMOTA_HEADER_SIZE_IN_PKT + len + 3] = ((byte)(checksum >> 24));
+        packet[AMOTA_HEADER_SIZE_IN_PKT + len] = ((byte) (checksum));
+        packet[AMOTA_HEADER_SIZE_IN_PKT + len + 1] = ((byte) (checksum >> 8));
+        packet[AMOTA_HEADER_SIZE_IN_PKT + len + 2] = ((byte) (checksum >> 16));
+        packet[AMOTA_HEADER_SIZE_IN_PKT + len + 3] = ((byte) (checksum >> 24));
 
         if (sendPacket(packet, packetLength))
             return true;
         else {
             LogUtils.loge("bigbangTracker", "sendPacket failed");
-            writeCallback.onWriteFailure(3,CmdType.CMD_W_CFG);
+            runOnMainThread(new Runnable() {
+                @Override
+                public void run() {
+                    writeCallback.onWriteFailure(3, CmdType.CMD_W_CFG);
+                }
+            });
             return false;
         }
     }
+
     private boolean sendPacket(byte[] data, int len) {
         int idx = 0;
 
@@ -248,8 +310,7 @@ public class ChipEUpgradeThread extends Thread {
                 if (!sendOneFrame(frame)) {
                     return false;
                 }
-            }
-            catch (InterruptedException e) {
+            } catch (InterruptedException e) {
                 e.printStackTrace();
             }
             idx += frameLen;
@@ -267,6 +328,7 @@ public class ChipEUpgradeThread extends Thread {
         // wait for ACTION_GATT_WRITE_RESULT
         return waitGATTWriteComplete(3000);
     }
+
     private boolean waitGATTWriteComplete(long timeoutMs) {
         boolean ret = false;
         try {
@@ -279,9 +341,10 @@ public class ChipEUpgradeThread extends Thread {
     }
 
     public void setGATTWriteComplete() {
-        LogUtils.loge("bigbangTracker","dataWriteSemaphore 释放");
+        LogUtils.loge("bigbangTracker", "dataWriteSemaphore 释放");
         dataWriteSemaphore.release();
     }
+
     public void otaCmdResponse(byte[] response) {
         eAmotaCommand cmd = amOtaByte2Cmd(response[2] & 0xff);
 
@@ -293,7 +356,12 @@ public class ChipEUpgradeThread extends Thread {
         // TODO : handle CRC error and some more here
         if ((response[3] & 0xff) != 0) {
             LogUtils.loge("bigbangTracker", "error occurred, response = " + formatHex2String(response));
-            writeCallback.onWriteFailure(0, CmdType.CMD_BB_TRACKER_UPGRADE);
+            runOnMainThread(new Runnable() {
+                @Override
+                public void run() {
+                    writeCallback.onWriteFailure(0, CmdType.CMD_BB_TRACKER_UPGRADE);
+                }
+            });
             return;
         }
 
@@ -341,8 +409,7 @@ public class ChipEUpgradeThread extends Thread {
         return eAmotaCommand.AMOTA_CMD_UNKNOWN;
     }
 
-    public enum eAmotaCommand
-    {
+    public enum eAmotaCommand {
         AMOTA_CMD_UNKNOWN,
         AMOTA_CMD_FW_HEADER,
         AMOTA_CMD_FW_DATA,
