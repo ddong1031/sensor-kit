@@ -3,6 +3,11 @@ package com.sensoro.libbleserver.ble;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+import com.sensoro.libbleserver.ble.bean.SensoroChannel;
+import com.sensoro.libbleserver.ble.proto.MsgNode1V1M5;
+
+import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -56,6 +61,7 @@ public class SensoroDevice extends BLEDevice implements Parcelable, Cloneable {
     Integer activation;
     Integer delay;
     transient List<Integer> channelMaskList;
+    ArrayList<SensoroChannel> channelList;
     transient int maxEirp;
     transient int sglStatus;
     transient int sglFrequency;
@@ -328,9 +334,14 @@ public class SensoroDevice extends BLEDevice implements Parcelable, Cloneable {
         dataVersion = in.readByte();
         band = in.readString();
         uploadInterval = (Integer) in.readSerializable();
+        Serializable channels = in.readSerializable();
+        if (channels instanceof ArrayList) {
+            channelList = (ArrayList<SensoroChannel>) channels;
+        }
         confirm = (Integer) in.readSerializable();
         activation = (Integer) in.readSerializable();
         delay = (Integer) in.readSerializable();
+
         hasBleInterval = in.readByte() != 0;
         hasBleOffTime = in.readByte() != 0;
         hasBleOnOff = in.readByte() != 0;
@@ -414,6 +425,7 @@ public class SensoroDevice extends BLEDevice implements Parcelable, Cloneable {
         out.writeInt(dfuProgress);
         out.writeByte(dataVersion);
         out.writeString(band);
+        out.writeSerializable(channelList);
         out.writeSerializable(uploadInterval);
         out.writeSerializable(confirm);
         out.writeSerializable(activation);
@@ -798,6 +810,15 @@ public class SensoroDevice extends BLEDevice implements Parcelable, Cloneable {
     public void setChannelMaskList(List<Integer> channelMaskList) {
         this.channelMaskList = channelMaskList;
     }
+
+    public ArrayList<SensoroChannel> getChannelList() {
+        return channelList;
+    }
+
+    public void setChannelList(ArrayList<SensoroChannel> channelList) {
+        this.channelList = channelList;
+    }
+
 
     @Override
     public boolean equals(Object that) {
