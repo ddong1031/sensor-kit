@@ -1,6 +1,8 @@
 package com.sensoro.libbleserver.ble;
 
 
+import com.sensoro.libbleserver.ble.bean.SensoroChannel;
+
 import java.util.List;
 
 /**
@@ -55,6 +57,7 @@ public class SensoroDeviceConfiguration {
     Integer confirmData = null;
     Integer delay = null;
     List<Integer> channelList = null;
+    List<SensoroChannel> channels = null;
     SensoroSensorConfiguration sensoroSensorConfiguration;
     boolean hasUploadInterval;
     boolean hasConfirm;
@@ -169,6 +172,7 @@ public class SensoroDeviceConfiguration {
         confirmData = builder.confirmData;
         delay = builder.delay;
         channelList = builder.channelList;
+        channels = builder.channels;
         hasUploadInterval = builder.hasUploadInterval;
         hasConfirm = builder.hasConfirm;
         hasActivation = builder.hasActivation;
@@ -363,6 +367,13 @@ public class SensoroDeviceConfiguration {
 
     public List<Integer> getChannelList() {
         return channelList;
+    }
+    public List<SensoroChannel> getChannels() {
+        return channels;
+    }
+
+    public void setChannels(List<SensoroChannel> channels) {
+        this.channels = channels;
     }
 
     public boolean hasAppParam() {
@@ -640,6 +651,7 @@ public class SensoroDeviceConfiguration {
         }
 
         private List<Integer> channelList;
+        private List<SensoroChannel> channels;
         private boolean hasDelay;
         private boolean hasUploadInterval;
         private boolean hasConfirm;
@@ -711,6 +723,7 @@ public class SensoroDeviceConfiguration {
             this.confirmData = null;
             this.delay = null;
             this.channelList = null;
+            this.channels = null;
             this.hasDelay = false;
             this.hasSglStatus = false;
             this.hasSglDataRate = false;
@@ -1075,6 +1088,11 @@ public class SensoroDeviceConfiguration {
 
         public Builder setChannelList(List<Integer> channelList) {
             this.channelList = channelList;
+            return this;
+        }
+
+        public Builder setChannels(List<SensoroChannel> channels) {
+            this.channels = channels;
             return this;
         }
 

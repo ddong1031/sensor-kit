@@ -17,6 +17,7 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import com.sensoro.libbleserver.ble.bean.SensoroAcrelFires;
 import com.sensoro.libbleserver.ble.bean.SensoroBaymax;
 import com.sensoro.libbleserver.ble.bean.SensoroCayManData;
+import com.sensoro.libbleserver.ble.bean.SensoroChannel;
 import com.sensoro.libbleserver.ble.proto.MsgNode1V1M5;
 import com.sensoro.libbleserver.ble.scanner.SensoroUUID;
 import com.sensoro.libbleserver.ble.proto.ProtoMsgCfgV1U1;
@@ -1027,6 +1028,27 @@ public class SensoroDeviceConnection {
                     sensoroDevice.setSglFrequency(lpwanParam.getSglFrequency());
                 }
 
+                //lpwanParam.getChannelsList() 一定不为null，只不过数量会为空
+                List<MsgNode1V1M5.Channel> channelsList = lpwanParam.getChannelsList();
+                ArrayList<SensoroChannel> list = new ArrayList<>();
+                if (channelsList.size() > 0) {
+                    for (MsgNode1V1M5.Channel channel : channelsList) {
+                        SensoroChannel sensoroChannel = new SensoroChannel();
+                        sensoroChannel.hasFrequency = channel.hasFrequency();
+                        if (channel.hasFrequency()) {
+                            sensoroChannel.frequency = channel.getFrequency();
+                        }
+
+                        sensoroChannel.hasRx1Frequency = channel.hasRx1Frequency();
+                        if (channel.hasRx1Frequency()) {
+                            sensoroChannel.rx1Frequency = channel.getRx1Frequency();
+                        }
+                        list.add(sensoroChannel);
+                    }
+                }
+               sensoroDevice.setChannelList(list);
+
+
             }
             //
 //            SensoroSensor sensoroSensor = new SensoroSensor();
@@ -1452,7 +1474,6 @@ public class SensoroDeviceConnection {
 
             //曼顿电气火灾
             parseMantunData(msgNode, sensoroSensorTest);
-
 
             //安科瑞三相电
             parseAcrelFires(msgNode, sensoroSensorTest);
@@ -2001,6 +2022,8 @@ public class SensoroDeviceConnection {
                 if (deviceConfiguration.hasDelay()) {
                     loraParamBuilder.setDelay(deviceConfiguration.delay);
                 }
+
+
 //                if (deviceConfiguration.hasSglStatus()) {
 //                    loraParamBuilder.setSglStatus(deviceConfiguration.sglStatus);
 //                }
@@ -2019,6 +2042,16 @@ public class SensoroDeviceConnection {
                 if (deviceConfiguration.hasActivation()) {
                     loraParamBuilder.setActivition(MsgNode1V1M5.Activtion.valueOf(deviceConfiguration.activation));
                 }
+                List<SensoroChannel> channels = deviceConfiguration.getChannels();
+                for (int i = 0; i < channels.size(); i++) {
+                    MsgNode1V1M5.Channel.Builder builder1 = MsgNode1V1M5.Channel.newBuilder();
+                    SensoroChannel sensoroChannel = channels.get(i);
+                    builder1.setFrequency(sensoroChannel.frequency);
+                    builder1.setRx1Frequency(sensoroChannel.rx1Frequency);
+//                    loraParamBuilder.setChannels(i,builder1);
+                    loraParamBuilder.addChannels(builder1);
+                }
+
                 builder.setLpwanParam(loraParamBuilder);
                 byte[] data = builder.build().toByteArray();
                 int data_length = data.length;
