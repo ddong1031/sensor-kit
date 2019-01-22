@@ -7,6 +7,8 @@ import android.os.ParcelUuid;
 import android.util.Log;
 
 
+import com.sensoro.libbleserver.ble.entity.ScanBLEResult;
+
 import java.util.List;
 import java.util.UUID;
 

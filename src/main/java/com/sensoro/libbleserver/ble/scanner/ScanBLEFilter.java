@@ -23,6 +23,8 @@ import android.os.ParcelUuid;
 import android.os.Parcelable;
 
 
+import com.sensoro.libbleserver.ble.entity.ScanBLEResult;
+
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;

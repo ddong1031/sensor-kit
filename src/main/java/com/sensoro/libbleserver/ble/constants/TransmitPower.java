@@ -1,6 +1,6 @@
 package com.sensoro.libbleserver.ble.constants;
 
-import com.sensoro.libbleserver.ble.SensoroDevice;
+import com.sensoro.libbleserver.ble.entity.SensoroDevice;
 
 import java.io.Serializable;
 

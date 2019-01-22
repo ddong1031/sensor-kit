@@ -3,9 +3,9 @@ package com.sensoro.libbleserver.ble.chipeupgrade;
 import android.os.Handler;
 import android.os.Looper;
 
-import com.sensoro.libbleserver.ble.BluetoothLEHelper4;
-import com.sensoro.libbleserver.ble.CmdType;
-import com.sensoro.libbleserver.ble.SensoroWriteCallback;
+import com.sensoro.libbleserver.ble.connection.BluetoothLEHelper4;
+import com.sensoro.libbleserver.ble.constants.CmdType;
+import com.sensoro.libbleserver.ble.callback.SensoroWriteCallback;
 import com.sensoro.libbleserver.ble.utils.LogUtils;
 
 import java.io.FileInputStream;

@@ -10,7 +10,7 @@ import android.content.pm.PackageManager;
 import android.os.IBinder;
 import android.util.Log;
 
-import com.sensoro.libbleserver.ble.SensoroUtils;
+import com.sensoro.libbleserver.ble.entity.BLEDeviceService;
 
 /**
  * Created by fangping on 2016/7/11.
@@ -22,20 +22,20 @@ public class BLEDeviceManager {
     private static final int SERVICE_STATE_UNBINDING = 1;
     private static final int SERVICE_STATE_BOUND = 2;
     private static final int SERVICE_STATE_BINDING = 3;
-    static final long DEFAULT_FOREGROUND_SCAN_PERIOD = 7*1000; // 默认前台device扫描时间
-    static final long DEFAULT_FOREGROUND_BETWEEN_SCAN_PERIOD = 0; // 默认前台device扫描时间间隔
-    static final long DEFAULT_BACKGROUND_SCAN_PERIOD = 7*1000; // 默认后台device扫描时间
-    static final long DEFAULT_BACKGROUND_BETWEEN_SCAN_PERIOD = 2* 1000; // 默认后台device扫描时间间隔
-    static final long DEFAULT_UPDATE_DEVICE_PERIOD = 1000; // device定时更新时间间隔
+    public static final long DEFAULT_FOREGROUND_SCAN_PERIOD = 7*1000; // 默认前台device扫描时间
+    public static final long DEFAULT_FOREGROUND_BETWEEN_SCAN_PERIOD = 0; // 默认前台device扫描时间间隔
+    public static final long DEFAULT_BACKGROUND_SCAN_PERIOD = 7*1000; // 默认后台device扫描时间
+    public static final long DEFAULT_BACKGROUND_BETWEEN_SCAN_PERIOD = 2* 1000; // 默认后台device扫描时间间隔
+    public static final long DEFAULT_UPDATE_DEVICE_PERIOD = 1000; // device定时更新时间间隔
 
-    static volatile long FOREGROUND_SCAN_PERIOD = DEFAULT_FOREGROUND_SCAN_PERIOD;
-    static volatile long FOREGROUND_BETWEEN_SCAN_PERIOD = DEFAULT_FOREGROUND_BETWEEN_SCAN_PERIOD;
-    static volatile long BACKGROUND_SCAN_PERIOD = DEFAULT_BACKGROUND_SCAN_PERIOD;
-    static volatile long BACKGROUND_BETWEEN_SCAN_PERIOD = DEFAULT_BACKGROUND_BETWEEN_SCAN_PERIOD;
-    static volatile long UPDATE_DEVICE_PERIOD = DEFAULT_UPDATE_DEVICE_PERIOD;
-    static volatile long OUT_OF_RANGE_DELAY = 15 * 1000; // 如果在该时间间隔内没有扫描到已经发现的beacon，则认为这个beacon已经离开
+    public static volatile long FOREGROUND_SCAN_PERIOD = DEFAULT_FOREGROUND_SCAN_PERIOD;
+    public  static volatile long FOREGROUND_BETWEEN_SCAN_PERIOD = DEFAULT_FOREGROUND_BETWEEN_SCAN_PERIOD;
+    public  static volatile long BACKGROUND_SCAN_PERIOD = DEFAULT_BACKGROUND_SCAN_PERIOD;
+    public static volatile long BACKGROUND_BETWEEN_SCAN_PERIOD = DEFAULT_BACKGROUND_BETWEEN_SCAN_PERIOD;
+    public static volatile long UPDATE_DEVICE_PERIOD = DEFAULT_UPDATE_DEVICE_PERIOD;
+    public  static volatile long OUT_OF_RANGE_DELAY = 15 * 1000; // 如果在该时间间隔内没有扫描到已经发现的beacon，则认为这个beacon已经离开
     public static final String BLUETOOTH_IS_NOT_ENABLED = "BluetoothIsNotEnabled";// 异常字符串蓝牙没有开启
-    static final String BLUETOOTH_IS_NOT_SUPPORT = "BluetoothIsNotSupport";// 异常字符串不支持 ble
+    public  static final String BLUETOOTH_IS_NOT_SUPPORT = "BluetoothIsNotSupport";// 异常字符串不支持 ble
     public static final String MONITORED_DEVICE = "MONITORED_DEVICE";
     public static final String UPDATE_DEVICES = "UPDATE_DEVICES";
     private boolean isBleEnabled;// 蓝牙是否开启
@@ -72,7 +72,7 @@ public class BLEDeviceManager {
         this.mListener = listener;
     }
 
-    BLEDeviceListener getBLEDeviceListener() {
+    public BLEDeviceListener getBLEDeviceListener() {
         return mListener;
     }
 

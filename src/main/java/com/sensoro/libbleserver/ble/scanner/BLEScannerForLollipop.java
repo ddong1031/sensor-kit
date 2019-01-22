@@ -12,6 +12,8 @@ import android.content.Context;
 import android.os.Build;
 import android.util.Log;
 
+import com.sensoro.libbleserver.ble.entity.ScanBLEResult;
+
 import java.util.ArrayList;
 import java.util.List;
 
