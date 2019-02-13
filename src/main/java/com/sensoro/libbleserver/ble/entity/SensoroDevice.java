@@ -68,7 +68,7 @@ public class SensoroDevice extends BLEDevice implements Parcelable, Cloneable {
 
     byte dataVersion;
     boolean isIBeaconEnabled; // is beacon function enable.
-    boolean isDfu;
+    public boolean isDfu;
     boolean hasBleInterval;
     boolean hasBleOffTime;
     boolean hasBleOnTime;

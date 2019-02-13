@@ -71,4 +71,6 @@ public class CmdType {
 
     //人员定位器 升级
     public static int CMD_BB_TRACKER_UPGRADE = 0x116;
+    //dfu升级
+    public static final int CMD_ON_DFU_MODE = 0x101;
 }
