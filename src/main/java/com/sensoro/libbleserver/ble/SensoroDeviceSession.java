@@ -8,34 +8,21 @@ import android.bluetooth.BluetoothGattService;
 import android.bluetooth.BluetoothProfile;
 import android.content.Context;
 import android.os.Handler;
-import android.os.Looper;
-import android.util.Log;
 
 import com.sensoro.libbleserver.ble.callback.ConnectionCallback;
-import com.sensoro.libbleserver.ble.callback.OnDeviceUpdateObserver;
-import com.sensoro.libbleserver.ble.callback.SensoroConnectionCallback;
-import com.sensoro.libbleserver.ble.callback.SensoroWriteCallback;
 import com.sensoro.libbleserver.ble.callback.WriteCallback;
 import com.sensoro.libbleserver.ble.connection.BluetoothLEHelper;
 import com.sensoro.libbleserver.ble.connection.SensoroDeviceConnection;
 import com.sensoro.libbleserver.ble.constants.CmdType;
 import com.sensoro.libbleserver.ble.constants.ResultCode;
-import com.sensoro.libbleserver.ble.entity.BLEDevice;
 import com.sensoro.libbleserver.ble.entity.SensoroDevice;
 import com.sensoro.libbleserver.ble.scanner.SensoroUUID;
-import com.sensoro.libbleserver.ble.service.DfuService;
 import com.sensoro.libbleserver.ble.utils.LogUtils;
 
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import no.nordicsemi.android.dfu.DfuProgressListener;
-import no.nordicsemi.android.dfu.DfuServiceInitiator;
-import no.nordicsemi.android.dfu.DfuServiceListenerHelper;
-
-import static com.sensoro.libbleserver.ble.constants.CmdType.CMD_ON_DFU_MODE;
 
 
 /**
@@ -72,15 +59,19 @@ public class SensoroDeviceSession {
     public void startSession(String password, final ConnectionCallback callback) {
         this.callback = callback;
         this.password = password;
-        if (!bluetoothLEHelper.initialize()) {
-            callback.onConnectFailed(ResultCode.BLUETOOTH_ERROR);
-            disconnect();
-        }
-        if (!bluetoothLEHelper.connect(sensoroDevice.getMacAddress(), bluetoothGattCallback)) {
-            callback.onConnectFailed(ResultCode.INVALID_PARAM);
-            disconnect();
-        }
-
+//        runOnMainThread(new Runnable() {
+//            @Override
+//            public void run() {
+//                if (!bluetoothLEHelper.initialize()) {
+//                    callback.onConnectFailed(ResultCode.BLUETOOTH_ERROR);
+//                    disconnect();
+//                }
+//                if (!bluetoothLEHelper.connect(sensoroDevice.getMacAddress(), bluetoothGattCallback)) {
+//                    callback.onConnectFailed(ResultCode.INVALID_PARAM);
+//                    disconnect();
+//                }
+//            }
+//        });
     }
 
     public void write(byte[] data, WriteCallback writeCallback) {
@@ -288,242 +279,5 @@ public class SensoroDeviceSession {
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //连接回调
-    private final SensoroConnectionCallback mSensoroConnectionCallback = new SensoroConnectionCallback() {
-        @Override
-        public void onConnectedSuccess(BLEDevice bleDevice, int cmd) {
-            LogUtils.logd(TAG, "onConnectedSuccess: sensoroDevice ------" + sensoroDevice.toString());
-            //DFU模式直接连接
-            if (sensoroDevice.isDfu || cmd == CMD_ON_DFU_MODE) {
-//                mSensoroDeviceConnection.disconnect();
-                sensoroDevice.setDfu(true);
-                dfuStart();
-            } else {
-                mSensoroDeviceConnection.writeCmd(mWriteCallback);
-            }
 
-        }
-
-        @Override
-        public void onConnectedFailure(final int errorCode) {
-            if (mOnDeviceUpdateObserver != null) {
-                runOnMainThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        mOnDeviceUpdateObserver.onFailed(sensoroDevice.getMacAddress(), "连接失败:errorCode = " +
-                                errorCode, null);
-                    }
-                });
-            }
-        }
-
-        @Override
-        public void onDisconnected() {
-            LogUtils.loge(TAG, "onDisconnected: mSensoroDeviceConnection.connect(pwd, mSensoroConnectionCallback);----断开！！");
-//            if (mOnDeviceUpdateObserver != null) {
-//                runOnMainThread(new Runnable() {
-//                    @Override
-//                    public void run() {
-//                        mOnDeviceUpdateObserver.onDisconnecting();
-//                    }
-//                });
-//            }
-        }
-    };
-    //写入会掉
-    private final SensoroWriteCallback mWriteCallback = new SensoroWriteCallback() {
-        @Override
-        public void onWriteSuccess(Object o, int cmd) {
-            mSensoroDeviceConnection.disconnect();
-            sensoroDevice.setDfu(true);
-            dfuStart();
-        }
-
-        @Override
-        public void onWriteFailure(int errorCode, int cmd) {
-
-        }
-
-    };
-
-    //升级接口
-    public void startUpdate(String updateFilePath, String pwd, final OnDeviceUpdateObserver onDeviceUpdateObserver) {
-        mOnDeviceUpdateObserver = onDeviceUpdateObserver;
-        mTempUpdateFilePath = updateFilePath;
-        mSensoroDeviceConnection = new SensoroDeviceConnection(context, sensoroDevice.getMacAddress());
-        try {
-            mSensoroDeviceConnection.connect(pwd, mSensoroConnectionCallback);
-        } catch (final Exception e) {
-            e.printStackTrace();
-            runOnMainThread(new Runnable() {
-                @Override
-                public void run() {
-                    if (mOnDeviceUpdateObserver != null) {
-                        mOnDeviceUpdateObserver.onFailed(sensoroDevice.getMacAddress(), "startUpdate抛出异常--" + e
-                                .getMessage(), e);
-                    }
-                }
-            });
-        }
-    }
-
-    //生命周期方法onresume
-    public void onSessionResume() {
-        DfuServiceListenerHelper.registerProgressListener(context, mDfuProgressListener);
-    }
-
-    //生命周期方法onpause
-    public void onSessonPause() {
-        DfuServiceListenerHelper.unregisterProgressListener(context, mDfuProgressListener);
-    }
-
-    //DFU监听
-    private final DfuProgressListener mDfuProgressListener = new DfuProgressListener() {
-        @Override
-        public void onDeviceConnecting(String deviceAddress) {
-            Log.d(TAG, "DFU---onDeviceConnecting: deviceAddress = " + deviceAddress);
-        }
-
-        @Override
-        public void onDeviceConnected(String deviceAddress) {
-            Log.d(TAG, "DFU----开始连接DFU设备：onDeviceConnected: deviceAddress = " + deviceAddress);
-//            if (mOnDeviceUpdateObserver != null) {
-//                runOnMainThread(new Runnable() {
-//                    @Override
-//                    public void run() {
-//                        mOnDeviceUpdateObserver.onDisconnecting();
-//                    }
-//                });
-//            }
-        }
-
-        //准备阶段
-        @Override
-        public void onDfuProcessStarting(final String deviceAddress) {
-            Log.d(TAG, "DFU--onDfuProcessStarting: deviceAddress= " + deviceAddress);
-        }
-
-        //等待传输固件
-        @Override
-        public void onDfuProcessStarted(final String deviceAddress) {
-            Log.d(TAG, "DFU---onDfuProcessStarted: deviceAddress = " + deviceAddress);
-            if (mOnDeviceUpdateObserver != null) {
-                runOnMainThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        mOnDeviceUpdateObserver.onEnteringDFU(deviceAddress, mTempUpdateFilePath, "正在进入DFU");
-                    }
-                });
-            }
-        }
-
-        @Override
-        public void onEnablingDfuMode(String deviceAddress) {
-            Log.d(TAG, "DFU--onEnablingDfuMode: deviceAddress = " + deviceAddress);
-        }
-
-        //进度更新
-        @Override
-        public void onProgressChanged(final String deviceAddress, final int percent, final float speed, final float
-                avgSpeed, final int
-                                              currentPart, final int partsTotal) {
-            if (mOnDeviceUpdateObserver != null) {
-                runOnMainThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        mOnDeviceUpdateObserver.onDFUTransfering(deviceAddress, percent, speed, avgSpeed,
-                                currentPart, partsTotal, "正在传输数据");
-                    }
-                });
-            }
-        }
-
-        //校验文件
-        @Override
-        public void onFirmwareValidating(final String deviceAddress) {
-            if (mOnDeviceUpdateObserver != null) {
-                runOnMainThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        mOnDeviceUpdateObserver.onUpdateValidating(deviceAddress, "正在校验文件");
-                    }
-                });
-            }
-            Log.d(TAG, "DFU--onFirmwareValidating: deviceAddress = " + deviceAddress);
-        }
-
-        @Override
-        public void onDeviceDisconnecting(String deviceAddress) {
-            Log.e(TAG, "DFU---onDeviceDisconnecting: deviceAddress = " + deviceAddress);
-        }
-
-        @Override
-        public void onDeviceDisconnected(String deviceAddress) {
-            if (mOnDeviceUpdateObserver != null) {
-                runOnMainThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        mOnDeviceUpdateObserver.onDisconnecting();
-                    }
-                });
-            }
-        }
-
-        //传输完成
-        @Override
-        public void onDfuCompleted(final String deviceAddress) {
-            if (mOnDeviceUpdateObserver != null) {
-                runOnMainThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        mOnDeviceUpdateObserver.onUpdateCompleted(mTempUpdateFilePath, deviceAddress, "升级完成！");
-                    }
-                });
-            }
-        }
-
-        @Override
-        public void onDfuAborted(String deviceAddress) {
-            Log.d(TAG, "DFU--onDfuAborted: deviceAddress = " + deviceAddress);
-        }
-
-        @Override
-        public void onError(final String deviceAddress, final int error, int errorType, final String message) {
-            Log.e(TAG, "DFU--onError: deviceAddress = " + deviceAddress);
-            if (mOnDeviceUpdateObserver != null) {
-                runOnMainThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        mOnDeviceUpdateObserver.onFailed(deviceAddress, "错误信息：errorCode = " + error + ",errotType = "
-                                + error + ",错误信息= " + message, null);
-                    }
-                });
-            }
-        }
-    };
-
-    private String mTempUpdateFilePath = "";
-
-    private void dfuStart() {
-        String macAddress = sensoroDevice.getMacAddress();
-        DfuServiceInitiator initiator = new DfuServiceInitiator(macAddress)
-                .setDisableNotification(true)
-                .setZip(mTempUpdateFilePath);
-        initiator.start(context, DfuService.class);
-
-    }
-
-    //升级监听
-    private OnDeviceUpdateObserver mOnDeviceUpdateObserver;
-
-    //主线程切换
-    private void runOnMainThread(Runnable task) {
-        if (Looper.myLooper() == Looper.getMainLooper()) {
-            task.run();
-        } else {
-            mainHandler.post(task);
-        }
-    }
-
-    private final Handler mainHandler = new Handler(Looper.getMainLooper());
 }

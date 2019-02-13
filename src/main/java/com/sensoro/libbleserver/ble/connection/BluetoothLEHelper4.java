@@ -473,10 +473,10 @@ public class BluetoothLEHelper4 implements Serializable {
     public int writeCharacteristic(BluetoothGattCharacteristic writeChar, byte[] writeBytes) {
         String s = "";
         for (byte writeByte : writeBytes) {
-            LogUtils.loge("发送信号数据"+Integer.toHexString(writeByte));
-            s = s+Integer.toHexString(writeByte);
+            LogUtils.loge("发送信号数据" + Integer.toHexString(writeByte));
+            s = s + Integer.toHexString(writeByte);
         }
-        LogUtils.loge("发送信号数据"+s);
+        LogUtils.loge("发送信号数据" + s);
 
         if (writeChar == null || writeBytes == null || writeBytes.length < 0 || writeBytes.length > 20) {
             return ResultCode.SYSTEM_ERROR;
@@ -514,8 +514,8 @@ public class BluetoothLEHelper4 implements Serializable {
 
         }
 
-        if(mAmotaTxChar != null){
-            setCharacteristicNotification(mAmotaTxChar,true);
+        if (mAmotaTxChar != null) {
+            setCharacteristicNotification(mAmotaTxChar, true);
         }
 
         return mAmotaTxChar != null && mAmotaRxChar != null;
@@ -542,6 +542,7 @@ public class BluetoothLEHelper4 implements Serializable {
 
     public static class GattInfo {
         public static final UUID SENSORO_DEVICE_SERVICE_UUID = UUID.fromString("DEAE0300-7A4E-1BA2-834A-50A30CCAE0E4");
+        public static final UUID SENSORO_SENSOR_SERVICE_UUID = UUID.fromString("DEAE0500-7A4E-1BA2-834A-50A30CCAE0E4");
         public static final UUID SENSORO_DEVICE_AUTHORIZATION_CHAR_UUID = UUID.fromString
                 ("DEAE0302-7A4E-1BA2-834A-50A30CCAE0E4");
         public static final UUID SENSORO_DEVICE_WRITE_CHAR_UUID = UUID.fromString
@@ -559,7 +560,8 @@ public class BluetoothLEHelper4 implements Serializable {
                 ("DEAE0401-7A4E-1BA2-834A-50A30CCAE0E4");
         public static final UUID SENSORO_STATION_READ_CHAR_UUID = UUID.fromString
                 ("DEAE0401-7A4E-1BA2-834A-50A30CCAE0E4");
-
+        public static final UUID SENSORO_DEVICE_SERVICE_UUID_ON_DFU_MODE = UUID.fromString
+                ("00001530-1212-EFDE-1523-785FEABCD123");
         //bigbang 人员定位器
         public final static UUID UUID_HEART_RATE_MEASUREMENT =
                 UUID.fromString(SampleGattAttributes.HEART_RATE_MEASUREMENT);
