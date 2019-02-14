@@ -3902,6 +3902,27 @@ public class SensoroDeviceConnection {
         }
     }
 
+    public void startChipEUpdate(String updateFilePath, String pwd, final OnDeviceUpdateObserver onDeviceUpdateObserver) {
+        isChipE = true;
+        isDfu = false;
+        mOnDeviceUpdateObserver = onDeviceUpdateObserver;
+        mTempUpdateFilePath = updateFilePath;
+        try {
+            connect(pwd, mSensoroConnectionCallback);
+        } catch (final Exception e) {
+            e.printStackTrace();
+            runOnMainThread(new Runnable() {
+                @Override
+                public void run() {
+                    if (mOnDeviceUpdateObserver != null) {
+                        mOnDeviceUpdateObserver.onFailed(sensoroDevice.getMacAddress(), "startUpdate抛出异常--" + e
+                                .getMessage(), e);
+                    }
+                }
+            });
+        }
+    }
+
 
 
     //生命周期方法onresume
