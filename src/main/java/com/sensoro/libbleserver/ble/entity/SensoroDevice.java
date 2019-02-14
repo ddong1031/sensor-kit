@@ -26,7 +26,7 @@ public class SensoroDevice extends BLEDevice implements Parcelable, Cloneable {
     int minor; // minor
     String proximityUUID; // proximityUuid
 
-    int accelerometerCount; // accelerometer count.
+    int accelerometerCount; // accelerometer reConnectCount.
     int power;//功率
     float sf;//BL间隔
     String devEui;

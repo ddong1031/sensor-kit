@@ -184,7 +184,7 @@ public class BluetoothLEHelper implements Serializable {
     }
 
     /**
-     * reset accelerometer count.
+     * reset accelerometer reConnectCount.
      *
      * @return result.
      */
@@ -356,7 +356,7 @@ public class BluetoothLEHelper implements Serializable {
     }
 
     /**
-     * listen accelerometer count changing.
+     * listen accelerometer reConnectCount changing.
      */
     public void listenAcceleratorCountChar() {
         BluetoothGattCharacteristic isMovingChar = sensoSettingsService.getCharacteristic(GattInfo.SENSO_IS_MOVING_UUID);

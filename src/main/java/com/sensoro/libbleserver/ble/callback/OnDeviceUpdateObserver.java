@@ -8,7 +8,7 @@ public interface OnDeviceUpdateObserver {
     void onUpdateCompleted(String filePath, String deviceMacAddress, String msg);
 
     //正在传输数据
-    void onDFUTransfering(String deviceAddress, int percent, float speed, float avgSpeed, int
+    void onDFUTransfer(String deviceAddress, int percent, float speed, float avgSpeed, int
             currentPart, int partsTotal, String msg);
 
     //正在校验

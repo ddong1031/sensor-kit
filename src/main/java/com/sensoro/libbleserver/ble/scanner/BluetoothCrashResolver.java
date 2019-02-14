@@ -131,7 +131,7 @@ class BluetoothCrashResolver {
 
     /**
      * Call this method from your BluetoothAdapter.LeScanCallback method.
-     * Doing so is optional, but if you do, this class will be able to count the number of
+     * Doing so is optional, but if you do, this class will be able to reConnectCount the number of
      * distinct Bluetooth devices scanned, and prevent crashes before they happen.
      * <p/>
      * This works very well if the app containing this class is the only one running bluetooth
