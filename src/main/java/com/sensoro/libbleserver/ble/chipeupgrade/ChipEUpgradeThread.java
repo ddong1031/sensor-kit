@@ -59,7 +59,7 @@ public class ChipEUpgradeThread extends Thread {
             runOnMainThread(new Runnable() {
                 @Override
                 public void run() {
-                    writeCallback.onWriteFailure(0, CmdType.CMD_BB_TRACKER_UPGRADE);
+                    writeCallback.onWriteFailure(ChipEUpgradeErrorCode.FILE_NO_EXIST, CmdType.CMD_BB_TRACKER_UPGRADE);
                 }
             });
             return;
@@ -74,7 +74,7 @@ public class ChipEUpgradeThread extends Thread {
                 runOnMainThread(new Runnable() {
                     @Override
                     public void run() {
-                        writeCallback.onWriteFailure(1, CmdType.CMD_BB_TRACKER_UPGRADE);
+                        writeCallback.onWriteFailure(ChipEUpgradeErrorCode.FILE_SIZE_ZERO, CmdType.CMD_BB_TRACKER_UPGRADE);
                     }
                 });
                 return;
@@ -93,7 +93,7 @@ public class ChipEUpgradeThread extends Thread {
                 runOnMainThread(new Runnable() {
                     @Override
                     public void run() {
-                        writeCallback.onWriteFailure(4, CmdType.CMD_BB_TRACKER_UPGRADE);
+                        writeCallback.onWriteFailure(ChipEUpgradeErrorCode.SEND_PACKET_ERROR, CmdType.CMD_BB_TRACKER_UPGRADE);
                     }
                 });
                 mFsInput.close();
@@ -106,7 +106,7 @@ public class ChipEUpgradeThread extends Thread {
                 runOnMainThread(new Runnable() {
                     @Override
                     public void run() {
-                        writeCallback.onWriteFailure(5, CmdType.CMD_BB_TRACKER_UPGRADE);
+                        writeCallback.onWriteFailure(ChipEUpgradeErrorCode.SEND_VERIFY_ERROR, CmdType.CMD_BB_TRACKER_UPGRADE);
                     }
                 });
                 mFsInput.close();
@@ -127,7 +127,7 @@ public class ChipEUpgradeThread extends Thread {
             runOnMainThread(new Runnable() {
                 @Override
                 public void run() {
-                    writeCallback.onWriteFailure(6, CmdType.CMD_BB_TRACKER_UPGRADE);
+                    writeCallback.onWriteFailure(ChipEUpgradeErrorCode.UPGRADE_ERROR, CmdType.CMD_BB_TRACKER_UPGRADE);
                 }
             });
 
@@ -229,7 +229,7 @@ public class ChipEUpgradeThread extends Thread {
             runOnMainThread(new Runnable() {
                 @Override
                 public void run() {
-                    writeCallback.onWriteFailure(2, CmdType.CMD_W_CFG);
+                    writeCallback.onWriteFailure(ChipEUpgradeErrorCode.HEAD_PACKET_ERROR, CmdType.CMD_W_CFG);
                 }
             });
             return false;
@@ -287,7 +287,7 @@ public class ChipEUpgradeThread extends Thread {
             runOnMainThread(new Runnable() {
                 @Override
                 public void run() {
-                    writeCallback.onWriteFailure(3, CmdType.CMD_W_CFG);
+                    writeCallback.onWriteFailure(ChipEUpgradeErrorCode.SEND_HEAD_PACKET_ERROR, CmdType.CMD_W_CFG);
                 }
             });
             return false;
@@ -359,7 +359,7 @@ public class ChipEUpgradeThread extends Thread {
             runOnMainThread(new Runnable() {
                 @Override
                 public void run() {
-                    writeCallback.onWriteFailure(0, CmdType.CMD_BB_TRACKER_UPGRADE);
+                    writeCallback.onWriteFailure(ChipEUpgradeErrorCode.UPGRADE_CMD_ERROR, CmdType.CMD_BB_TRACKER_UPGRADE);
                 }
             });
             return;

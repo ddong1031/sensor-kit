@@ -11,10 +11,12 @@ import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
+import android.widget.Switch;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.sensoro.libbleserver.ble.callback.OnDeviceUpdateObserver;
+import com.sensoro.libbleserver.ble.chipeupgrade.ChipEUpgradeErrorCode;
 import com.sensoro.libbleserver.ble.service.DfuService;
 import com.sensoro.libbleserver.ble.utils.SensoroUtils;
 import com.sensoro.libbleserver.ble.callback.SensoroConnectionCallback;
@@ -46,6 +48,7 @@ import java.io.Serializable;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.IllegalFormatCodePointException;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -55,6 +58,7 @@ import no.nordicsemi.android.dfu.DfuProgressListener;
 import no.nordicsemi.android.dfu.DfuServiceInitiator;
 import no.nordicsemi.android.dfu.DfuServiceListenerHelper;
 
+import static com.sensoro.libbleserver.ble.constants.CmdType.CMD_BB_TRACKER_UPGRADE;
 import static com.sensoro.libbleserver.ble.constants.CmdType.CMD_ON_DFU_MODE;
 
 /**
@@ -152,7 +156,6 @@ public class SensoroDeviceConnection {
                     }
                     trySleepThread(50);
                     gatt.discoverServices();
-//                    reConnectCount = 0;
                     reConnectCount = 3;
 //                    taskHandler.postDelayed(new Runnable() {
 //                        @Override
@@ -3462,6 +3465,15 @@ public class SensoroDeviceConnection {
 //        writeCallbackHashMap.put(CmdType.CMD_W_CFG, writeCallback);
         switch (status) {
             case 1:
+                //chipe 升级
+                runOnMainThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (mOnDeviceUpdateObserver != null) {
+                            mOnDeviceUpdateObserver.onEnteringDFU(macAddress, mTempUpdateFilePath, "正在进入DFU");
+                        }
+                    }
+                });
                 chipEUpgradeThread = new ChipEUpgradeThread(writeCallback, filePath, bluetoothLEHelper4);
                 chipEUpgradeThread.start();
                 break;
@@ -3840,6 +3852,9 @@ public class SensoroDeviceConnection {
                 taskHandler.removeCallbacks(connectTimeoutRunnable);
                 sensoroDevice.setDfu(true);
                 dfuStart();
+            } else if (isChipE) {
+                taskHandler.removeCallbacks(connectTimeoutRunnable);
+                writeUpgradeCmd(mTempUpdateFilePath, 1, mWriteCallback);
             } else {
                 writeCmd(mWriteCallback);
             }
@@ -3853,7 +3868,7 @@ public class SensoroDeviceConnection {
                 @Override
                 public void run() {
                     if (mOnDeviceUpdateObserver != null) {
-                        mOnDeviceUpdateObserver.onFailed(sensoroDevice.getMacAddress(), "连接失败:errorCode = " +
+                        mOnDeviceUpdateObserver.onFailed(macAddress, "连接失败:errorCode = " +
                                 errorCode, null);
                     }
                 }
@@ -3866,22 +3881,95 @@ public class SensoroDeviceConnection {
             LogUtils.loge(TAG, "onDisconnected: mSensoroDeviceConnection.connect(pwd, mSensoroConnectionCallback);----主动断开！！");
         }
     };
-    //写入会掉
+    //写入回调
     private final SensoroWriteCallback mWriteCallback = new SensoroWriteCallback() {
         @Override
         public void onWriteSuccess(Object o, int cmd) {
-            sensoroDevice.setDfu(true);
-            taskHandler.removeCallbacks(connectTimeoutRunnable);
-            disconnect();
-            dfuStart();
+            if (CMD_BB_TRACKER_UPGRADE == cmd) {
+                parseWriteChipe(o);
+            } else {
+                sensoroDevice.setDfu(true);
+                taskHandler.removeCallbacks(connectTimeoutRunnable);
+                disconnect();
+                dfuStart();
+            }
+
+        }
+
+        private void parseWriteChipe(Object o) {
+            if (o instanceof Integer) {
+                final Integer i = (Integer) o;
+                if (i < 101) {
+                    runOnMainThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            if (mOnDeviceUpdateObserver != null) {
+                                mOnDeviceUpdateObserver.onDFUTransfer(macAddress, i, -1, -1,
+                                        -1, -1, "正在传输数据");
+                            }
+                        }
+                    });
+                } else {
+                    runOnMainThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            if (mOnDeviceUpdateObserver != null) {
+                                LogUtils.loge("chipe 升级完成");
+                                mOnDeviceUpdateObserver.onUpdateCompleted(mTempUpdateFilePath, macAddress, "升级完成！");
+                            }
+                        }
+                    });
+                }
+            }
         }
 
         @Override
         public void onWriteFailure(int errorCode, int cmd) {
+            if (CMD_BB_TRACKER_UPGRADE == cmd) {
+                parseChipEWriteFailue(errorCode);
 
+            }
         }
 
     };
+
+    private void parseChipEWriteFailue(final int errorCode) {
+        runOnMainThread(new Runnable() {
+            @Override
+            public void run() {
+                if (mOnDeviceUpdateObserver != null) {
+                    String s = "异常";
+                    switch (errorCode) {
+                        case ChipEUpgradeErrorCode.FILE_NO_EXIST:
+                            s = "文件为空";
+                            break;
+                        case ChipEUpgradeErrorCode.FILE_SIZE_ZERO:
+                            s = "文件大小为空";
+                            break;
+                        case ChipEUpgradeErrorCode.HEAD_PACKET_ERROR:
+                            s = "packet包错误";
+                            break;
+                        case ChipEUpgradeErrorCode.SEND_HEAD_PACKET_ERROR:
+                            s = "发送包失败";
+                            break;
+                        case ChipEUpgradeErrorCode.SEND_PACKET_ERROR:
+                            s = "发送数据错误";
+                            break;
+                        case ChipEUpgradeErrorCode.SEND_VERIFY_ERROR:
+                            s = "发送确认指令失败";
+                        case ChipEUpgradeErrorCode.UPGRADE_ERROR:
+                            s = "升级异常";
+                            break;
+                        case ChipEUpgradeErrorCode.UPGRADE_CMD_ERROR:
+                            s = "升级过程错误";
+                            break;
+                    }
+                    mOnDeviceUpdateObserver.onFailed(sensoroDevice.getMacAddress(), s, null);
+                }
+            }
+        });
+
+    }
 
     //dfu升级接口
     public void startUpdate(String updateFilePath, String pwd, final OnDeviceUpdateObserver onDeviceUpdateObserver) {
@@ -3916,7 +4004,7 @@ public class SensoroDeviceConnection {
                 @Override
                 public void run() {
                     if (mOnDeviceUpdateObserver != null) {
-                        mOnDeviceUpdateObserver.onFailed(sensoroDevice.getMacAddress(), "startUpdate抛出异常--" + e
+                        mOnDeviceUpdateObserver.onFailed(macAddress, "startUpdate抛出异常--" + e
                                 .getMessage(), e);
                     }
                 }

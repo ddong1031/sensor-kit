@@ -124,7 +124,6 @@ public abstract class BLEScanner {
     }
 
     private void scanLeDevice(final boolean enable) {
-        Log.e("hcs","scanEnable:::"+enable);
         if (enable) {
             Log.d(TAG, "scanLeDevice true: starting a new scan cycle");
             if (!scanCycleStarted) {
