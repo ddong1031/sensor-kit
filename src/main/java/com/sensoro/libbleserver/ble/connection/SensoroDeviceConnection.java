@@ -103,7 +103,7 @@ public class SensoroDeviceConnection {
     private byte dataVersion = DATA_VERSION_03;
     private boolean isContainSignal;
     private String macAddress;
-    public int reConnectCount;
+    public volatile int reConnectCount = 0;
     //
     private final Runnable connectTimeoutRunnable = new Runnable() {
         @Override
@@ -153,13 +153,14 @@ public class SensoroDeviceConnection {
                     trySleepThread(50);
                     gatt.discoverServices();
 //                    reConnectCount = 0;
-                    taskHandler.postDelayed(new Runnable() {
-                        @Override
-                        public void run() {
-                            //TODO 连接成功后count=3，连接成功后3s内，如果断开了不会再次重连
-                            reConnectCount = 3;
-                        }
-                    }, 3 * 1000);
+                    reConnectCount = 3;
+//                    taskHandler.postDelayed(new Runnable() {
+//                        @Override
+//                        public void run() {
+//                            //TODO 连接成功后count=3，连接成功后3s内，如果断开了不会再次重连
+//
+//                        }
+//                    }, (long) (1.5 * 1000));
                 } else {
                     LogUtils.loge("连接状态connected 没有成功");
                     if (reConnectCount < 3) {
@@ -3922,7 +3923,6 @@ public class SensoroDeviceConnection {
             });
         }
     }
-
 
 
     //生命周期方法onresume
