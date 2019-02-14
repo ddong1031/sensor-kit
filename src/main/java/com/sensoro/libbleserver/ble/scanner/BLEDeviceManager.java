@@ -10,7 +10,7 @@ import android.content.pm.PackageManager;
 import android.os.IBinder;
 import android.util.Log;
 
-import com.sensoro.libbleserver.ble.entity.BLEDeviceService;
+import com.sensoro.libbleserver.ble.service.BLEDeviceService;
 
 /**
  * Created by fangping on 2016/7/11.

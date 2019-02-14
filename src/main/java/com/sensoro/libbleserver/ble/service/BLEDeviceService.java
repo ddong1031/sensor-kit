@@ -1,4 +1,4 @@
-package com.sensoro.libbleserver.ble.entity;
+package com.sensoro.libbleserver.ble.service;
 
 import android.app.Service;
 import android.content.Intent;
@@ -9,6 +9,8 @@ import android.os.Looper;
 import android.support.annotation.Nullable;
 import android.text.TextUtils;
 
+import com.sensoro.libbleserver.ble.entity.BLEDevice;
+import com.sensoro.libbleserver.ble.entity.ScanBLEResult;
 import com.sensoro.libbleserver.ble.factory.BLEDeviceFactory;
 import com.sensoro.libbleserver.ble.scanner.BLEDeviceManager;
 import com.sensoro.libbleserver.ble.scanner.BLEScanCallback;

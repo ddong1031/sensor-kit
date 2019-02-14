@@ -50,6 +50,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+
 import no.nordicsemi.android.dfu.DfuProgressListener;
 import no.nordicsemi.android.dfu.DfuServiceInitiator;
 import no.nordicsemi.android.dfu.DfuServiceListenerHelper;
@@ -3881,7 +3882,7 @@ public class SensoroDeviceConnection {
 
     };
 
-    //升级接口
+    //dfu升级接口
     public void startUpdate(String updateFilePath, String pwd, final OnDeviceUpdateObserver onDeviceUpdateObserver) {
         mOnDeviceUpdateObserver = onDeviceUpdateObserver;
         mTempUpdateFilePath = updateFilePath;
@@ -3900,6 +3901,8 @@ public class SensoroDeviceConnection {
             });
         }
     }
+
+
 
     //生命周期方法onresume
     public void onSessionResume() {

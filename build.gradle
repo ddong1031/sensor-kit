@@ -35,4 +35,5 @@ dependencies {
     })
     compile 'no.nordicsemi.android:dfu:1.0.0'
 
+
 }
