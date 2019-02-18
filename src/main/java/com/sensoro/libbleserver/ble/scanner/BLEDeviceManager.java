@@ -119,6 +119,7 @@ public class BLEDeviceManager {
         @Override
         public void onServiceDisconnected(ComponentName name) {
             serviceState = SERVICE_STATE_UNBOUND;
+
         }
 
         @Override
