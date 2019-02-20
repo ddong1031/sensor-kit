@@ -11,24 +11,22 @@ import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
-import android.widget.Switch;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.sensoro.libbleserver.ble.callback.OnDeviceUpdateObserver;
-import com.sensoro.libbleserver.ble.chipeupgrade.ChipEUpgradeErrorCode;
-import com.sensoro.libbleserver.ble.service.DfuService;
-import com.sensoro.libbleserver.ble.utils.SensoroUtils;
 import com.sensoro.libbleserver.ble.callback.SensoroConnectionCallback;
 import com.sensoro.libbleserver.ble.callback.SensoroDirectWriteDfuCallBack;
 import com.sensoro.libbleserver.ble.callback.SensoroWriteCallback;
+import com.sensoro.libbleserver.ble.chipeupgrade.ChipEUpgradeErrorCode;
+import com.sensoro.libbleserver.ble.chipeupgrade.ChipEUpgradeThread;
+import com.sensoro.libbleserver.ble.constants.CmdType;
+import com.sensoro.libbleserver.ble.constants.ResultCode;
+import com.sensoro.libbleserver.ble.entity.BLEDevice;
 import com.sensoro.libbleserver.ble.entity.SensoroAcrelFires;
 import com.sensoro.libbleserver.ble.entity.SensoroBaymax;
 import com.sensoro.libbleserver.ble.entity.SensoroCayManData;
 import com.sensoro.libbleserver.ble.entity.SensoroChannel;
-import com.sensoro.libbleserver.ble.constants.CmdType;
-import com.sensoro.libbleserver.ble.constants.ResultCode;
-import com.sensoro.libbleserver.ble.entity.BLEDevice;
 import com.sensoro.libbleserver.ble.entity.SensoroData;
 import com.sensoro.libbleserver.ble.entity.SensoroDevice;
 import com.sensoro.libbleserver.ble.entity.SensoroFireData;
@@ -37,22 +35,21 @@ import com.sensoro.libbleserver.ble.entity.SensoroSensor;
 import com.sensoro.libbleserver.ble.entity.SensoroSensorConfiguration;
 import com.sensoro.libbleserver.ble.entity.SensoroSlot;
 import com.sensoro.libbleserver.ble.proto.MsgNode1V1M5;
-import com.sensoro.libbleserver.ble.scanner.SensoroUUID;
 import com.sensoro.libbleserver.ble.proto.ProtoMsgCfgV1U1;
 import com.sensoro.libbleserver.ble.proto.ProtoMsgTest1U1;
 import com.sensoro.libbleserver.ble.proto.ProtoStd1U1;
-import com.sensoro.libbleserver.ble.chipeupgrade.ChipEUpgradeThread;
+import com.sensoro.libbleserver.ble.scanner.SensoroUUID;
+import com.sensoro.libbleserver.ble.service.DfuService;
 import com.sensoro.libbleserver.ble.utils.LogUtils;
+import com.sensoro.libbleserver.ble.utils.SensoroUtils;
 
 import java.io.Serializable;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.IllegalFormatCodePointException;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-
 
 import no.nordicsemi.android.dfu.DfuProgressListener;
 import no.nordicsemi.android.dfu.DfuServiceInitiator;
@@ -4028,6 +4025,14 @@ public class SensoroDeviceConnection {
         @Override
         public void onDeviceConnecting(String deviceAddress) {
             Log.d(TAG, "DFU---onDeviceConnecting: deviceAddress = " + deviceAddress);
+            runOnMainThread(new Runnable() {
+                @Override
+                public void run() {
+                    if (mOnDeviceUpdateObserver != null) {
+                        mOnDeviceUpdateObserver.onDisconnecting();
+                    }
+                }
+            });
         }
 
         @Override
@@ -4073,8 +4078,7 @@ public class SensoroDeviceConnection {
         //进度更新
         @Override
         public void onProgressChanged(final String deviceAddress, final int percent, final float speed, final float
-                avgSpeed, final int
-                                              currentPart, final int partsTotal) {
+                avgSpeed, final int currentPart, final int partsTotal) {
 
             runOnMainThread(new Runnable() {
                 @Override
@@ -4108,11 +4112,6 @@ public class SensoroDeviceConnection {
         @Override
         public void onDeviceDisconnecting(String deviceAddress) {
             Log.e(TAG, "DFU---onDeviceDisconnecting: deviceAddress = " + deviceAddress);
-        }
-
-        @Override
-        public void onDeviceDisconnected(String deviceAddress) {
-
             runOnMainThread(new Runnable() {
                 @Override
                 public void run() {
@@ -4121,6 +4120,10 @@ public class SensoroDeviceConnection {
                     }
                 }
             });
+        }
+
+        @Override
+        public void onDeviceDisconnected(String deviceAddress) {
 
         }
 
