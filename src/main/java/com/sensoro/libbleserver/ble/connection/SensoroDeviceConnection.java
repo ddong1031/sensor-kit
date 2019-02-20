@@ -15,11 +15,6 @@ import android.util.Log;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.sensoro.libbleserver.ble.callback.OnDeviceUpdateObserver;
-import com.sensoro.libbleserver.ble.chipeupgrade.ChipEUpgradeErrorCode;
-import com.sensoro.libbleserver.ble.entity.SensoroIbeacon;
-import com.sensoro.libbleserver.ble.proto.MsgNode1V1M5;
-import com.sensoro.libbleserver.ble.service.DfuService;
-import com.sensoro.libbleserver.ble.utils.SensoroUtils;
 import com.sensoro.libbleserver.ble.callback.SensoroConnectionCallback;
 import com.sensoro.libbleserver.ble.callback.SensoroDirectWriteDfuCallBack;
 import com.sensoro.libbleserver.ble.callback.SensoroWriteCallback;
@@ -35,11 +30,12 @@ import com.sensoro.libbleserver.ble.entity.SensoroChannel;
 import com.sensoro.libbleserver.ble.entity.SensoroData;
 import com.sensoro.libbleserver.ble.entity.SensoroDevice;
 import com.sensoro.libbleserver.ble.entity.SensoroFireData;
+import com.sensoro.libbleserver.ble.entity.SensoroIbeacon;
 import com.sensoro.libbleserver.ble.entity.SensoroMantunData;
 import com.sensoro.libbleserver.ble.entity.SensoroSensor;
 import com.sensoro.libbleserver.ble.entity.SensoroSensorConfiguration;
 import com.sensoro.libbleserver.ble.entity.SensoroSlot;
-import com.sensoro.libbleserver.ble.scanner.SensoroUUID;
+import com.sensoro.libbleserver.ble.proto.MsgNode1V1M5;
 import com.sensoro.libbleserver.ble.proto.ProtoMsgCfgV1U1;
 import com.sensoro.libbleserver.ble.proto.ProtoMsgTest1U1;
 import com.sensoro.libbleserver.ble.proto.ProtoStd1U1;
@@ -1774,7 +1770,7 @@ public class SensoroDeviceConnection {
             //baymax ch4 lpg
             parseBaymaxCh4Lpg(msgNode, sensoroSensorTest);
             //ibeacon
-            parseIbeacon(msgNode,sensoroSensorTest);
+            parseIbeacon(msgNode, sensoroSensorTest);
 
             sensoroDevice.setSensoroSensorTest(sensoroSensorTest);
             sensoroDevice.setDataVersion(DATA_VERSION_05);
@@ -1923,9 +1919,9 @@ public class SensoroDeviceConnection {
     private void parseIbeacon(MsgNode1V1M5.MsgNode msgNode, SensoroSensor sensoroSensorTest) {
         boolean hasIbeacon = msgNode.hasIbeacon();
         sensoroSensorTest.hasIbeacon = hasIbeacon;
-        if(hasIbeacon){
+        if (hasIbeacon) {
             MsgNode1V1M5.iBeacon ibeacon = msgNode.getIbeacon();
-             sensoroSensorTest.ibeacon = new SensoroIbeacon();
+            sensoroSensorTest.ibeacon = new SensoroIbeacon();
             sensoroSensorTest.ibeacon.hasUuid = ibeacon.hasUuid();
             if (ibeacon.hasUuid()) {
                 sensoroSensorTest.ibeacon.uuid = ibeacon.getUuid();
@@ -3976,7 +3972,15 @@ public class SensoroDeviceConnection {
         public void onWriteFailure(int errorCode, int cmd) {
             if (CMD_BB_TRACKER_UPGRADE == cmd) {
                 parseChipEWriteFailue(errorCode);
-
+            } else {
+                runOnMainThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (mOnDeviceUpdateObserver != null) {
+                            mOnDeviceUpdateObserver.onFailed(macAddress, "写命令失败", null);
+                        }
+                    }
+                });
             }
         }
 
@@ -4195,8 +4199,16 @@ public class SensoroDeviceConnection {
         }
 
         @Override
-        public void onDfuAborted(String deviceAddress) {
+        public void onDfuAborted(final String deviceAddress) {
             Log.d(TAG, "DFU--onDfuAborted: deviceAddress = " + deviceAddress);
+            runOnMainThread(new Runnable() {
+                @Override
+                public void run() {
+                    if (mOnDeviceUpdateObserver != null) {
+                        mOnDeviceUpdateObserver.onFailed(deviceAddress, "onDfuAborted 状态：DFU主动终止", null);
+                    }
+                }
+            });
         }
 
         @Override
