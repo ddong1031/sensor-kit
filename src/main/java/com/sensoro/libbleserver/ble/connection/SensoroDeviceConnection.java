@@ -11,12 +11,13 @@ import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
-import android.widget.Switch;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.sensoro.libbleserver.ble.callback.OnDeviceUpdateObserver;
 import com.sensoro.libbleserver.ble.chipeupgrade.ChipEUpgradeErrorCode;
+import com.sensoro.libbleserver.ble.entity.SensoroIbeacon;
+import com.sensoro.libbleserver.ble.proto.MsgNode1V1M5;
 import com.sensoro.libbleserver.ble.service.DfuService;
 import com.sensoro.libbleserver.ble.utils.SensoroUtils;
 import com.sensoro.libbleserver.ble.callback.SensoroConnectionCallback;
@@ -36,7 +37,6 @@ import com.sensoro.libbleserver.ble.entity.SensoroMantunData;
 import com.sensoro.libbleserver.ble.entity.SensoroSensor;
 import com.sensoro.libbleserver.ble.entity.SensoroSensorConfiguration;
 import com.sensoro.libbleserver.ble.entity.SensoroSlot;
-import com.sensoro.libbleserver.ble.proto.MsgNode1V1M5;
 import com.sensoro.libbleserver.ble.scanner.SensoroUUID;
 import com.sensoro.libbleserver.ble.proto.ProtoMsgCfgV1U1;
 import com.sensoro.libbleserver.ble.proto.ProtoMsgTest1U1;
@@ -48,7 +48,6 @@ import java.io.Serializable;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.IllegalFormatCodePointException;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -1191,6 +1190,7 @@ public class SensoroDeviceConnection {
                 boolean hasConfirm = appParam.hasConfirm();
                 sensoroDevice.setHasConfirm(hasConfirm);
                 if (hasConfirm) {
+
                     sensoroDevice.setConfirm(appParam.getConfirm());
                 }
             }
@@ -1770,6 +1770,9 @@ public class SensoroDeviceConnection {
             parseCaymanData(msgNode, sensoroSensorTest);
             //baymax ch4 lpg
             parseBaymaxCh4Lpg(msgNode, sensoroSensorTest);
+            //ibeacon
+            parseIbeacon(msgNode,sensoroSensorTest);
+
             sensoroDevice.setSensoroSensorTest(sensoroSensorTest);
             sensoroDevice.setDataVersion(DATA_VERSION_05);
             sensoroDevice.setHasSensorParam(true);
@@ -1912,6 +1915,32 @@ public class SensoroDeviceConnection {
                 sensoroConnectionCallback.onConnectedSuccess(sensoroDevice, CmdType.CMD_NULL);
             }
         });
+    }
+
+    private void parseIbeacon(MsgNode1V1M5.MsgNode msgNode, SensoroSensor sensoroSensorTest) {
+        boolean hasIbeacon = msgNode.hasIbeacon();
+        sensoroSensorTest.hasIbeacon = hasIbeacon;
+        if(hasIbeacon){
+            MsgNode1V1M5.iBeacon ibeacon = msgNode.getIbeacon();
+             sensoroSensorTest.ibeacon = new SensoroIbeacon();
+            sensoroSensorTest.ibeacon.hasUuid = ibeacon.hasUuid();
+            if (ibeacon.hasUuid()) {
+                sensoroSensorTest.ibeacon.uuid = ibeacon.getUuid();
+            }
+            sensoroSensorTest.ibeacon.hasMajor = ibeacon.hasMajor();
+            if (ibeacon.hasMajor()) {
+                sensoroSensorTest.ibeacon.major = ibeacon.getMajor();
+            }
+            sensoroSensorTest.ibeacon.hasMinor = ibeacon.hasMinor();
+            if (ibeacon.hasMinor()) {
+                sensoroSensorTest.ibeacon.minor = ibeacon.getMinor();
+            }
+            sensoroSensorTest.ibeacon.hasMrssi = ibeacon.hasMrssi();
+            if (ibeacon.hasMrssi()) {
+                sensoroSensorTest.ibeacon.mrssi = ibeacon.getMrssi();
+            }
+
+        }
     }
 
     private void parseBaymaxCh4Lpg(MsgNode1V1M5.MsgNode msgNode, SensoroSensor sensoroSensorTest) {
@@ -2980,6 +3009,23 @@ public class SensoroDeviceConnection {
                 builder.setGasDeviceCMD(sensoroSensorTest.baymax.gasDeviceCMD);
             }
             msgNodeBuilder.setBaymaxData(builder);
+        }
+
+        //ibeacon
+        if (sensoroSensorTest.hasIbeacon) {
+            MsgNode1V1M5.iBeacon.Builder builder = MsgNode1V1M5.iBeacon.newBuilder();
+            if (sensoroSensorTest.ibeacon.hasUuid) {
+                builder.setUuid(sensoroSensorTest.ibeacon.uuid);
+            }
+            if (sensoroSensorTest.ibeacon.hasMajor) {
+                builder.setMajor(sensoroSensorTest.ibeacon.major);
+            }
+            if (sensoroSensorTest.ibeacon.hasMinor) {
+                builder.setMinor(sensoroSensorTest.ibeacon.minor);
+            }
+            if (sensoroSensorTest.ibeacon.hasMrssi) {
+                builder.setMrssi(sensoroSensorTest.ibeacon.mrssi);
+            }
         }
 
         if (sensoroDevice.hasAppParam()) {

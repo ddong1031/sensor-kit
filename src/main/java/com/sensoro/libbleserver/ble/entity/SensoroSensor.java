@@ -51,6 +51,8 @@ public class SensoroSensor extends BLEDevice implements Parcelable, Cloneable {
     public SensoroAcrelFires acrelFires;// 安科瑞三相电
     public SensoroCayManData cayManData;//嘉德 自研烟感
     public SensoroBaymax baymax;//baymax ch4 lpg
+    public SensoroIbeacon ibeacon;//ibeacon 自研烟感需要用ibeacon，这时加入的
+
     //
     public boolean hasAccelerometerCount;
     public boolean hasAngle;
@@ -88,6 +90,7 @@ public class SensoroSensor extends BLEDevice implements Parcelable, Cloneable {
     public boolean hasAcrelFires;
     public boolean hasCayMan;
     public boolean hasBaymax;
+    public boolean hasIbeacon;
 
     public SensoroSensor() {
     }
@@ -141,9 +144,13 @@ public class SensoroSensor extends BLEDevice implements Parcelable, Cloneable {
         if (cayMan instanceof SensoroCayManData) {
             cayManData = (SensoroCayManData)cayMan;
         }
-        Serializable bayMax = in.readSerializable();
-        if (bayMax instanceof SensoroCayManData) {
-            baymax = (SensoroBaymax) bayMax;
+        Serializable sBayMax = in.readSerializable();
+        if (sBayMax instanceof SensoroCayManData) {
+            baymax = (SensoroBaymax) sBayMax;
+        }
+        Serializable SIbeacon = in.readSerializable();
+        if (SIbeacon instanceof SensoroIbeacon) {
+            ibeacon = (SensoroIbeacon) SIbeacon;
         }
         customize = in.createByteArray();
         hasAccelerometerCount = in.readByte() != 0;
@@ -182,6 +189,7 @@ public class SensoroSensor extends BLEDevice implements Parcelable, Cloneable {
         hasAcrelFires = in.readByte() != 0;
         hasCayMan = in.readByte() != 0;
         hasBaymax = in.readByte() != 0;
+        hasIbeacon = in.readByte() != 0;
     }
 
     @Override
@@ -225,6 +233,7 @@ public class SensoroSensor extends BLEDevice implements Parcelable, Cloneable {
         parcel.writeSerializable(acrelFires);
         parcel.writeSerializable(cayManData);
         parcel.writeSerializable(baymax);
+        parcel.writeSerializable(ibeacon);
         parcel.writeSerializable(multiTemperature);
         parcel.writeByteArray(customize);
         parcel.writeByte((byte) (hasAccelerometerCount ? 1 : 0));
@@ -263,6 +272,7 @@ public class SensoroSensor extends BLEDevice implements Parcelable, Cloneable {
         parcel.writeByte((byte)(hasAcrelFires?1:0));
         parcel.writeByte((byte)(hasCayMan?1:0));
         parcel.writeByte((byte) (hasBaymax?1:0));
+        parcel.writeByte((byte) (hasIbeacon?1:0));
     }
 
     public static final Creator<SensoroSensor> CREATOR = new Creator<SensoroSensor>() {
