@@ -382,7 +382,7 @@ public class SensoroDeviceConnection {
                     bluetoothLEHelper4.sendPacket(characteristic);
                     LogUtils.loge("onCharacteristicWrite char sendPacket");
                 } else {
-                    Log.v(TAG, "onCharacteristicWrite failure" + status);
+                    LogUtils.logd("onCharacteristicWrite failure" + status);
                     // failure
                     switch (cmdType) {
                         case CmdType.CMD_R_CFG:
@@ -411,14 +411,14 @@ public class SensoroDeviceConnection {
                 }
             }
             if (characteristic.getUuid().equals(BluetoothLEHelper4.GattInfo.SENSORO_DEVICE_SIGNAL_UUID)) {
-                Log.v(TAG, "onCharacteristicWrite success");
+                LogUtils.logd( "onCharacteristicWrite success");
                 final int cmdType = bluetoothLEHelper4.getSendCmdType();
                 if (status == BluetoothGatt.GATT_SUCCESS) {
                     bluetoothLEHelper4.sendPacket(characteristic);
                     LogUtils.loge("onCharacteristicWrite single sendPacket");
 
                 } else {
-                    Log.v(TAG, "onCharacteristicWrite failure" + status);
+                    LogUtils.logd( "onCharacteristicWrite failure" + status);
                     // failure
                     switch (cmdType) {
                         case CmdType.CMD_R_CFG:
@@ -4076,7 +4076,7 @@ public class SensoroDeviceConnection {
     private final DfuProgressListener mDfuProgressListener = new DfuProgressListener() {
         @Override
         public void onDeviceConnecting(String deviceAddress) {
-            Log.d(TAG, "DFU---onDeviceConnecting: deviceAddress = " + deviceAddress);
+            LogUtils.logd("DFU---onDeviceConnecting: deviceAddress = " + deviceAddress);
             runOnMainThread(new Runnable() {
                 @Override
                 public void run() {
@@ -4089,7 +4089,7 @@ public class SensoroDeviceConnection {
 
         @Override
         public void onDeviceConnected(String deviceAddress) {
-            Log.d(TAG, "DFU----开始连接DFU设备：onDeviceConnected: deviceAddress = " + deviceAddress);
+            LogUtils.logd("DFU----开始连接DFU设备：onDeviceConnected: deviceAddress = " + deviceAddress);
 //            if (mOnDeviceUpdateObserver != null) {
 //                runOnMainThread(new Runnable() {
 //                    @Override
@@ -4103,13 +4103,13 @@ public class SensoroDeviceConnection {
         //准备阶段
         @Override
         public void onDfuProcessStarting(final String deviceAddress) {
-            Log.d(TAG, "DFU--onDfuProcessStarting: deviceAddress= " + deviceAddress);
+            LogUtils.logd("DFU--onDfuProcessStarting: deviceAddress= " + deviceAddress);
         }
 
         //等待传输固件
         @Override
         public void onDfuProcessStarted(final String deviceAddress) {
-            Log.d(TAG, "DFU---onDfuProcessStarted: deviceAddress = " + deviceAddress);
+            LogUtils.logd("DFU---onDfuProcessStarted: deviceAddress = " + deviceAddress);
 
             runOnMainThread(new Runnable() {
                 @Override
@@ -4124,7 +4124,7 @@ public class SensoroDeviceConnection {
 
         @Override
         public void onEnablingDfuMode(String deviceAddress) {
-            Log.d(TAG, "DFU--onEnablingDfuMode: deviceAddress = " + deviceAddress);
+            LogUtils.logd("DFU--onEnablingDfuMode: deviceAddress = " + deviceAddress);
         }
 
         //进度更新
@@ -4158,12 +4158,12 @@ public class SensoroDeviceConnection {
                 }
             });
 
-            Log.d(TAG, "DFU--onFirmwareValidating: deviceAddress = " + deviceAddress);
+            LogUtils.logd("DFU--onFirmwareValidating: deviceAddress = " + deviceAddress);
         }
 
         @Override
         public void onDeviceDisconnecting(String deviceAddress) {
-            Log.e(TAG, "DFU---onDeviceDisconnecting: deviceAddress = " + deviceAddress);
+            LogUtils.logd("DFU---onDeviceDisconnecting: deviceAddress = " + deviceAddress);
             runOnMainThread(new Runnable() {
                 @Override
                 public void run() {
@@ -4196,12 +4196,12 @@ public class SensoroDeviceConnection {
 
         @Override
         public void onDfuAborted(String deviceAddress) {
-            Log.d(TAG, "DFU--onDfuAborted: deviceAddress = " + deviceAddress);
+            LogUtils.logd("DFU--onDfuAborted: deviceAddress = " + deviceAddress);
         }
 
         @Override
         public void onError(final String deviceAddress, final int error, int errorType, final String message) {
-            Log.e(TAG, "DFU--onError: deviceAddress = " + deviceAddress);
+            LogUtils.loge("DFU--onError: deviceAddress = " + deviceAddress);
 
             runOnMainThread(new Runnable() {
                 @Override
