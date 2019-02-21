@@ -4081,14 +4081,6 @@ public class SensoroDeviceConnection {
         @Override
         public void onDeviceConnecting(String deviceAddress) {
             Log.d(TAG, "DFU---onDeviceConnecting: deviceAddress = " + deviceAddress);
-            runOnMainThread(new Runnable() {
-                @Override
-                public void run() {
-                    if (mOnDeviceUpdateObserver != null) {
-                        mOnDeviceUpdateObserver.onDisconnecting();
-                    }
-                }
-            });
         }
 
         @Override
