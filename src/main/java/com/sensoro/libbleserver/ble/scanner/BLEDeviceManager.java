@@ -23,7 +23,7 @@ public class BLEDeviceManager {
     private static final int SERVICE_STATE_BOUND = 2;
     private static final int SERVICE_STATE_BINDING = 3;
     public static final long DEFAULT_FOREGROUND_SCAN_PERIOD = 7 * 1000; // 默认前台device扫描时间
-    public static final long DEFAULT_FOREGROUND_BETWEEN_SCAN_PERIOD = 0; // 默认前台device扫描时间间隔
+    public static final long DEFAULT_FOREGROUND_BETWEEN_SCAN_PERIOD = 2 * 1000; // 默认前台device扫描时间间隔
     public static final long DEFAULT_BACKGROUND_SCAN_PERIOD = 7 * 1000; // 默认后台device扫描时间
     public static final long DEFAULT_BACKGROUND_BETWEEN_SCAN_PERIOD = 2 * 1000; // 默认后台device扫描时间间隔
     public static final long DEFAULT_UPDATE_DEVICE_PERIOD = 1000; // device定时更新时间间隔
@@ -144,7 +144,11 @@ public class BLEDeviceManager {
         UPDATE_DEVICE_PERIOD = periodMills;
     }
 
-
+    /**
+     * 每次扫描时长
+     *
+     * @param periodMills
+     */
     public void setForegroundScanPeriod(long periodMills) {
         FOREGROUND_SCAN_PERIOD = periodMills;
     }
@@ -176,7 +180,11 @@ public class BLEDeviceManager {
         BACKGROUND_BETWEEN_SCAN_PERIOD = periodMills;
     }
 
-
+    /**
+     * 认为设备已经丢失
+     *
+     * @param delayMills
+     */
     public void setOutOfRangeDelay(long delayMills) {
         OUT_OF_RANGE_DELAY = delayMills;
     }

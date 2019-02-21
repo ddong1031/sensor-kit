@@ -46,8 +46,8 @@ public class BLEDeviceService extends Service implements BLEScanCallback {
                 .build();
         scanBLEResults.add(scanBLEFilter);
         bleScanner.setScanBLEFilters(scanBLEResults);
-//        bleScanner.setScanPeriod(BLEDeviceManager.FOREGROUND_SCAN_PERIOD);
-        bleScanner.setScanPeriod(2000);
+        bleScanner.setScanPeriod(BLEDeviceManager.FOREGROUND_SCAN_PERIOD);
+//        bleScanner.setScanPeriod(2000);
         bleScanner.setBetweenScanPeriod(BLEDeviceManager.FOREGROUND_BETWEEN_SCAN_PERIOD);
 
     }
