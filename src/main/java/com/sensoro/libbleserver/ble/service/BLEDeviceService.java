@@ -52,15 +52,15 @@ public class BLEDeviceService extends Service implements BLEScanCallback {
 
     }
 
-    public void startScan(){
-        if(bleScanner != null){
+    public void startScan() {
+        if (bleScanner != null) {
             bleScanner.start();
         }
 
     }
 
-    public void stopScan(){
-        if(bleScanner != null){
+    public void stopScan() {
+        if (bleScanner != null) {
             bleScanner.stop();
         }
 
