@@ -407,14 +407,14 @@ public class SensoroDeviceConnection {
                 }
             }
             if (characteristic.getUuid().equals(BluetoothLEHelper4.GattInfo.SENSORO_DEVICE_SIGNAL_UUID)) {
-                LogUtils.logd( "onCharacteristicWrite success");
+                LogUtils.logd("onCharacteristicWrite success");
                 final int cmdType = bluetoothLEHelper4.getSendCmdType();
                 if (status == BluetoothGatt.GATT_SUCCESS) {
                     bluetoothLEHelper4.sendPacket(characteristic);
                     LogUtils.loge("onCharacteristicWrite single sendPacket");
 
                 } else {
-                    LogUtils.logd( "onCharacteristicWrite failure" + status);
+                    LogUtils.logd("onCharacteristicWrite failure" + status);
                     // failure
                     switch (cmdType) {
                         case CmdType.CMD_R_CFG:
@@ -3908,7 +3908,7 @@ public class SensoroDeviceConnection {
 
         @Override
         public void onConnectedFailure(final int errorCode) {
-
+            freshCache();
             runOnMainThread(new Runnable() {
                 @Override
                 public void run() {
@@ -3970,6 +3970,7 @@ public class SensoroDeviceConnection {
 
         @Override
         public void onWriteFailure(int errorCode, int cmd) {
+            freshCache();
             if (CMD_BB_TRACKER_UPGRADE == cmd) {
                 parseChipEWriteFailue(errorCode);
             } else {
@@ -4192,7 +4193,7 @@ public class SensoroDeviceConnection {
 
         @Override
         public void onDfuAborted(final String deviceAddress) {
-                LogUtils.logd("DFU--onDfuAborted: deviceAddress = " + deviceAddress);
+            LogUtils.logd("DFU--onDfuAborted: deviceAddress = " + deviceAddress);
             runOnMainThread(new Runnable() {
                 @Override
                 public void run() {
