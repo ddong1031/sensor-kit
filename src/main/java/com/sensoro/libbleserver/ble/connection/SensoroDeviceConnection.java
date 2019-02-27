@@ -110,7 +110,7 @@ public class SensoroDeviceConnection {
     private final Runnable connectTimeoutRunnable = new Runnable() {
         @Override
         public void run() {
-            taskHandler.removeCallbacksAndMessages(connectTimeoutRunnable);
+            taskHandler.removeCallbacks(connectTimeoutRunnable);
             runOnMainThread(new Runnable() {
                 @Override
                 public void run() {
@@ -540,9 +540,9 @@ public class SensoroDeviceConnection {
                         freshCache();
                     }
                 }
-            }, 500);
+            }, 100);
         } else {
-            taskHandler.removeCallbacksAndMessages(connectTimeoutRunnable);
+            taskHandler.removeCallbacks(connectTimeoutRunnable);
             runOnMainThread(new Runnable() {
                 @Override
                 public void run() {
@@ -3361,6 +3361,7 @@ public class SensoroDeviceConnection {
      * @param writeCallback
      */
     public void writeDemoModeCmd(int demoMode, SensoroWriteCallback writeCallback) {
+        writeCallbackHashMap.put(CmdType.CMD_W_CFG, writeCallback);
         MsgNode1V1M5.AppParam.Builder builder = MsgNode1V1M5.AppParam.newBuilder();
         builder.setDemoMode(demoMode);
         MsgNode1V1M5.MsgNode.Builder msgNode = MsgNode1V1M5.MsgNode.newBuilder();
