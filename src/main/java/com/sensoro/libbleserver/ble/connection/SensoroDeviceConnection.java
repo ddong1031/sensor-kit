@@ -723,7 +723,7 @@ public class SensoroDeviceConnection {
                         }
                     }
                     break;
-                    //固件交互，写入命令，返回一般都是这个，所以命令，如自检，设置，cmdtype皆设置为如此
+                //固件交互，写入命令，返回一般都是这个，所以命令，如自检，设置，cmdtype皆设置为如此
                 case CmdType.CMD_W_CFG:
                     if (data.length >= 4) {
                         final byte retCode = data[3];
@@ -794,6 +794,28 @@ public class SensoroDeviceConnection {
                                 @Override
                                 public void run() {
                                     writeCallbackHashMap.get(cmdType).onWriteFailure(retCode, CmdType.CMD_SET_BAYMAX_CMD);
+                                }
+                            });
+
+                        }
+                    }
+                    break;
+                case CmdType.CMD_SET_CAYMAN_CMD:
+                    if (data.length >= 4) {
+                        final byte retCode = data[3];
+                        if (retCode == ResultCode.CODE_DEVICE_SUCCESS) {
+                            runOnMainThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    writeCallbackHashMap.get(cmdType).onWriteSuccess(null, CmdType.CMD_SET_CAYMAN_CMD);
+                                }
+                            });
+                        } else {
+                            LogUtils.loge("CMD_W_CFG 失败");
+                            runOnMainThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    writeCallbackHashMap.get(cmdType).onWriteFailure(retCode, CmdType.CMD_SET_CAYMAN_CMD);
                                 }
                             });
 
@@ -3334,16 +3356,17 @@ public class SensoroDeviceConnection {
 
     /**
      * 使设备进入demo 演示模式，主要用于city
-     * @param demoMode 0 非演示模式 1 演示模式
+     *
+     * @param demoMode      0 非演示模式 1 演示模式
      * @param writeCallback
      */
-    public void writeDemoModeCmd(int demoMode, SensoroWriteCallback writeCallback){
+    public void writeDemoModeCmd(int demoMode, SensoroWriteCallback writeCallback) {
         MsgNode1V1M5.AppParam.Builder builder = MsgNode1V1M5.AppParam.newBuilder();
         builder.setDemoMode(demoMode);
         MsgNode1V1M5.MsgNode.Builder msgNode = MsgNode1V1M5.MsgNode.newBuilder();
         msgNode.setAppParam(builder);
         byte[] data = msgNode.build().toByteArray();
-        writeData05Cmd(data,CmdType.CMD_W_CFG,writeCallback);
+        writeData05Cmd(data, CmdType.CMD_W_CFG, writeCallback);
     }
 
     /**
