@@ -55,6 +55,7 @@ public class SensoroDevice extends BLEDevice implements Parcelable, Cloneable {
     int classBPeriodicity;
     Integer uploadInterval;
     Integer confirm;
+    int demoMode;
     Integer activation;
     Integer delay;
     transient List<Integer> channelMaskList;
@@ -91,6 +92,7 @@ public class SensoroDevice extends BLEDevice implements Parcelable, Cloneable {
     boolean hasBleParam;
     boolean hasAppParam;
     boolean hasConfirm;
+    boolean hasDemoMode;
     boolean hasUploadInterval;
     boolean hasEddyStone;
     boolean hasIbeacon;
@@ -98,6 +100,7 @@ public class SensoroDevice extends BLEDevice implements Parcelable, Cloneable {
     boolean hasSensorParam;
     boolean hasCustomPackage;
     boolean hasDelay;
+
 
     boolean hasLbtStatus;
     boolean hasLbtThreshold;
@@ -275,6 +278,7 @@ public class SensoroDevice extends BLEDevice implements Parcelable, Cloneable {
         hasBleParam = false;
         hasAppParam = false;
         hasConfirm = false;
+        hasDemoMode = false;
         hasUploadInterval = false;
         hasIbeacon = false;
         hasEddyStone = false;
@@ -336,6 +340,7 @@ public class SensoroDevice extends BLEDevice implements Parcelable, Cloneable {
             channelList = (ArrayList<SensoroChannel>) channels;
         }
         confirm = (Integer) in.readSerializable();
+        demoMode = (Integer) in.readSerializable();
         activation = (Integer) in.readSerializable();
         delay = (Integer) in.readSerializable();
 
@@ -358,6 +363,7 @@ public class SensoroDevice extends BLEDevice implements Parcelable, Cloneable {
         hasLoraParam = in.readByte() != 0;
         hasUploadInterval = in.readByte() != 0;
         hasConfirm = in.readByte() != 0;
+        hasDemoMode = in.readByte() != 0;
         hasLoraInterval = in.readByte() != 0;
         hasEddyStone = in.readByte() != 0;
         hasIbeacon = in.readByte() != 0;
@@ -425,6 +431,7 @@ public class SensoroDevice extends BLEDevice implements Parcelable, Cloneable {
         out.writeSerializable(channelList);
         out.writeSerializable(uploadInterval);
         out.writeSerializable(confirm);
+        out.writeSerializable(demoMode);
         out.writeSerializable(activation);
         out.writeSerializable(delay);
         out.writeByte((byte) (hasBleInterval ? 1 : 0));
@@ -446,6 +453,7 @@ public class SensoroDevice extends BLEDevice implements Parcelable, Cloneable {
         out.writeByte((byte) (hasLoraParam ? 1 : 0));
         out.writeByte((byte) (hasUploadInterval ? 1 : 0));
         out.writeByte((byte) (hasConfirm ? 1 : 0));
+        out.writeByte((byte) (hasDemoMode ? 1 : 0));
         out.writeByte((byte) (hasLoraInterval ? 1 : 0));
         out.writeByte((byte) (hasEddyStone ? 1 : 0));
         out.writeByte((byte) (hasIbeacon ? 1 : 0));
@@ -1027,12 +1035,28 @@ public class SensoroDevice extends BLEDevice implements Parcelable, Cloneable {
         this.confirm = confirm;
     }
 
+    public Integer getDemoMode() {
+        return demoMode;
+    }
+
+    public void setDemoMode(Integer demoMode) {
+        this.demoMode = demoMode;
+    }
+
     public boolean hasConfirm() {
         return hasConfirm;
     }
 
     public void setHasConfirm(boolean hasConfirm) {
         this.hasConfirm = hasConfirm;
+    }
+
+    public boolean hasDemoMode() {
+        return hasDemoMode;
+    }
+
+    public void setHasDemoMode(boolean hasDemoMode) {
+        this.hasDemoMode = hasDemoMode;
     }
 
 //    public SensoroSensor getSensoroSensor() {
