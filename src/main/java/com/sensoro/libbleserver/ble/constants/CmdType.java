@@ -44,8 +44,8 @@ public class CmdType {
     public static final int CMD_SMOKE = 0x18;
     public static final int CMD_PRESSURE = 0x19;
     public static final int CMD_SET_ELEC_CMD = 0x20;
-    public static final int CMD_SET_MANTUN_CMD = 0x21;
-    public static final int CMD_SET_ACREL_CMD = 0x22;
+//    public static final int CMD_SET_MANTUN_CMD = 0x21;
+//    public static final int CMD_SET_ACREL_CMD = 0x22;
     public static final int CMD_SET_CAYMAN_CMD = 0x23;
     public static final int CMD_SET_BAYMAX_CMD = 0x24;
     //电表命令

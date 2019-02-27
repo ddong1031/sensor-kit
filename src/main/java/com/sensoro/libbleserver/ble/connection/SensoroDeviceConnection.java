@@ -3998,19 +3998,19 @@ public class SensoroDeviceConnection {
     }
 
     public void writeMantunCmd(MsgNode1V1M5.MantunData.Builder builder, SensoroWriteCallback writeCallback) {
-        writeCallbackHashMap.put(CmdType.CMD_SET_MANTUN_CMD, writeCallback);
+        writeCallbackHashMap.put(CmdType.CMD_W_CFG, writeCallback);
         MsgNode1V1M5.MsgNode.Builder msgNodeBuilder = MsgNode1V1M5.MsgNode.newBuilder();
         msgNodeBuilder.addMtunData(builder);
         byte[] data = msgNodeBuilder.build().toByteArray();
-        writeData05Cmd(data, CmdType.CMD_SET_MANTUN_CMD, writeCallback);
+        writeData05Cmd(data, CmdType.CMD_W_CFG, writeCallback);
     }
 
     public void writeAcrelCmd(MsgNode1V1M5.AcrelData.Builder builder, SensoroWriteCallback writeCallback) {
-        writeCallbackHashMap.put(CmdType.CMD_SET_ACREL_CMD, writeCallback);
+        writeCallbackHashMap.put(CmdType.CMD_W_CFG, writeCallback);
         MsgNode1V1M5.MsgNode.Builder msgNodeBuilder = MsgNode1V1M5.MsgNode.newBuilder();
         msgNodeBuilder.setAcrelData(builder);
         byte[] data = msgNodeBuilder.build().toByteArray();
-        writeData05Cmd(data, CmdType.CMD_SET_ACREL_CMD, writeCallback);
+        writeData05Cmd(data, CmdType.CMD_W_CFG, writeCallback);
     }
 
     public void writeCaymanCmd(MsgNode1V1M5.Cayman.Builder builder, SensoroWriteCallback writeCallback) {
