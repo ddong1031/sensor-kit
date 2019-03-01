@@ -2208,6 +2208,26 @@ public class SensoroDeviceConnection {
             if (caymanData.hasCmd()) {
                 sensoroSensorTest.cayManData.cmd = caymanData.getCmd();
             }
+            sensoroSensorTest.cayManData.hasValueOfphotor = caymanData.hasValueOfphotor();
+            if (caymanData.hasValueOfphotor()) {
+                sensoroSensorTest.cayManData.valueOfphotor = caymanData.getValueOfphotor();
+            }
+            sensoroSensorTest.cayManData.hasBleAdvType = caymanData.hasBleAdvType();
+            if (caymanData.hasBleAdvType()) {
+                sensoroSensorTest.cayManData.bleAdvType = caymanData.getBleAdvType();
+            }
+            sensoroSensorTest.cayManData.hasBleAdvStartTime = caymanData.hasBleAdvStartTime();
+            if (caymanData.hasBleAdvStartTime()) {
+                sensoroSensorTest.cayManData.bleAdvStartTime = caymanData.getBleAdvStartTime();
+            }
+            sensoroSensorTest.cayManData.hasBleAdvEndTime = caymanData.hasBleAdvEndTime();
+            if (caymanData.hasBleAdvEndTime()) {
+                sensoroSensorTest.cayManData.bleAdvEndTime = caymanData.getBleAdvEndTime();
+            }
+            sensoroSensorTest.cayManData.hasValueOfBatb = caymanData.hasValueOfBatb();
+            if (caymanData.hasValueOfBatb()) {
+                sensoroSensorTest.cayManData.valueOfBatb = caymanData.getValueOfBatb();
+            }
 
         }
     }
@@ -2628,6 +2648,12 @@ public class SensoroDeviceConnection {
         }
     }
 
+    /**
+     * 暂时没有用，不知道干啥的，不删了
+     * @param sensoroDeviceConfiguration
+     * @param writeCallback
+     * @throws InvalidProtocolBufferException
+     */
     public void writeData05Configuration(SensoroDeviceConfiguration sensoroDeviceConfiguration, final SensoroWriteCallback
             writeCallback) throws InvalidProtocolBufferException {
         writeCallbackHashMap.put(CmdType.CMD_W_CFG, writeCallback);
@@ -3260,6 +3286,22 @@ public class SensoroDeviceConnection {
             if (sensoroSensorTest.cayManData.hasCmd) {
                 builder.setCmd(sensoroSensorTest.cayManData.cmd);
             }
+            if (sensoroSensorTest.cayManData.hasValueOfphotor) {
+                builder.setValueOfphotor(sensoroSensorTest.cayManData.valueOfphotor);
+            }
+            if (sensoroSensorTest.cayManData.hasBleAdvType) {
+                builder.setBleAdvType(sensoroSensorTest.cayManData.bleAdvType);
+            }
+            if (sensoroSensorTest.cayManData.hasBleAdvStartTime) {
+                builder.setBleAdvStartTime(sensoroSensorTest.cayManData.bleAdvStartTime);
+            }
+            if (sensoroSensorTest.cayManData.hasBleAdvEndTime) {
+                builder.setBleAdvEndTime(sensoroSensorTest.cayManData.bleAdvEndTime);
+            }
+            if (sensoroSensorTest.cayManData.hasValueOfBatb) {
+                builder.setValueOfBatb(sensoroSensorTest.cayManData.valueOfBatb);
+            }
+
             msgNodeBuilder.setCaymanData(builder);
         }
     }
