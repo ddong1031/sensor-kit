@@ -25,6 +25,11 @@ public class SensoroCayManData implements Serializable {
     public boolean hasAlarmOfHighHum;
     public boolean hasAlarmOfLowHum;
     public boolean hasCmd;
+    public boolean hasValueOfphotor;
+    public boolean hasBleAdvType;
+    public boolean hasBleAdvStartTime;
+    public boolean hasBleAdvEndTime;
+    public boolean hasValueOfBatb;
 
 
     public int isSmoke;// 烟雾状态 0 无烟 1 有烟
