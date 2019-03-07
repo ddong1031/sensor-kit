@@ -29,15 +29,15 @@ public class SensoroDevice extends BLEDevice implements Parcelable, Cloneable {
     int accelerometerCount; // accelerometer reConnectCount.
     int power;//功率
     float sf;//BL间隔
-    String devEui;
-    String appEui;
-    String appKey;
-    String appSkey;
-    String nwkSkey;
+    public String devEui;
+    public String appEui;
+    public String appKey;
+    public String appSkey;
+    public String nwkSkey;
     String password;
     String dfuInfo;
     String band;
-    int devAdr;
+    public int devAdr;
     int loraDr;
     int loraAdr;
     int loraTxp;
@@ -50,14 +50,14 @@ public class SensoroDevice extends BLEDevice implements Parcelable, Cloneable {
     int tempInterval;
     int lightInterval;
     int humidityInterval;
-    int classBEnabled;
+    public int classBEnabled;
     int classBDataRate;
     int classBPeriodicity;
     Integer uploadInterval;
     Integer confirm;
     int demoMode;
     Integer activation;
-    Integer delay;
+    public Integer delay;
     transient List<Integer> channelMaskList;
     ArrayList<SensoroChannel> channelList;
     transient int maxEirp;

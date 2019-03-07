@@ -2208,6 +2208,26 @@ public class SensoroDeviceConnection {
             if (caymanData.hasCmd()) {
                 sensoroSensorTest.cayManData.cmd = caymanData.getCmd();
             }
+            sensoroSensorTest.cayManData.hasValueOfphotor = caymanData.hasValueOfphotor();
+            if (caymanData.hasValueOfphotor()) {
+                sensoroSensorTest.cayManData.valueOfphotor = caymanData.getValueOfphotor();
+            }
+            sensoroSensorTest.cayManData.hasBleAdvType = caymanData.hasBleAdvType();
+            if (caymanData.hasBleAdvType()) {
+                sensoroSensorTest.cayManData.bleAdvType = caymanData.getBleAdvType();
+            }
+            sensoroSensorTest.cayManData.hasBleAdvStartTime = caymanData.hasBleAdvStartTime();
+            if (caymanData.hasBleAdvStartTime()) {
+                sensoroSensorTest.cayManData.bleAdvStartTime = caymanData.getBleAdvStartTime();
+            }
+            sensoroSensorTest.cayManData.hasBleAdvEndTime = caymanData.hasBleAdvEndTime();
+            if (caymanData.hasBleAdvEndTime()) {
+                sensoroSensorTest.cayManData.bleAdvEndTime = caymanData.getBleAdvEndTime();
+            }
+            sensoroSensorTest.cayManData.hasValueOfBatb = caymanData.hasValueOfBatb();
+            if (caymanData.hasValueOfBatb()) {
+                sensoroSensorTest.cayManData.valueOfBatb = caymanData.getValueOfBatb();
+            }
 
         }
     }
@@ -2402,7 +2422,7 @@ public class SensoroDeviceConnection {
         }
     }
 
-    public void writeDeviceAdvanceConfiguration(SensoroDeviceConfiguration deviceConfiguration, final SensoroWriteCallback
+    public void writeDeviceAdvanceConfiguration(SensoroDevice deviceConfiguration, final SensoroWriteCallback
             writeCallback) throws InvalidProtocolBufferException {
         writeCallbackHashMap.put(CmdType.CMD_W_CFG, writeCallback);
         switch (dataVersion) {
@@ -2419,7 +2439,7 @@ public class SensoroDeviceConnection {
                         .nwkSkey)));
                 msgCfgBuilder.setDevAddr(deviceConfiguration.devAdr);
                 msgCfgBuilder.setLoraDr(deviceConfiguration.getLoraDr());
-                msgCfgBuilder.setLoraAdr(deviceConfiguration.loadAdr);
+                msgCfgBuilder.setLoraAdr(deviceConfiguration.getLoraAdr());
                 ProtoMsgCfgV1U1.MsgCfgV1u1 msgCfg = msgCfgBuilder.build();
 
                 byte[] data = msgCfg.toByteArray();
@@ -2464,11 +2484,11 @@ public class SensoroDeviceConnection {
                         .nwkSkey)));
                 msgCfgBuilder.setDevAddr(deviceConfiguration.devAdr);
                 msgCfgBuilder.setLoraDr(deviceConfiguration.getLoraDr());
-                msgCfgBuilder.setLoraAdr(deviceConfiguration.loadAdr);
+                msgCfgBuilder.setLoraAdr(deviceConfiguration.getLoraAdr());
                 msgStdBuilder.setCustomData(msgCfgBuilder.build().toByteString());
                 msgStdBuilder.setEnableClassB(deviceConfiguration.classBEnabled);
-                msgStdBuilder.setClassBDataRate(deviceConfiguration.classBDateRate);
-                msgStdBuilder.setClassBPeriodicity(deviceConfiguration.classBPeriodicity);
+                msgStdBuilder.setClassBDataRate(deviceConfiguration.getClassBDataRate());
+                msgStdBuilder.setClassBPeriodicity(deviceConfiguration.getClassBPeriodicity());
                 ProtoStd1U1.MsgStd msgStd = msgStdBuilder.build();
 
                 byte[] data = msgStd.toByteArray();
@@ -2541,14 +2561,14 @@ public class SensoroDeviceConnection {
 //                if (deviceConfiguration.hasSglFrequency()) {
 //                    loraParamBuilder.setSglFrequency(deviceConfiguration.sglFrequency);
 //                }
-                List<Integer> channelList = deviceConfiguration.getChannelList();
+                List<Integer> channelList = deviceConfiguration.getChannelMaskList();
                 loraParamBuilder.addAllChannelMask(channelList);
                 loraParamBuilder.setAdr(deviceConfiguration.getLoraAdr());
                 loraParamBuilder.setDatarate(deviceConfiguration.getLoraDr());
                 if (deviceConfiguration.hasActivation()) {
-                    loraParamBuilder.setActivition(MsgNode1V1M5.Activtion.valueOf(deviceConfiguration.activation));
+                    loraParamBuilder.setActivition(MsgNode1V1M5.Activtion.valueOf(deviceConfiguration.getActivation()));
                 }
-                List<SensoroChannel> channels = deviceConfiguration.getChannels();
+                List<SensoroChannel> channels = deviceConfiguration.getChannelList();
                 for (int i = 0; i < channels.size(); i++) {
                     MsgNode1V1M5.Channel.Builder builder1 = MsgNode1V1M5.Channel.newBuilder();
                     SensoroChannel sensoroChannel = channels.get(i);
@@ -2628,6 +2648,12 @@ public class SensoroDeviceConnection {
         }
     }
 
+    /**
+     * 暂时没有用，不知道干啥的，不删了
+     * @param sensoroDeviceConfiguration
+     * @param writeCallback
+     * @throws InvalidProtocolBufferException
+     */
     public void writeData05Configuration(SensoroDeviceConfiguration sensoroDeviceConfiguration, final SensoroWriteCallback
             writeCallback) throws InvalidProtocolBufferException {
         writeCallbackHashMap.put(CmdType.CMD_W_CFG, writeCallback);
@@ -2820,7 +2846,7 @@ public class SensoroDeviceConnection {
         writeBaymaxCh4Lpg(msgNodeBuilder, sensoroSensorTest);
 
         //ibeacon
-        writeIbeacon(sensoroSensorTest);
+        writeIbeacon(msgNodeBuilder,sensoroSensorTest);
 
         writeAppParam(sensoroDevice, msgNodeBuilder);
 
@@ -3260,6 +3286,22 @@ public class SensoroDeviceConnection {
             if (sensoroSensorTest.cayManData.hasCmd) {
                 builder.setCmd(sensoroSensorTest.cayManData.cmd);
             }
+            if (sensoroSensorTest.cayManData.hasValueOfphotor) {
+                builder.setValueOfphotor(sensoroSensorTest.cayManData.valueOfphotor);
+            }
+            if (sensoroSensorTest.cayManData.hasBleAdvType) {
+                builder.setBleAdvType(sensoroSensorTest.cayManData.bleAdvType);
+            }
+            if (sensoroSensorTest.cayManData.hasBleAdvStartTime) {
+                builder.setBleAdvStartTime(sensoroSensorTest.cayManData.bleAdvStartTime);
+            }
+            if (sensoroSensorTest.cayManData.hasBleAdvEndTime) {
+                builder.setBleAdvEndTime(sensoroSensorTest.cayManData.bleAdvEndTime);
+            }
+            if (sensoroSensorTest.cayManData.hasValueOfBatb) {
+                builder.setValueOfBatb(sensoroSensorTest.cayManData.valueOfBatb);
+            }
+
             msgNodeBuilder.setCaymanData(builder);
         }
     }
@@ -3310,7 +3352,7 @@ public class SensoroDeviceConnection {
         }
     }
 
-    private void writeIbeacon(SensoroSensor sensoroSensorTest) {
+    private void writeIbeacon(MsgNode1V1M5.MsgNode.Builder msgNodeBuilder, SensoroSensor sensoroSensorTest) {
         if (sensoroSensorTest.hasIbeacon) {
             MsgNode1V1M5.iBeacon.Builder builder = MsgNode1V1M5.iBeacon.newBuilder();
             if (sensoroSensorTest.ibeacon.hasUuid) {
@@ -3325,6 +3367,7 @@ public class SensoroDeviceConnection {
             if (sensoroSensorTest.ibeacon.hasMrssi) {
                 builder.setMrssi(sensoroSensorTest.ibeacon.mrssi);
             }
+            msgNodeBuilder.setIbeacon(builder);
         }
     }
 
