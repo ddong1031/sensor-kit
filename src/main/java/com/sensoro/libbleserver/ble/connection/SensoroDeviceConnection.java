@@ -2569,14 +2569,17 @@ public class SensoroDeviceConnection {
                     loraParamBuilder.setActivition(MsgNode1V1M5.Activtion.valueOf(deviceConfiguration.getActivation()));
                 }
                 List<SensoroChannel> channels = deviceConfiguration.getChannelList();
-                for (int i = 0; i < channels.size(); i++) {
-                    MsgNode1V1M5.Channel.Builder builder1 = MsgNode1V1M5.Channel.newBuilder();
-                    SensoroChannel sensoroChannel = channels.get(i);
-                    builder1.setFrequency(sensoroChannel.frequency);
-                    builder1.setRx1Frequency(sensoroChannel.rx1Frequency);
+                if (channels != null) {
+                    for (int i = 0; i < channels.size(); i++) {
+                        MsgNode1V1M5.Channel.Builder builder1 = MsgNode1V1M5.Channel.newBuilder();
+                        SensoroChannel sensoroChannel = channels.get(i);
+                        builder1.setFrequency(sensoroChannel.frequency);
+                        builder1.setRx1Frequency(sensoroChannel.rx1Frequency);
 //                    loraParamBuilder.setChannels(i,builder1);
-                    loraParamBuilder.addChannels(builder1);
+                        loraParamBuilder.addChannels(builder1);
+                    }
                 }
+
 
                 builder.setLpwanParam(loraParamBuilder);
                 byte[] data = builder.build().toByteArray();
