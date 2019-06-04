@@ -723,7 +723,6 @@ public class SensoroDeviceConnection {
                         }
                     }
                     break;
-                //固件交互，写入命令，返回一般都是这个，所以命令，如自检，设置，cmdtype皆设置为如此
                 case CmdType.CMD_W_CFG:
                     if (data.length >= 4) {
                         final byte retCode = data[3];
@@ -731,7 +730,7 @@ public class SensoroDeviceConnection {
                             runOnMainThread(new Runnable() {
                                 @Override
                                 public void run() {
-                                    writeCallbackHashMap.get(cmdType).onWriteSuccess(null, CmdType.CMD_NULL);
+                                    writeCallbackHashMap.get(cmdType).onWriteSuccess(null, CmdType.CMD_W_CFG);
                                 }
                             });
                         } else {
@@ -1434,6 +1433,12 @@ public class SensoroDeviceConnection {
             sensoroDevice.setHasDemoMode(hasDemoMode);
             if (hasDemoMode) {
                 sensoroDevice.setDemoMode(appParam.getDemoMode());
+            }
+
+            boolean hasLowBatteryBeep = appParam.hasLowBatteryBeep();
+            sensoroDevice.setHasBatteryBeep(hasLowBatteryBeep);
+            if (hasLowBatteryBeep) {
+                sensoroDevice.setBatteryBeep(appParam.getLowBatteryBeep());
             }
         }
     }
@@ -3388,6 +3393,10 @@ public class SensoroDeviceConnection {
             if (sensoroDevice.hasDemoMode()) {
                 appBuilder.setDemoMode(sensoroDevice.getDemoMode());
             }
+
+            if (sensoroDevice.hasBatteryBeep()) {
+                appBuilder.setLowBatteryBeep(sensoroDevice.getBatteryBeep());
+            }
             msgNodeBuilder.setAppParam(appBuilder);
         }
     }
@@ -3407,13 +3416,13 @@ public class SensoroDeviceConnection {
      * @param writeCallback
      */
     public void writeDemoModeCmd(int demoMode, SensoroWriteCallback writeCallback) {
-        writeCallbackHashMap.put(CmdType.CMD_W_CFG, writeCallback);
+        writeCallbackHashMap.put(CmdType.CMD_SET_ELEC_CMD, writeCallback);
         MsgNode1V1M5.AppParam.Builder builder = MsgNode1V1M5.AppParam.newBuilder();
         builder.setDemoMode(demoMode);
         MsgNode1V1M5.MsgNode.Builder msgNode = MsgNode1V1M5.MsgNode.newBuilder();
         msgNode.setAppParam(builder);
         byte[] data = msgNode.build().toByteArray();
-        writeData05Cmd(data, CmdType.CMD_W_CFG, writeCallback);
+        writeData05Cmd(data, CmdType.CMD_SET_ELEC_CMD, writeCallback);
     }
 
     /**
@@ -4045,19 +4054,19 @@ public class SensoroDeviceConnection {
     }
 
     public void writeMantunCmd(MsgNode1V1M5.MantunData.Builder builder, SensoroWriteCallback writeCallback) {
-        writeCallbackHashMap.put(CmdType.CMD_W_CFG, writeCallback);
+        writeCallbackHashMap.put(CmdType.CMD_SET_ELEC_CMD, writeCallback);
         MsgNode1V1M5.MsgNode.Builder msgNodeBuilder = MsgNode1V1M5.MsgNode.newBuilder();
         msgNodeBuilder.addMtunData(builder);
         byte[] data = msgNodeBuilder.build().toByteArray();
-        writeData05Cmd(data, CmdType.CMD_W_CFG, writeCallback);
+        writeData05Cmd(data, CmdType.CMD_SET_ELEC_CMD, writeCallback);
     }
 
     public void writeAcrelCmd(MsgNode1V1M5.AcrelData.Builder builder, SensoroWriteCallback writeCallback) {
-        writeCallbackHashMap.put(CmdType.CMD_W_CFG, writeCallback);
+        writeCallbackHashMap.put(CmdType.CMD_SET_ELEC_CMD, writeCallback);
         MsgNode1V1M5.MsgNode.Builder msgNodeBuilder = MsgNode1V1M5.MsgNode.newBuilder();
         msgNodeBuilder.setAcrelData(builder);
         byte[] data = msgNodeBuilder.build().toByteArray();
-        writeData05Cmd(data, CmdType.CMD_W_CFG, writeCallback);
+        writeData05Cmd(data, CmdType.CMD_SET_ELEC_CMD, writeCallback);
     }
 
     public void writeCaymanCmd(MsgNode1V1M5.Cayman.Builder builder, SensoroWriteCallback writeCallback) {
