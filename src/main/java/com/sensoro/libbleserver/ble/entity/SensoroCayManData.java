@@ -30,6 +30,12 @@ public class SensoroCayManData implements Serializable {
     public boolean hasBleAdvStartTime;
     public boolean hasBleAdvEndTime;
     public boolean hasValueOfBatb;
+    public boolean hasHumanDetectionTime;
+    public boolean hasDefenseMode;
+    public boolean hasDefenseTimerMode;
+    public boolean hasDefenseModeStartTime;
+    public boolean hasDefenseModeStopTime;
+    public boolean hasInvadeAlarm;
 
 
     public int isSmoke;// 烟雾状态 0 无烟 1 有烟
@@ -46,4 +52,11 @@ public class SensoroCayManData implements Serializable {
     public int bleAdvStartTime;//蓝牙广播开始时间 蓝牙广播开始时间	[0x0000-0x2359]
     public int bleAdvEndTime;//蓝牙广播开始时间 蓝牙广播结束时间	[0x0000-0x2359]
     public int valueOfBatb;//从机电池电量 [0-3.5V]
+    public int humanDetectionTime;//人体检测时间参数, 单位 s, 范围 [1 - 30], (上|下)
+    public int defenseMode;//设防模式开关, 范围 [0 - 1], (上|下)
+    public int defenseTimerMode;//定时设防模式开关, 范围 [0 - 1], (上|下)
+    public int defenseModeStartTime;//定时设防开始时间, 单位 min, 范围 [0 - 1439], (上|下)
+    public int defenseModeStopTime;//定时设防结束时间, 单位 min, 范围 [0 - 1439], (上|下)
+    public int invadeAlarm;//入侵报警开关, 范围 [0 - 1], (上|下)
+
 }

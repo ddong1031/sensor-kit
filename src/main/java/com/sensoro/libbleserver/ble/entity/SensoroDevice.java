@@ -57,6 +57,8 @@ public class SensoroDevice extends BLEDevice implements Parcelable, Cloneable {
     Integer confirm;
     Integer demoMode;
     Integer batteryBeep;
+    Integer beepMuteTime;
+    Integer ledStatus;
     Integer activation;
     public Integer delay;
     transient List<Integer> channelMaskList;
@@ -95,6 +97,8 @@ public class SensoroDevice extends BLEDevice implements Parcelable, Cloneable {
     boolean hasConfirm;
     boolean hasDemoMode;
     boolean hasBatteryBeep;
+    boolean hasBeepMuteTime;
+    boolean hasLedStatus;
     boolean hasUploadInterval;
     boolean hasEddyStone;
     boolean hasIbeacon;
@@ -282,6 +286,8 @@ public class SensoroDevice extends BLEDevice implements Parcelable, Cloneable {
         hasConfirm = false;
         hasDemoMode = false;
         hasBatteryBeep = false;
+        hasBeepMuteTime = false;
+        hasLedStatus = false;
         hasUploadInterval = false;
         hasIbeacon = false;
         hasEddyStone = false;
@@ -345,6 +351,8 @@ public class SensoroDevice extends BLEDevice implements Parcelable, Cloneable {
         confirm = (Integer) in.readSerializable();
         demoMode = (Integer) in.readSerializable();
         batteryBeep = (Integer) in.readSerializable();
+        beepMuteTime = (Integer) in.readSerializable();
+        ledStatus = (Integer) in.readSerializable();
         activation = (Integer) in.readSerializable();
         delay = (Integer) in.readSerializable();
 
@@ -369,6 +377,8 @@ public class SensoroDevice extends BLEDevice implements Parcelable, Cloneable {
         hasConfirm = in.readByte() != 0;
         hasDemoMode = in.readByte() != 0;
         hasBatteryBeep = in.readByte() != 0;
+        hasBeepMuteTime = in.readByte() != 0;
+        hasLedStatus = in.readByte() != 0;
         hasLoraInterval = in.readByte() != 0;
         hasEddyStone = in.readByte() != 0;
         hasIbeacon = in.readByte() != 0;
@@ -438,6 +448,8 @@ public class SensoroDevice extends BLEDevice implements Parcelable, Cloneable {
         out.writeSerializable(confirm);
         out.writeSerializable(demoMode);
         out.writeSerializable(batteryBeep);
+        out.writeSerializable(beepMuteTime);
+        out.writeSerializable(ledStatus);
         out.writeSerializable(activation);
         out.writeSerializable(delay);
         out.writeByte((byte) (hasBleInterval ? 1 : 0));
@@ -461,6 +473,8 @@ public class SensoroDevice extends BLEDevice implements Parcelable, Cloneable {
         out.writeByte((byte) (hasConfirm ? 1 : 0));
         out.writeByte((byte) (hasDemoMode ? 1 : 0));
         out.writeByte((byte) (hasBatteryBeep ? 1 : 0));
+        out.writeByte((byte) (hasBeepMuteTime ? 1 : 0));
+        out.writeByte((byte) (hasLedStatus ? 1 : 0));
         out.writeByte((byte) (hasLoraInterval ? 1 : 0));
         out.writeByte((byte) (hasEddyStone ? 1 : 0));
         out.writeByte((byte) (hasIbeacon ? 1 : 0));
@@ -1049,6 +1063,12 @@ public class SensoroDevice extends BLEDevice implements Parcelable, Cloneable {
     public Integer getBatteryBeep() {
         return batteryBeep;
     }
+    public Integer getBeepMuteTime() {
+        return beepMuteTime;
+    }
+    public Integer getLedStatus() {
+        return ledStatus;
+    }
 
     public void setDemoMode(Integer demoMode) {
         this.demoMode = demoMode;
@@ -1056,6 +1076,14 @@ public class SensoroDevice extends BLEDevice implements Parcelable, Cloneable {
 
     public void setBatteryBeep(Integer batteryBeep) {
         this.batteryBeep = batteryBeep;
+    }
+
+    public void setBeepMuteTime(Integer beepMuteTime) {
+        this.beepMuteTime = beepMuteTime;
+    }
+
+    public void setLedStatus(Integer ledStatus) {
+        this.ledStatus = ledStatus;
     }
 
     public boolean hasConfirm() {
@@ -1074,11 +1102,27 @@ public class SensoroDevice extends BLEDevice implements Parcelable, Cloneable {
         return hasBatteryBeep;
     }
 
+    public boolean hasBeepMuteTime() {
+        return hasBeepMuteTime;
+    }
+
+    public boolean hasLedStatus() {
+        return hasLedStatus;
+    }
+
     public void setHasDemoMode(boolean hasDemoMode) {
         this.hasDemoMode = hasDemoMode;
     }
     public void setHasBatteryBeep(boolean hasBatteryBeep) {
         this.hasBatteryBeep = hasBatteryBeep;
+    }
+
+    public void setHasBeepMuteTime(boolean hasBeepMuteTime) {
+        this.hasBeepMuteTime = hasBeepMuteTime;
+    }
+
+    public void setHasLedStatus(boolean hasLedStatus) {
+        this.hasLedStatus = hasLedStatus;
     }
 
 //    public SensoroSensor getSensoroSensor() {
