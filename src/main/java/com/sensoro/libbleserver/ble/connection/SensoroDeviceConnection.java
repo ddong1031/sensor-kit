@@ -175,6 +175,7 @@ public class SensoroDeviceConnection {
                     reConnectDevice(ResultCode.BLUETOOTH_ERROR, "连接失败 disconnect");
                 } else {
                     reConnectCount = 0;
+                    sensoroConnectionCallback.onConnectedFailure(ResultCode.BLUETOOTH_ERROR);
                 }
                 LogUtils.loge("设备断开");
             }
@@ -612,7 +613,6 @@ public class SensoroDeviceConnection {
      *
      * @param password                  If beacon has no password, set value null.
      * @param sensoroConnectionCallback The callback of beacon connection.
-     * @throws Exception
      */
     public void connect(String password, final SensoroConnectionCallback sensoroConnectionCallback) throws Exception {
         if (context == null) {
@@ -651,6 +651,7 @@ public class SensoroDeviceConnection {
                 });
 
             } else {
+                reConnectCount = 0;
                 connectDevice(sensoroConnectionCallback);
             }
         }
@@ -761,12 +762,12 @@ public class SensoroDeviceConnection {
                                 parseData(array);
                                 taskHandler.removeCallbacks(connectTimeoutRunnable);
                             }
-                        } catch (Exception e) {
+                        } catch (final Exception e) {
                             e.printStackTrace();
                             runOnMainThread(new Runnable() {
                                 @Override
                                 public void run() {
-                                    LogUtils.loge("数据写入 catch");
+                                    LogUtils.loge("数据写入 catch"+e.getMessage());
                                     freshCache();
                                     sensoroConnectionCallback.onConnectedFailure(ResultCode.PARSE_ERROR);
                                 }
