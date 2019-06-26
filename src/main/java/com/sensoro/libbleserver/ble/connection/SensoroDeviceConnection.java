@@ -2350,6 +2350,16 @@ public class SensoroDeviceConnection {
             if (acrelData.hasCt()) {
                 sensoroSensorTest.acrelFires.ct = acrelData.getCt();
             }
+
+            sensoroSensorTest.acrelFires.hasIn = acrelData.hasIn();
+            if (acrelData.hasIn()) {
+                sensoroSensorTest.acrelFires.in = acrelData.getIn();
+            }
+
+            sensoroSensorTest.acrelFires.hasBuzzer = acrelData.hasBuzzer();
+            if (acrelData.hasIn()) {
+                sensoroSensorTest.acrelFires.buzzer = acrelData.getBuzzer();
+            }
         }
     }
 
@@ -3296,9 +3306,19 @@ public class SensoroDeviceConnection {
             if (sensoroSensorTest.acrelFires.hasCt) {
                 builder.setCt(sensoroSensorTest.acrelFires.ct);
             }
-//            if (sensoroSensorTest.acrelFires.hasCmd) {
+
+            if (sensoroSensorTest.acrelFires.hasCmd) {
             builder.setCmd(sensoroSensorTest.acrelFires.cmd);
-//            }
+            }
+
+            if (sensoroSensorTest.acrelFires.hasIn) {
+                builder.setCt(sensoroSensorTest.acrelFires.in);
+            }
+
+            if (sensoroSensorTest.acrelFires.hasBuzzer) {
+                builder.setCt(sensoroSensorTest.acrelFires.buzzer);
+            }
+
             msgNodeBuilder.setAcrelData(builder);
 
         }
