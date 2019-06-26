@@ -64,6 +64,9 @@ public class CmdType {
     //安瑞科三相电
     public static final int CMD_ACREL_RESET = 0x111;
     public static final int CMD_ACREL_SELF_CHECK = 0x112;
+    public static final int CMD_ACREL_QUERY = 0x117;
+    public static final int CMD_ACREL_MUTE = 0x118;
+    public static final int CMD_ACREL_ZERO_CLEARING = 0x119;
     //嘉德 自研烟感
     public static final int CMD_CAYMAN_SELEF_CHECK = 0x113;
     public static final int CMD_CAYMAN_RESET = 0x114;

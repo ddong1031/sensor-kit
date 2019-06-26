@@ -175,6 +175,7 @@ public class SensoroDeviceConnection {
                     reConnectDevice(ResultCode.BLUETOOTH_ERROR, "连接失败 disconnect");
                 } else {
                     reConnectCount = 0;
+                    sensoroConnectionCallback.onConnectedFailure(ResultCode.BLUETOOTH_ERROR);
                 }
                 LogUtils.loge("设备断开");
             }
@@ -612,7 +613,6 @@ public class SensoroDeviceConnection {
      *
      * @param password                  If beacon has no password, set value null.
      * @param sensoroConnectionCallback The callback of beacon connection.
-     * @throws Exception
      */
     public void connect(String password, final SensoroConnectionCallback sensoroConnectionCallback) throws Exception {
         if (context == null) {
@@ -651,6 +651,7 @@ public class SensoroDeviceConnection {
                 });
 
             } else {
+                reConnectCount = 0;
                 connectDevice(sensoroConnectionCallback);
             }
         }
@@ -723,7 +724,6 @@ public class SensoroDeviceConnection {
                         }
                     }
                     break;
-                //固件交互，写入命令，返回一般都是这个，所以命令，如自检，设置，cmdtype皆设置为如此
                 case CmdType.CMD_W_CFG:
                     if (data.length >= 4) {
                         final byte retCode = data[3];
@@ -731,7 +731,7 @@ public class SensoroDeviceConnection {
                             runOnMainThread(new Runnable() {
                                 @Override
                                 public void run() {
-                                    writeCallbackHashMap.get(cmdType).onWriteSuccess(null, CmdType.CMD_NULL);
+                                    writeCallbackHashMap.get(cmdType).onWriteSuccess(null, CmdType.CMD_W_CFG);
                                 }
                             });
                         } else {
@@ -762,12 +762,12 @@ public class SensoroDeviceConnection {
                                 parseData(array);
                                 taskHandler.removeCallbacks(connectTimeoutRunnable);
                             }
-                        } catch (Exception e) {
+                        } catch (final Exception e) {
                             e.printStackTrace();
                             runOnMainThread(new Runnable() {
                                 @Override
                                 public void run() {
-                                    LogUtils.loge("数据写入 catch");
+                                    LogUtils.loge("数据写入 catch"+e.getMessage());
                                     freshCache();
                                     sensoroConnectionCallback.onConnectedFailure(ResultCode.PARSE_ERROR);
                                 }
@@ -801,13 +801,14 @@ public class SensoroDeviceConnection {
                     }
                     break;
                 case CmdType.CMD_SET_CAYMAN_CMD:
+                case CmdType.CMD_CAYMAN_RESET:
                     if (data.length >= 4) {
                         final byte retCode = data[3];
                         if (retCode == ResultCode.CODE_DEVICE_SUCCESS) {
                             runOnMainThread(new Runnable() {
                                 @Override
                                 public void run() {
-                                    writeCallbackHashMap.get(cmdType).onWriteSuccess(null, CmdType.CMD_SET_CAYMAN_CMD);
+                                    writeCallbackHashMap.get(cmdType).onWriteSuccess(null, cmdType);
                                 }
                             });
                         } else {
@@ -815,7 +816,7 @@ public class SensoroDeviceConnection {
                             runOnMainThread(new Runnable() {
                                 @Override
                                 public void run() {
-                                    writeCallbackHashMap.get(cmdType).onWriteFailure(retCode, CmdType.CMD_SET_CAYMAN_CMD);
+                                    writeCallbackHashMap.get(cmdType).onWriteFailure(retCode, cmdType);
                                 }
                             });
 
@@ -1434,6 +1435,24 @@ public class SensoroDeviceConnection {
             sensoroDevice.setHasDemoMode(hasDemoMode);
             if (hasDemoMode) {
                 sensoroDevice.setDemoMode(appParam.getDemoMode());
+            }
+
+            boolean hasLowBatteryBeep = appParam.hasLowBatteryBeep();
+            sensoroDevice.setHasBatteryBeep(hasLowBatteryBeep);
+            if (hasLowBatteryBeep) {
+                sensoroDevice.setBatteryBeep(appParam.getLowBatteryBeep());
+            }
+
+            boolean hasBeepMuteTime = appParam.hasBeepMuteTime();
+            sensoroDevice.setHasBeepMuteTime(hasBeepMuteTime);
+            if (hasBeepMuteTime) {
+                sensoroDevice.setBeepMuteTime(appParam.getBeepMuteTime());
+            }
+
+            boolean hasLedStatus = appParam.hasLedStatus();
+            sensoroDevice.setHasLedStatus(hasLedStatus);
+            if (hasLedStatus) {
+                sensoroDevice.setLedStatus(appParam.getLedStatus());
             }
         }
     }
@@ -2228,6 +2247,31 @@ public class SensoroDeviceConnection {
             if (caymanData.hasValueOfBatb()) {
                 sensoroSensorTest.cayManData.valueOfBatb = caymanData.getValueOfBatb();
             }
+            sensoroSensorTest.cayManData.hasHumanDetectionTime = caymanData.hasHumanDetectionTime();
+            if (caymanData.hasHumanDetectionTime()) {
+                sensoroSensorTest.cayManData.humanDetectionTime = caymanData.getHumanDetectionTime();
+            }
+            sensoroSensorTest.cayManData.hasDefenseMode = caymanData.hasDefenseMode();
+            if (caymanData.hasDefenseMode()) {
+                sensoroSensorTest.cayManData.defenseMode = caymanData.getDefenseMode();
+            }
+            sensoroSensorTest.cayManData.hasDefenseTimerMode = caymanData.hasDefenseTimerMode();
+            if (caymanData.hasDefenseTimerMode()) {
+                sensoroSensorTest.cayManData.defenseTimerMode = caymanData.getDefenseTimerMode();
+            }
+            sensoroSensorTest.cayManData.hasDefenseModeStartTime = caymanData.hasDefenseModeStartTime();
+            if (caymanData.hasDefenseModeStartTime()) {
+                sensoroSensorTest.cayManData.defenseModeStartTime = caymanData.getDefenseModeStartTime();
+            }
+            sensoroSensorTest.cayManData.hasDefenseModeStopTime = caymanData.hasDefenseModeStopTime();
+            if (caymanData.hasDefenseModeStopTime()) {
+                sensoroSensorTest.cayManData.defenseModeStopTime = caymanData.getDefenseModeStopTime();
+            }
+            sensoroSensorTest.cayManData.hasInvadeAlarm = caymanData.hasInvadeAlarm();
+            if (caymanData.hasInvadeAlarm()) {
+                sensoroSensorTest.cayManData.invadeAlarm = caymanData.getInvadeAlarm();
+            }
+
 
         }
     }
@@ -2569,14 +2613,17 @@ public class SensoroDeviceConnection {
                     loraParamBuilder.setActivition(MsgNode1V1M5.Activtion.valueOf(deviceConfiguration.getActivation()));
                 }
                 List<SensoroChannel> channels = deviceConfiguration.getChannelList();
-                for (int i = 0; i < channels.size(); i++) {
-                    MsgNode1V1M5.Channel.Builder builder1 = MsgNode1V1M5.Channel.newBuilder();
-                    SensoroChannel sensoroChannel = channels.get(i);
-                    builder1.setFrequency(sensoroChannel.frequency);
-                    builder1.setRx1Frequency(sensoroChannel.rx1Frequency);
+                if (channels != null) {
+                    for (int i = 0; i < channels.size(); i++) {
+                        MsgNode1V1M5.Channel.Builder builder1 = MsgNode1V1M5.Channel.newBuilder();
+                        SensoroChannel sensoroChannel = channels.get(i);
+                        builder1.setFrequency(sensoroChannel.frequency);
+                        builder1.setRx1Frequency(sensoroChannel.rx1Frequency);
 //                    loraParamBuilder.setChannels(i,builder1);
-                    loraParamBuilder.addChannels(builder1);
+                        loraParamBuilder.addChannels(builder1);
+                    }
                 }
+
 
                 builder.setLpwanParam(loraParamBuilder);
                 byte[] data = builder.build().toByteArray();
@@ -3301,6 +3348,24 @@ public class SensoroDeviceConnection {
             if (sensoroSensorTest.cayManData.hasValueOfBatb) {
                 builder.setValueOfBatb(sensoroSensorTest.cayManData.valueOfBatb);
             }
+            if (sensoroSensorTest.cayManData.hasHumanDetectionTime) {
+                builder.setHumanDetectionTime(sensoroSensorTest.cayManData.humanDetectionTime);
+            }
+            if (sensoroSensorTest.cayManData.hasDefenseMode) {
+                builder.setDefenseMode(sensoroSensorTest.cayManData.defenseMode);
+            }
+            if (sensoroSensorTest.cayManData.hasDefenseTimerMode) {
+                builder.setDefenseTimerMode(sensoroSensorTest.cayManData.defenseTimerMode);
+            }
+            if (sensoroSensorTest.cayManData.hasDefenseModeStartTime) {
+                builder.setDefenseModeStartTime(sensoroSensorTest.cayManData.defenseModeStartTime);
+            }
+            if (sensoroSensorTest.cayManData.hasDefenseModeStopTime) {
+                builder.setDefenseModeStopTime(sensoroSensorTest.cayManData.defenseModeStopTime);
+            }
+            if (sensoroSensorTest.cayManData.hasInvadeAlarm) {
+                builder.setInvadeAlarm(sensoroSensorTest.cayManData.invadeAlarm);
+            }
 
             msgNodeBuilder.setCaymanData(builder);
         }
@@ -3385,6 +3450,19 @@ public class SensoroDeviceConnection {
             if (sensoroDevice.hasDemoMode()) {
                 appBuilder.setDemoMode(sensoroDevice.getDemoMode());
             }
+
+            if (sensoroDevice.hasBatteryBeep()) {
+                appBuilder.setLowBatteryBeep(sensoroDevice.getBatteryBeep());
+            }
+
+            if(sensoroDevice.hasBeepMuteTime()){
+                appBuilder.setBeepMuteTime(sensoroDevice.getBeepMuteTime());
+            }
+
+            if (sensoroDevice.hasLedStatus()) {
+                appBuilder.setLedStatus(sensoroDevice.getLedStatus());
+            }
+
             msgNodeBuilder.setAppParam(appBuilder);
         }
     }
@@ -3404,13 +3482,13 @@ public class SensoroDeviceConnection {
      * @param writeCallback
      */
     public void writeDemoModeCmd(int demoMode, SensoroWriteCallback writeCallback) {
-        writeCallbackHashMap.put(CmdType.CMD_W_CFG, writeCallback);
+        writeCallbackHashMap.put(CmdType.CMD_SET_ELEC_CMD, writeCallback);
         MsgNode1V1M5.AppParam.Builder builder = MsgNode1V1M5.AppParam.newBuilder();
         builder.setDemoMode(demoMode);
         MsgNode1V1M5.MsgNode.Builder msgNode = MsgNode1V1M5.MsgNode.newBuilder();
         msgNode.setAppParam(builder);
         byte[] data = msgNode.build().toByteArray();
-        writeData05Cmd(data, CmdType.CMD_W_CFG, writeCallback);
+        writeData05Cmd(data, CmdType.CMD_SET_ELEC_CMD, writeCallback);
     }
 
     /**
@@ -4042,27 +4120,33 @@ public class SensoroDeviceConnection {
     }
 
     public void writeMantunCmd(MsgNode1V1M5.MantunData.Builder builder, SensoroWriteCallback writeCallback) {
-        writeCallbackHashMap.put(CmdType.CMD_W_CFG, writeCallback);
+        writeCallbackHashMap.put(CmdType.CMD_SET_ELEC_CMD, writeCallback);
         MsgNode1V1M5.MsgNode.Builder msgNodeBuilder = MsgNode1V1M5.MsgNode.newBuilder();
         msgNodeBuilder.addMtunData(builder);
         byte[] data = msgNodeBuilder.build().toByteArray();
-        writeData05Cmd(data, CmdType.CMD_W_CFG, writeCallback);
+        writeData05Cmd(data, CmdType.CMD_SET_ELEC_CMD, writeCallback);
     }
 
     public void writeAcrelCmd(MsgNode1V1M5.AcrelData.Builder builder, SensoroWriteCallback writeCallback) {
-        writeCallbackHashMap.put(CmdType.CMD_W_CFG, writeCallback);
+        writeCallbackHashMap.put(CmdType.CMD_SET_ELEC_CMD, writeCallback);
         MsgNode1V1M5.MsgNode.Builder msgNodeBuilder = MsgNode1V1M5.MsgNode.newBuilder();
         msgNodeBuilder.setAcrelData(builder);
         byte[] data = msgNodeBuilder.build().toByteArray();
-        writeData05Cmd(data, CmdType.CMD_W_CFG, writeCallback);
+        writeData05Cmd(data, CmdType.CMD_SET_ELEC_CMD, writeCallback);
     }
 
-    public void writeCaymanCmd(MsgNode1V1M5.Cayman.Builder builder, SensoroWriteCallback writeCallback) {
-        writeCallbackHashMap.put(CmdType.CMD_SET_CAYMAN_CMD, writeCallback);
+    public void writeCaymanCmd(MsgNode1V1M5.Cayman.Builder builder, int cmdCaymanReset, SensoroWriteCallback writeCallback) {
         MsgNode1V1M5.MsgNode.Builder msgNodeBuilder = MsgNode1V1M5.MsgNode.newBuilder();
         msgNodeBuilder.setCaymanData(builder);
         byte[] data = msgNodeBuilder.build().toByteArray();
-        writeData05Cmd(data, CmdType.CMD_SET_CAYMAN_CMD, writeCallback);
+        if (cmdCaymanReset == -1) {
+            writeCallbackHashMap.put(CmdType.CMD_SET_CAYMAN_CMD, writeCallback);
+            writeData05Cmd(data, CmdType.CMD_SET_CAYMAN_CMD, writeCallback);
+        }else{
+            writeCallbackHashMap.put(CmdType.CMD_CAYMAN_RESET, writeCallback);
+            writeData05Cmd(data, CmdType.CMD_CAYMAN_RESET, writeCallback);
+        }
+
     }
 
     public void setOnSensoroDirectWriteDfuCallBack(SensoroDirectWriteDfuCallBack sensoroDirectWriteDfuCallBack) {
