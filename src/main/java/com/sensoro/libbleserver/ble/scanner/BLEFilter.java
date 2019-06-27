@@ -16,6 +16,8 @@ public class BLEFilter {
     public static final String SENSOR_SERVICE_UUID_E3412 = "3412";
     public static final String DEVICE_SERVICE_DATA_UUID = "6CCE";
     public static final String STATION_SERVICE_DATA_UUID = "A418";
+    public static final int MANUFACTURER_ID_APPLE = 0x004C;
+
 
     public static byte[] umm2ScanFilter(String uuid, Integer major, Integer minor) {
         byte[] result = new byte[23];

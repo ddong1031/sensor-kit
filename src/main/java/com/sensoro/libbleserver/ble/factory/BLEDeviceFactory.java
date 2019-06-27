@@ -4,6 +4,7 @@ import android.os.ParcelUuid;
 import android.util.Log;
 
 import com.sensoro.libbleserver.ble.entity.BLEDevice;
+import com.sensoro.libbleserver.ble.entity.IBeacon;
 import com.sensoro.libbleserver.ble.entity.SensoroData;
 import com.sensoro.libbleserver.ble.entity.SensoroDevice;
 import com.sensoro.libbleserver.ble.entity.SensoroSensor;
@@ -381,6 +382,8 @@ public class BLEDeviceFactory {
             if (scanBLEResult == null) {
                 return null;
             }
+
+
             Map<ParcelUuid, byte[]> serviceData = scanBLEResult.getScanRecord().getServiceData();
             if (serviceData == null) {
                 return null;
@@ -388,9 +391,14 @@ public class BLEDeviceFactory {
             ParcelUuid stationParcelUuid = BLEFilter.createServiceDataUUID(BLEFilter.STATION_SERVICE_DATA_UUID);
             ParcelUuid deviceParcelUuid = BLEFilter.createServiceDataUUID(BLEFilter.DEVICE_SERVICE_DATA_UUID);
             ParcelUuid sensorParcelUuid = BLEFilter.createServiceDataUUID(BLEFilter.SENSOR_SERVICE_UUID_E3412);
+
+
             byte sensor_data[] = scanBLEResult.getScanRecord().getServiceData(sensorParcelUuid);
             byte device_data[] = scanBLEResult.getScanRecord().getServiceData(deviceParcelUuid);
             byte station_data[] = scanBLEResult.getScanRecord().getServiceData(stationParcelUuid);
+            IBeacon iBeacon = IBeacon.createIBeacon(scanBLEResult);
+
+
             SensoroSensor sensoroSensor = null;
             if (sensor_data != null) {
                 E3214 e3214 = E3214.parseE3214(sensor_data);
@@ -606,6 +614,7 @@ public class BLEDeviceFactory {
 
                 bleDevice.setSn(SensoroUUID.parseSN(sn));
                 Log.e("zxh", ":parse::" + bleDevice.getSn() + ">>" + bleDevice.getSn().contains("BB8F"));
+
                 byte[] hardware = new byte[2];
                 System.arraycopy(device_data, 8, hardware, 0, hardware.length);
                 int hardwareCode = (int) hardware[0] & 0xff;
@@ -639,6 +648,9 @@ public class BLEDeviceFactory {
                 }
                 bleDevice.setRssi(scanBLEResult.getRssi());
                 bleDevice.setType(BLEDevice.TYPE_DEVICE);
+                if (null != iBeacon) {
+                    bleDevice.setiBeacon(iBeacon);
+                }
                 return bleDevice;
             } else if (station_data != null) {
                 SensoroStation bleDevice = new SensoroStation();
