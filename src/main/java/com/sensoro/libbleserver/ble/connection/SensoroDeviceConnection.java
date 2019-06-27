@@ -812,7 +812,7 @@ public class SensoroDeviceConnection {
                                 }
                             });
                         } else {
-                            LogUtils.loge("CMD_W_CFG 失败");
+                            LogUtils.loge("cayman 失败");
                             runOnMainThread(new Runnable() {
                                 @Override
                                 public void run() {
@@ -4214,6 +4214,41 @@ public class SensoroDeviceConnection {
         msgNodeBuilder.setBaymaxData(builder);
         byte[] data = msgNodeBuilder.build().toByteArray();
         writeData05Cmd(data, CmdType.CMD_SET_BAYMAX_CMD, writeCallback);
+    }
+
+    public void writeAppBeepMuteTime(int beepTime, SensoroWriteCallback writeCallback) {
+        writeCallbackHashMap.put(CmdType.CMD_W_CFG,writeCallback);
+//        MsgNode1V1M5.AppParam.Builder builder = MsgNode1V1M5.AppParam.newBuilder();
+//        builder.setBeepMuteTime(beepTime);
+//        builder.setCmd(MsgNode1V1M5.AppCmd.APP_CMD_TIMING_MUTE);
+//        byte[] bytes = builder.build().toByteArray();
+//        writeData05Cmd(bytes,CmdType.CMD_SET_ELEC_CMD,writeCallback);
+
+        MsgNode1V1M5.MsgNode.Builder nodeBuilder = MsgNode1V1M5.MsgNode.newBuilder();
+        MsgNode1V1M5.AppParam.Builder appBuilder = MsgNode1V1M5.AppParam.newBuilder();
+        appBuilder.setCmd(MsgNode1V1M5.AppCmd.APP_CMD_TIMING_MUTE);
+        appBuilder.setBeepMuteTime(beepTime);
+        nodeBuilder.setAppParam(appBuilder);
+        byte[] data = nodeBuilder.build().toByteArray();
+        int data_length = data.length;
+
+        int total_length = data_length + 3;
+
+        byte[] total_data = new byte[total_length];
+
+        byte[] length_data = SensoroUUID.intToByteArray(data_length + 1, 2);
+
+        byte[] version_data = SensoroUUID.intToByteArray(5, 1);
+
+        System.arraycopy(length_data, 0, total_data, 0, 2);
+        System.arraycopy(version_data, 0, total_data, 2, 1);
+        System.arraycopy(data, 0, total_data, 3, data_length);
+
+        int resultCode = bluetoothLEHelper4.writeConfigurations(total_data, CmdType.CMD_W_CFG,
+                BluetoothLEHelper4.GattInfo.SENSORO_DEVICE_WRITE_CHAR_UUID);
+        if (resultCode != ResultCode.SUCCESS) {
+            writeCallback.onWriteFailure(ResultCode.CODE_DEVICE_DFU_ERROR, CmdType.CMD_NULL);
+        }
     }
 
 
