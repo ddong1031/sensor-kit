@@ -767,7 +767,7 @@ public class SensoroDeviceConnection {
                             runOnMainThread(new Runnable() {
                                 @Override
                                 public void run() {
-                                    LogUtils.loge("数据写入 catch"+e.getMessage());
+                                    LogUtils.loge("数据写入 catch" + e.getMessage());
                                     freshCache();
                                     sensoroConnectionCallback.onConnectedFailure(ResultCode.PARSE_ERROR);
                                 }
@@ -2707,6 +2707,7 @@ public class SensoroDeviceConnection {
 
     /**
      * 暂时没有用，不知道干啥的，不删了
+     *
      * @param sensoroDeviceConfiguration
      * @param writeCallback
      * @throws InvalidProtocolBufferException
@@ -2903,7 +2904,7 @@ public class SensoroDeviceConnection {
         writeBaymaxCh4Lpg(msgNodeBuilder, sensoroSensorTest);
 
         //ibeacon
-        writeIbeacon(msgNodeBuilder,sensoroSensorTest);
+        writeIbeacon(msgNodeBuilder, sensoroSensorTest);
 
         writeAppParam(sensoroDevice, msgNodeBuilder);
 
@@ -3475,7 +3476,7 @@ public class SensoroDeviceConnection {
                 appBuilder.setLowBatteryBeep(sensoroDevice.getBatteryBeep());
             }
 
-            if(sensoroDevice.hasBeepMuteTime()){
+            if (sensoroDevice.hasBeepMuteTime()) {
                 appBuilder.setBeepMuteTime(sensoroDevice.getBeepMuteTime());
             }
 
@@ -4155,18 +4156,21 @@ public class SensoroDeviceConnection {
         writeData05Cmd(data, CmdType.CMD_SET_ELEC_CMD, writeCallback);
     }
 
-    public void writeCaymanCmd(MsgNode1V1M5.Cayman.Builder builder, int cmdCaymanReset, SensoroWriteCallback writeCallback) {
+    public void writeCaymanCmd(MsgNode1V1M5.Cayman.Builder builder, SensoroWriteCallback writeCallback) {
         MsgNode1V1M5.MsgNode.Builder msgNodeBuilder = MsgNode1V1M5.MsgNode.newBuilder();
         msgNodeBuilder.setCaymanData(builder);
         byte[] data = msgNodeBuilder.build().toByteArray();
-        if (cmdCaymanReset == -1) {
-            writeCallbackHashMap.put(CmdType.CMD_SET_CAYMAN_CMD, writeCallback);
-            writeData05Cmd(data, CmdType.CMD_SET_CAYMAN_CMD, writeCallback);
-        }else{
-            writeCallbackHashMap.put(CmdType.CMD_CAYMAN_RESET, writeCallback);
-            writeData05Cmd(data, CmdType.CMD_CAYMAN_RESET, writeCallback);
-        }
+        writeCallbackHashMap.put(CmdType.CMD_SET_CAYMAN_CMD, writeCallback);
+        writeData05Cmd(data, CmdType.CMD_SET_CAYMAN_CMD, writeCallback);
 
+    }
+
+    public void writeCaymanCmdReset(MsgNode1V1M5.Cayman.Builder builder, SensoroWriteCallback writeCallback) {
+        MsgNode1V1M5.MsgNode.Builder msgNodeBuilder = MsgNode1V1M5.MsgNode.newBuilder();
+        msgNodeBuilder.setCaymanData(builder);
+        byte[] data = msgNodeBuilder.build().toByteArray();
+        writeCallbackHashMap.put(CmdType.CMD_CAYMAN_RESET, writeCallback);
+        writeData05Cmd(data, CmdType.CMD_CAYMAN_RESET, writeCallback);
     }
 
     public void setOnSensoroDirectWriteDfuCallBack(SensoroDirectWriteDfuCallBack sensoroDirectWriteDfuCallBack) {
