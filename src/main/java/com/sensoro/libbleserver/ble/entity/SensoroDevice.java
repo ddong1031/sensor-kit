@@ -37,7 +37,6 @@ public class SensoroDevice extends BLEDevice implements Parcelable, Cloneable {
     String password;
     String dfuInfo;
     String band;
-    public IBeacon iBeacon;
     public int devAdr;
     int loraDr;
     int loraAdr;
@@ -398,7 +397,6 @@ public class SensoroDevice extends BLEDevice implements Parcelable, Cloneable {
         alarmLow = (Integer) in.readSerializable();
         hasLbtStatus = in.readByte() != 0;
         hasLbtThreshold = in.readByte() != 0;
-        iBeacon = (IBeacon) in.readSerializable();
     }
 
     @Override
@@ -495,7 +493,6 @@ public class SensoroDevice extends BLEDevice implements Parcelable, Cloneable {
         out.writeSerializable(alarmLow);
         out.writeByte((byte) (hasLbtStatus ? 1 : 0));
         out.writeByte((byte) (hasLbtThreshold ? 1 : 0));
-        out.writeSerializable(iBeacon);
     }
 
     public static final Creator<SensoroDevice> CREATOR = new Creator<SensoroDevice>() {
@@ -1278,12 +1275,5 @@ public class SensoroDevice extends BLEDevice implements Parcelable, Cloneable {
         this.hasSensorParam = hasSensorParam;
     }
 
-    public IBeacon getiBeacon() {
-        return iBeacon;
-    }
-
-    public void setiBeacon(IBeacon iBeacon) {
-        this.iBeacon = iBeacon;
-    }
 }
 

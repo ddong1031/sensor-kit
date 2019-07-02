@@ -597,6 +597,9 @@ public class BLEDeviceFactory {
                     sensoroSensor.waterPressure.data_float = pressureMap.get(sensoroSensor.macAddress);
                     //
                     sensoroSensor.setType(BLEDevice.TYPE_SENSOR);
+                    if (null!=iBeacon) {
+                        sensoroSensor.iBeacon = iBeacon;
+                    }
                     if (sensoroSensor.getSn() == null) {
                         sensoroSensor = null;
                     }
@@ -649,7 +652,7 @@ public class BLEDeviceFactory {
                 bleDevice.setRssi(scanBLEResult.getRssi());
                 bleDevice.setType(BLEDevice.TYPE_DEVICE);
                 if (null != iBeacon) {
-                    bleDevice.setiBeacon(iBeacon);
+                    bleDevice.iBeacon = iBeacon;
                 }
                 return bleDevice;
             } else if (station_data != null) {
@@ -683,6 +686,9 @@ public class BLEDeviceFactory {
                 bleDevice.setRssi(scanBLEResult.getRssi());
                 bleDevice.setMacAddress(scanBLEResult.getDevice().getAddress());
                 bleDevice.setType(BLEDevice.TYPE_STATION);
+                if (null!=iBeacon) {
+                    sensoroSensor.iBeacon = iBeacon;
+                }
                 return bleDevice;
             } else {
                 if (sensor_data != null) {
