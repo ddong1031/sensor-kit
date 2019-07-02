@@ -20,6 +20,7 @@ public class BLEDevice implements Parcelable, Cloneable {
     public int rssi;
     public int type;
     public long lastFoundTime;
+    public IBeacon iBeacon;
 
     protected BLEDevice() {
         lastFoundTime = System.currentTimeMillis();
@@ -34,6 +35,7 @@ public class BLEDevice implements Parcelable, Cloneable {
         type = in.readInt();
         batteryLevel = in.readInt();
         rssi = in.readInt();
+        iBeacon = (IBeacon) in.readSerializable();
     }
 
 
@@ -52,6 +54,8 @@ public class BLEDevice implements Parcelable, Cloneable {
         parcel.writeInt(type);
         parcel.writeInt(batteryLevel);
         parcel.writeInt(rssi);
+        parcel.writeSerializable(iBeacon);
+
     }
 
     public static final Parcelable.Creator<BLEDevice> CREATOR = new Parcelable.Creator<BLEDevice>() {
