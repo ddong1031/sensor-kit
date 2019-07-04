@@ -4217,8 +4217,8 @@ public class SensoroDeviceConnection {
     }
 
     /**
-     * 消音时间范围限定1-30minute
-     * @param beepTime 传入的单位是minute
+     *
+     * @param beepTime 传入的单位是s
      * @param writeCallback
      */
     public void writeAppBeepMuteTime(int beepTime, SensoroWriteCallback writeCallback) {
@@ -4232,7 +4232,7 @@ public class SensoroDeviceConnection {
         MsgNode1V1M5.MsgNode.Builder nodeBuilder = MsgNode1V1M5.MsgNode.newBuilder();
         MsgNode1V1M5.AppParam.Builder appBuilder = MsgNode1V1M5.AppParam.newBuilder();
         appBuilder.setCmd(MsgNode1V1M5.AppCmd.APP_CMD_TIMING_MUTE);
-        appBuilder.setBeepMuteTime(beepTime*60);//传给设备的单位是s，所以*60
+        appBuilder.setBeepMuteTime(beepTime);
         nodeBuilder.setAppParam(appBuilder);
         byte[] data = nodeBuilder.build().toByteArray();
         int data_length = data.length;
