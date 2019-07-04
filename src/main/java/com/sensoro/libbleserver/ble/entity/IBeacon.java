@@ -52,7 +52,7 @@ public class IBeacon implements Parcelable, Cloneable, Serializable {
     int major;
     int minor;
     int measuredPower;
-    String macAddress; // MAC
+    public String macAddress; // MAC
 
     public static IBeacon createIBeacon(ScanBLEResult scanBLEResult) {
         SparseArray<byte[]> manufacturerSpecificData = scanBLEResult.getScanRecord().getManufacturerSpecificData();
