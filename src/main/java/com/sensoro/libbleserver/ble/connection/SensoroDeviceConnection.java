@@ -2355,9 +2355,8 @@ public class SensoroDeviceConnection {
             if (acrelData.hasIn()) {
                 sensoroSensorTest.acrelFires.in = acrelData.getIn();
             }
-
             sensoroSensorTest.acrelFires.hasBuzzer = acrelData.hasBuzzer();
-            if (acrelData.hasIn()) {
+            if (acrelData.hasBuzzer()) {
                 sensoroSensorTest.acrelFires.buzzer = acrelData.getBuzzer();
             }
         }
@@ -3266,7 +3265,6 @@ public class SensoroDeviceConnection {
                 builder.setPasswd(sensoroSensorTest.acrelFires.passwd);
             }
             if (sensoroSensorTest.acrelFires.hasT1Th) {
-                int t1Th = sensoroSensorTest.acrelFires.t1Th;
                 builder.setT1Th(sensoroSensorTest.acrelFires.t1Th);
             }
             if (sensoroSensorTest.acrelFires.hasT2Th) {
@@ -3308,7 +3306,7 @@ public class SensoroDeviceConnection {
             }
 
             if (sensoroSensorTest.acrelFires.hasCmd) {
-            builder.setCmd(sensoroSensorTest.acrelFires.cmd);
+                builder.setCmd(sensoroSensorTest.acrelFires.cmd);
             }
 
             if (sensoroSensorTest.acrelFires.hasIn) {
@@ -4222,11 +4220,12 @@ public class SensoroDeviceConnection {
 
     /**
      * 消音时间范围限定1-30minute
-     * @param beepTime 传入的单位是minute
+     *
+     * @param beepTime      传入的单位是minute
      * @param writeCallback
      */
     public void writeAppBeepMuteTime(int beepTime, SensoroWriteCallback writeCallback) {
-        writeCallbackHashMap.put(CmdType.CMD_W_CFG,writeCallback);
+        writeCallbackHashMap.put(CmdType.CMD_W_CFG, writeCallback);
 //        MsgNode1V1M5.AppParam.Builder builder = MsgNode1V1M5.AppParam.newBuilder();
 //        builder.setBeepMuteTime(beepTime);
 //        builder.setCmd(MsgNode1V1M5.AppCmd.APP_CMD_TIMING_MUTE);
@@ -4236,7 +4235,7 @@ public class SensoroDeviceConnection {
         MsgNode1V1M5.MsgNode.Builder nodeBuilder = MsgNode1V1M5.MsgNode.newBuilder();
         MsgNode1V1M5.AppParam.Builder appBuilder = MsgNode1V1M5.AppParam.newBuilder();
         appBuilder.setCmd(MsgNode1V1M5.AppCmd.APP_CMD_TIMING_MUTE);
-        appBuilder.setBeepMuteTime(beepTime*60);//传给设备的单位是s，所以*60
+        appBuilder.setBeepMuteTime(beepTime * 60);//传给设备的单位是s，所以*60
         nodeBuilder.setAppParam(appBuilder);
         byte[] data = nodeBuilder.build().toByteArray();
         int data_length = data.length;
