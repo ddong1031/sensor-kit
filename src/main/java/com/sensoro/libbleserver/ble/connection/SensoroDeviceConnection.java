@@ -3310,13 +3310,12 @@ public class SensoroDeviceConnection {
             }
 
             if (sensoroSensorTest.acrelFires.hasIn) {
-                builder.setCt(sensoroSensorTest.acrelFires.in);
+                builder.setIn(sensoroSensorTest.acrelFires.in);
             }
 
             if (sensoroSensorTest.acrelFires.hasBuzzer) {
-                builder.setCt(sensoroSensorTest.acrelFires.buzzer);
+                builder.setBuzzer(sensoroSensorTest.acrelFires.buzzer);
             }
-
             msgNodeBuilder.setAcrelData(builder);
 
         }
