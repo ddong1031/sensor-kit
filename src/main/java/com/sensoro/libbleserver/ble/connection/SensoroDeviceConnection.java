@@ -767,7 +767,7 @@ public class SensoroDeviceConnection {
                             runOnMainThread(new Runnable() {
                                 @Override
                                 public void run() {
-                                    LogUtils.loge("数据写入 catch"+e.getMessage());
+                                    LogUtils.loge("数据写入 catch" + e.getMessage());
                                     freshCache();
                                     sensoroConnectionCallback.onConnectedFailure(ResultCode.PARSE_ERROR);
                                 }
@@ -2357,7 +2357,7 @@ public class SensoroDeviceConnection {
             }
 
             sensoroSensorTest.acrelFires.hasBuzzer = acrelData.hasBuzzer();
-            if (acrelData.hasIn()) {
+            if (acrelData.hasBuzzer()) {
                 sensoroSensorTest.acrelFires.buzzer = acrelData.getBuzzer();
             }
         }
@@ -2707,6 +2707,7 @@ public class SensoroDeviceConnection {
 
     /**
      * 暂时没有用，不知道干啥的，不删了
+     *
      * @param sensoroDeviceConfiguration
      * @param writeCallback
      * @throws InvalidProtocolBufferException
@@ -2903,7 +2904,7 @@ public class SensoroDeviceConnection {
         writeBaymaxCh4Lpg(msgNodeBuilder, sensoroSensorTest);
 
         //ibeacon
-        writeIbeacon(msgNodeBuilder,sensoroSensorTest);
+        writeIbeacon(msgNodeBuilder, sensoroSensorTest);
 
         writeAppParam(sensoroDevice, msgNodeBuilder);
 
@@ -3307,7 +3308,7 @@ public class SensoroDeviceConnection {
             }
 
             if (sensoroSensorTest.acrelFires.hasCmd) {
-            builder.setCmd(sensoroSensorTest.acrelFires.cmd);
+                builder.setCmd(sensoroSensorTest.acrelFires.cmd);
             }
 
             if (sensoroSensorTest.acrelFires.hasIn) {
@@ -3475,7 +3476,7 @@ public class SensoroDeviceConnection {
                 appBuilder.setLowBatteryBeep(sensoroDevice.getBatteryBeep());
             }
 
-            if(sensoroDevice.hasBeepMuteTime()){
+            if (sensoroDevice.hasBeepMuteTime()) {
                 appBuilder.setBeepMuteTime(sensoroDevice.getBeepMuteTime());
             }
 
@@ -4162,7 +4163,7 @@ public class SensoroDeviceConnection {
         if (cmdCaymanReset == -1) {
             writeCallbackHashMap.put(CmdType.CMD_SET_CAYMAN_CMD, writeCallback);
             writeData05Cmd(data, CmdType.CMD_SET_CAYMAN_CMD, writeCallback);
-        }else{
+        } else {
             writeCallbackHashMap.put(CmdType.CMD_CAYMAN_RESET, writeCallback);
             writeData05Cmd(data, CmdType.CMD_CAYMAN_RESET, writeCallback);
         }
@@ -4217,12 +4218,11 @@ public class SensoroDeviceConnection {
     }
 
     /**
-     *
-     * @param beepTime 传入的单位是s
+     * @param beepTime      传入的单位是s
      * @param writeCallback
      */
     public void writeAppBeepMuteTime(int beepTime, SensoroWriteCallback writeCallback) {
-        writeCallbackHashMap.put(CmdType.CMD_W_CFG,writeCallback);
+        writeCallbackHashMap.put(CmdType.CMD_W_CFG, writeCallback);
 //        MsgNode1V1M5.AppParam.Builder builder = MsgNode1V1M5.AppParam.newBuilder();
 //        builder.setBeepMuteTime(beepTime);
 //        builder.setCmd(MsgNode1V1M5.AppCmd.APP_CMD_TIMING_MUTE);
