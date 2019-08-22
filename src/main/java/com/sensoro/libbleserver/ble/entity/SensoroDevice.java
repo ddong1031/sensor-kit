@@ -70,6 +70,11 @@ public class SensoroDevice extends BLEDevice implements Parcelable, Cloneable {
     transient int lbtStatus;
     transient int lbtThreshold;
 
+
+
+    transient int rx2Frequency;
+    transient int rx2Datarate;
+
     byte dataVersion;
     boolean isIBeaconEnabled; // is beacon function enable.
     public boolean isDfu;
@@ -136,6 +141,27 @@ public class SensoroDevice extends BLEDevice implements Parcelable, Cloneable {
     }
 
     boolean hasSglFrequency;
+
+
+    public boolean hasRx2Frequency() {
+        return hasRx2Frequency;
+    }
+
+    public void setHasRx2Frequency(boolean hasRx2Frequency) {
+        this.hasRx2Frequency = hasRx2Frequency;
+    }
+
+    boolean hasRx2Frequency;
+
+    public boolean hasRx2Datarate() {
+        return hasRx2Datarate;
+    }
+
+    public void setHasRx2Datarate(boolean hasRx2Datarate) {
+        this.hasRx2Datarate = hasRx2Datarate;
+    }
+
+    boolean hasRx2Datarate;
 
     public boolean hasSglDatarate() {
         return hasSglDatarate;
@@ -303,6 +329,8 @@ public class SensoroDevice extends BLEDevice implements Parcelable, Cloneable {
         hasSglDatarate = false;
         hasLbtStatus = false;
         hasLbtThreshold = false;
+        hasRx2Datarate = false;
+        hasRx2Frequency = false;
     }
 
     protected SensoroDevice(Parcel in) {
@@ -397,6 +425,8 @@ public class SensoroDevice extends BLEDevice implements Parcelable, Cloneable {
         alarmLow = (Integer) in.readSerializable();
         hasLbtStatus = in.readByte() != 0;
         hasLbtThreshold = in.readByte() != 0;
+        hasRx2Datarate = in.readByte() != 0;
+        hasRx2Frequency = in.readByte() != 0;
     }
 
     @Override
@@ -493,6 +523,8 @@ public class SensoroDevice extends BLEDevice implements Parcelable, Cloneable {
         out.writeSerializable(alarmLow);
         out.writeByte((byte) (hasLbtStatus ? 1 : 0));
         out.writeByte((byte) (hasLbtThreshold ? 1 : 0));
+        out.writeByte((byte) (hasRx2Datarate ? 1 : 0));
+        out.writeByte((byte) (hasRx2Frequency ? 1 : 0));
     }
 
     public static final Creator<SensoroDevice> CREATOR = new Creator<SensoroDevice>() {
@@ -1226,6 +1258,22 @@ public class SensoroDevice extends BLEDevice implements Parcelable, Cloneable {
         return this;
     }
 
+
+    public int getRx2Frequency() {
+        return rx2Frequency;
+    }
+
+    public void setRx2Frequency(int rx2Frequency) {
+        this.rx2Frequency = rx2Frequency;
+    }
+
+    public int getRx2Datarate() {
+        return rx2Datarate;
+    }
+
+    public void setRx2Datarate(int rx2Datarate) {
+        this.rx2Datarate = rx2Datarate;
+    }
     public int getLbtStatus() {
         return lbtStatus;
     }

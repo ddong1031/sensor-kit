@@ -1578,6 +1578,24 @@ public class SensoroDeviceConnection {
                 sensoroDevice.setSglFrequency(lpwanParam.getSglFrequency());
             }
 
+
+            /**
+             * Rx2
+             */
+
+            boolean hasRx2Frequency = lpwanParam.hasRx2Frequency();
+            sensoroDevice.setHasRx2Frequency(hasRx2Frequency);
+            if (hasRx2Frequency) {
+                sensoroDevice.setRx2Frequency(lpwanParam.getRx2Frequency());
+            }
+
+
+            boolean hasRx2Datarate = lpwanParam.hasRx2Datarate();
+            sensoroDevice.setHasRx2Datarate(hasRx2Datarate);
+            if (hasRx2Datarate) {
+                sensoroDevice.setRx2Datarate(lpwanParam.getRx2Datarate());
+            }
+
             //lpwanParam.getChannelsList() 一定不为null，只不过数量会为空
             List<MsgNode1V1M5.Channel> channelsList = lpwanParam.getChannelsList();
             ArrayList<SensoroChannel> list = new ArrayList<>();
@@ -2604,17 +2622,17 @@ public class SensoroDeviceConnection {
                 }
 
 
-//                if (deviceConfiguration.hasSglStatus()) {
-//                    loraParamBuilder.setSglStatus(deviceConfiguration.sglStatus);
-//                }
-//
-//                if (deviceConfiguration.hasSglDataRate()) {
-//                    loraParamBuilder.setSglDatarate(deviceConfiguration.sglDatarate);
-//                }
-//
-//                if (deviceConfiguration.hasSglFrequency()) {
-//                    loraParamBuilder.setSglFrequency(deviceConfiguration.sglFrequency);
-//                }
+                if (deviceConfiguration.hasSglStatus()) {
+                    loraParamBuilder.setSglStatus(deviceConfiguration.getSglStatus());
+                }
+
+                if (deviceConfiguration.hasSglDatarate()) {
+                    loraParamBuilder.setSglDatarate(deviceConfiguration.getSglDatarate());
+                }
+
+                if (deviceConfiguration.hasSglFrequency()) {
+                    loraParamBuilder.setSglFrequency(deviceConfiguration.getSglFrequency());
+                }
                 List<Integer> channelList = deviceConfiguration.getChannelMaskList();
                 loraParamBuilder.addAllChannelMask(channelList);
                 loraParamBuilder.setAdr(deviceConfiguration.getLoraAdr());
