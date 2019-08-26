@@ -6447,7 +6447,7 @@ public final class MsgNode1V1M5 {
       public float getAlarmStepHigh() {
         return alarmStepHigh_;
       }
-      /**
+      /**SensorData
        * <code>optional float alarmStepHigh = 7;</code>
        *
        * <pre>

@@ -1454,6 +1454,16 @@ public class SensoroDeviceConnection {
             if (hasLedStatus) {
                 sensoroDevice.setLedStatus(appParam.getLedStatus());
             }
+
+
+            boolean hasAlertModeStatus = appParam.hasAlertModeStatus();
+
+            sensoroDevice.setHasAlertModeStatus(hasAlertModeStatus);
+            if (hasAlertModeStatus) {
+                sensoroDevice.setAlertModeStatus(appParam.getAlertModeStatus());
+            }
+
+
         }
     }
 
@@ -2633,6 +2643,33 @@ public class SensoroDeviceConnection {
                 if (deviceConfiguration.hasSglFrequency()) {
                     loraParamBuilder.setSglFrequency(deviceConfiguration.getSglFrequency());
                 }
+
+                /**
+                 * Rx2
+                 */
+
+                if (deviceConfiguration.hasRx2Frequency()) {
+                    loraParamBuilder.setRx2Frequency(deviceConfiguration.getRx2Frequency());
+                }
+
+
+                if (deviceConfiguration.hasRx2Datarate()) {
+                    loraParamBuilder.setRx2Datarate(deviceConfiguration.getRx2Datarate());
+                }
+
+
+                if (deviceConfiguration.hasAppParam()) {
+                    /**
+                     * alertModeStatus设备移动报警开关 （上|下）
+                     */
+                    MsgNode1V1M5.AppParam.Builder appBuilder = MsgNode1V1M5.AppParam.newBuilder();
+                    if (deviceConfiguration.hasAlertModeStatus()) {
+                        appBuilder.setAlertModeStatus(deviceConfiguration.getAlertModeStatus());
+                    }
+                    builder.setAppParam(appBuilder);
+                }
+
+
                 List<Integer> channelList = deviceConfiguration.getChannelMaskList();
                 loraParamBuilder.addAllChannelMask(channelList);
                 loraParamBuilder.setAdr(deviceConfiguration.getLoraAdr());
@@ -3501,6 +3538,12 @@ public class SensoroDeviceConnection {
             if (sensoroDevice.hasLedStatus()) {
                 appBuilder.setLedStatus(sensoroDevice.getLedStatus());
             }
+
+
+            if (sensoroDevice.hasAlertModeStatus()) {
+                appBuilder.setAlertModeStatus(sensoroDevice.getAlertModeStatus());
+            }
+
 
             msgNodeBuilder.setAppParam(appBuilder);
         }

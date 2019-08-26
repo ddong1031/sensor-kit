@@ -59,6 +59,9 @@ public class SensoroDevice extends BLEDevice implements Parcelable, Cloneable {
     Integer batteryBeep;
     Integer beepMuteTime;
     Integer ledStatus;
+
+
+    Integer alertModeStatus;
     Integer activation;
     public Integer delay;
     transient List<Integer> channelMaskList;
@@ -104,6 +107,10 @@ public class SensoroDevice extends BLEDevice implements Parcelable, Cloneable {
     boolean hasBatteryBeep;
     boolean hasBeepMuteTime;
     boolean hasLedStatus;
+
+
+
+    boolean hasAlertModeStatus;
     boolean hasUploadInterval;
     boolean hasEddyStone;
     boolean hasIbeacon;
@@ -317,6 +324,8 @@ public class SensoroDevice extends BLEDevice implements Parcelable, Cloneable {
         hasBatteryBeep = false;
         hasBeepMuteTime = false;
         hasLedStatus = false;
+        hasAlertModeStatus = false;
+
         hasUploadInterval = false;
         hasIbeacon = false;
         hasEddyStone = false;
@@ -384,6 +393,7 @@ public class SensoroDevice extends BLEDevice implements Parcelable, Cloneable {
         batteryBeep = (Integer) in.readSerializable();
         beepMuteTime = (Integer) in.readSerializable();
         ledStatus = (Integer) in.readSerializable();
+        alertModeStatus = (Integer) in.readSerializable();
         activation = (Integer) in.readSerializable();
         delay = (Integer) in.readSerializable();
 
@@ -410,6 +420,7 @@ public class SensoroDevice extends BLEDevice implements Parcelable, Cloneable {
         hasBatteryBeep = in.readByte() != 0;
         hasBeepMuteTime = in.readByte() != 0;
         hasLedStatus = in.readByte() != 0;
+        hasAlertModeStatus = in.readByte() != 0;
         hasLoraInterval = in.readByte() != 0;
         hasEddyStone = in.readByte() != 0;
         hasIbeacon = in.readByte() != 0;
@@ -483,6 +494,7 @@ public class SensoroDevice extends BLEDevice implements Parcelable, Cloneable {
         out.writeSerializable(batteryBeep);
         out.writeSerializable(beepMuteTime);
         out.writeSerializable(ledStatus);
+        out.writeSerializable(alertModeStatus);
         out.writeSerializable(activation);
         out.writeSerializable(delay);
         out.writeByte((byte) (hasBleInterval ? 1 : 0));
@@ -508,6 +520,7 @@ public class SensoroDevice extends BLEDevice implements Parcelable, Cloneable {
         out.writeByte((byte) (hasBatteryBeep ? 1 : 0));
         out.writeByte((byte) (hasBeepMuteTime ? 1 : 0));
         out.writeByte((byte) (hasLedStatus ? 1 : 0));
+        out.writeByte((byte) (hasAlertModeStatus ? 1 : 0));
         out.writeByte((byte) (hasLoraInterval ? 1 : 0));
         out.writeByte((byte) (hasEddyStone ? 1 : 0));
         out.writeByte((byte) (hasIbeacon ? 1 : 0));
@@ -1321,6 +1334,21 @@ public class SensoroDevice extends BLEDevice implements Parcelable, Cloneable {
 
     public void setHasSensorParam(boolean hasSensorParam) {
         this.hasSensorParam = hasSensorParam;
+    }
+    public boolean hasAlertModeStatus() {
+        return hasAlertModeStatus;
+    }
+
+    public void setHasAlertModeStatus(boolean hasAlertModeStatus) {
+        this.hasAlertModeStatus = hasAlertModeStatus;
+    }
+
+    public Integer getAlertModeStatus() {
+        return alertModeStatus;
+    }
+
+    public void setAlertModeStatus(Integer alertModeStatus) {
+        this.alertModeStatus = alertModeStatus;
     }
 
 }
