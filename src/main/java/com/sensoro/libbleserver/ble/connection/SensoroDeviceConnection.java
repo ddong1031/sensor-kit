@@ -1474,12 +1474,10 @@ public class SensoroDeviceConnection {
             //supportCmds
             List<MsgNode1V1M5.AppCmd> supportCmdsList = appParam.getSupportCmdsList();
             if (null != supportCmdsList && supportCmdsList.size() > 0) {
-                ArrayList<SensoroAppCmd> list = new ArrayList<>();
+                ArrayList<Integer> list = new ArrayList<>();
                 for (MsgNode1V1M5.AppCmd appCmd : supportCmdsList) {
-                    SensoroAppCmd sensoroAppCmd = new SensoroAppCmd();
                     int number = appCmd.getNumber();
-                    sensoroAppCmd.value = number;
-                    list.add(sensoroAppCmd);
+                    list.add(number);
                 }
                 sensoroDevice.setCmdArrayList(list);
             }
@@ -1731,6 +1729,8 @@ public class SensoroDeviceConnection {
             }
 
 // TODO: 2019-08-26  fluctuationRange
+            sensoroSensorTest.pitch.hasFluctuationRange = pitch.hasFluctuationRange();
+
             if (pitch.hasFluctuationRange()) {
                 sensoroSensorTest.pitch.fluctuationRange = pitch.getFluctuationRange();
             }
@@ -1758,6 +1758,8 @@ public class SensoroDeviceConnection {
             if (hasData) {
                 sensoroSensorTest.roll.data_float = roll.getData();
             }
+            sensoroSensorTest.roll.hasFluctuationRange = roll.hasFluctuationRange();
+
             if (roll.hasFluctuationRange()) {
                 sensoroSensorTest.roll.fluctuationRange = roll.getFluctuationRange();
             }
@@ -1785,6 +1787,7 @@ public class SensoroDeviceConnection {
             if (hasData) {
                 sensoroSensorTest.yaw.data_float = yaw.getData();
             }
+            sensoroSensorTest.yaw.hasFluctuationRange = yaw.hasFluctuationRange();
 
             if (yaw.hasFluctuationRange()) {
                 sensoroSensorTest.yaw.fluctuationRange = yaw.getFluctuationRange();
@@ -1815,9 +1818,11 @@ public class SensoroDeviceConnection {
                 sensoroSensorTest.waterPressure.data_float = waterPressure.getData();
             }
 
+            sensoroSensorTest.waterPressure.hasFluctuationRange = waterPressure.hasFluctuationRange();
             if (waterPressure.hasFluctuationRange()) {
                 sensoroSensorTest.waterPressure.fluctuationRange = waterPressure.getFluctuationRange();
             }
+
         }
     }
 
@@ -1832,6 +1837,7 @@ public class SensoroDeviceConnection {
             if (hasData) {
                 sensoroSensorTest.ch20.data_float = ch2O.getData();
             }
+            sensoroSensorTest.ch20.hasFluctuationRange = ch2O.hasFluctuationRange();
 
             if (ch2O.hasFluctuationRange()) {
                 sensoroSensorTest.ch20.fluctuationRange = ch2O.getFluctuationRange();
@@ -1855,6 +1861,7 @@ public class SensoroDeviceConnection {
             if (hasAlarmHigh) {
                 sensoroSensorTest.ch4.alarmHigh_float = ch4.getAlarmHigh();
             }
+            sensoroSensorTest.ch4.hasFluctuationRange = ch4.hasFluctuationRange();
 
             if (ch4.hasFluctuationRange()) {
                 sensoroSensorTest.ch4.fluctuationRange = ch4.getFluctuationRange();
@@ -1875,6 +1882,7 @@ public class SensoroDeviceConnection {
             if (hasData) {
                 sensoroSensorTest.coverStatus.data_float = cover.getData();
             }
+            sensoroSensorTest.coverStatus.hasFluctuationRange = cover.hasFluctuationRange();
 
             if (cover.hasFluctuationRange()) {
                 sensoroSensorTest.coverStatus.fluctuationRange = cover.getFluctuationRange();
@@ -1898,6 +1906,8 @@ public class SensoroDeviceConnection {
             if (hasAlarmHigh) {
                 sensoroSensorTest.co.alarmHigh_float = co.getAlarmHigh();
             }
+            sensoroSensorTest.co.hasFluctuationRange = co.hasFluctuationRange();
+
             if (co.hasFluctuationRange()) {
                 sensoroSensorTest.co.fluctuationRange = co.getFluctuationRange();
             }
@@ -1920,6 +1930,7 @@ public class SensoroDeviceConnection {
             if (hasAlarmHigh) {
                 sensoroSensorTest.co2.alarmHigh_float = co2.getAlarmHigh();
             }
+            sensoroSensorTest.co2.hasFluctuationRange = co2.hasFluctuationRange();
 
             if (co2.hasFluctuationRange()) {
                 sensoroSensorTest.co2.fluctuationRange = co2.getFluctuationRange();
@@ -1943,6 +1954,7 @@ public class SensoroDeviceConnection {
             if (hasAlarmHigh) {
                 sensoroSensorTest.no2.alarmHigh_float = no2.getAlarmHigh();
             }
+            sensoroSensorTest.no2.hasFluctuationRange = no2.hasFluctuationRange();
 
             if (no2.hasFluctuationRange()) {
                 sensoroSensorTest.no2.fluctuationRange = no2.getFluctuationRange();
@@ -1967,6 +1979,7 @@ public class SensoroDeviceConnection {
             if (hasAlarmHigh) {
                 sensoroSensorTest.so2.alarmHigh_float = so2.getAlarmHigh();
             }
+            sensoroSensorTest.so2.hasFluctuationRange = so2.hasFluctuationRange();
 
             if (so2.hasFluctuationRange()) {
                 sensoroSensorTest.so2.fluctuationRange = so2.getFluctuationRange();
@@ -1996,6 +2009,7 @@ public class SensoroDeviceConnection {
             if (hasAlarmLow) {
                 sensoroSensorTest.humidity.alarmLow_float = humidity.getAlarmLow();
             }
+            sensoroSensorTest.humidity.hasFluctuationRange = humidity.hasFluctuationRange();
 
             if (humidity.hasFluctuationRange()) {
                 sensoroSensorTest.humidity.fluctuationRange = humidity.getFluctuationRange();
@@ -2024,6 +2038,7 @@ public class SensoroDeviceConnection {
             if (hasAlarmLow) {
                 sensoroSensorTest.temperature.alarmLow_float = temperature.getAlarmLow();
             }
+            sensoroSensorTest.temperature.hasFluctuationRange = temperature.hasFluctuationRange();
 
             if (temperature.hasFluctuationRange()) {
                 sensoroSensorTest.temperature.fluctuationRange = temperature.getFluctuationRange();
@@ -2044,6 +2059,8 @@ public class SensoroDeviceConnection {
             }
 
             // TODO: 2019-08-26
+            sensoroSensorTest.light.hasFluctuationRange = light.hasFluctuationRange();
+
             if (light.hasFluctuationRange()) {
                 sensoroSensorTest.light.fluctuationRange = light.getFluctuationRange();
             }
@@ -2061,6 +2078,8 @@ public class SensoroDeviceConnection {
             if (hasData) {
                 sensoroSensorTest.level.data_float = level.getData();
             }
+            sensoroSensorTest.level.hasFluctuationRange = level.hasFluctuationRange();
+
             if (level.hasFluctuationRange()) {
                 sensoroSensorTest.level.fluctuationRange = level.getFluctuationRange();
             }
@@ -2083,6 +2102,7 @@ public class SensoroDeviceConnection {
             if (hasAlarmHigh) {
                 sensoroSensorTest.lpg.alarmHigh_float = lpg.getAlarmHigh();
             }
+            sensoroSensorTest.lpg.hasFluctuationRange = lpg.hasFluctuationRange();
 
             if (lpg.hasFluctuationRange()) {
                 sensoroSensorTest.lpg.fluctuationRange = lpg.getFluctuationRange();
@@ -2101,6 +2121,8 @@ public class SensoroDeviceConnection {
             if (hasData) {
                 sensoroSensorTest.o3.data_float = o3.getData();
             }
+            sensoroSensorTest.o3.hasFluctuationRange = o3.hasFluctuationRange();
+
             if (o3.hasFluctuationRange()) {
                 sensoroSensorTest.o3.fluctuationRange = o3.getFluctuationRange();
             }
@@ -2118,6 +2140,8 @@ public class SensoroDeviceConnection {
             if (hasData) {
                 sensoroSensorTest.pm1.data_float = pm1.getData();
             }
+
+            sensoroSensorTest.pm1.hasFluctuationRange = pm1.hasFluctuationRange();
 
             if (pm1.hasFluctuationRange()) {
                 sensoroSensorTest.pm1.fluctuationRange = pm1.getFluctuationRange();
@@ -2142,6 +2166,9 @@ public class SensoroDeviceConnection {
                 sensoroSensorTest.pm25.alarmHigh_float = pm25.getAlarmHigh();
             }
 
+            sensoroSensorTest.pm25.hasFluctuationRange = pm25.hasFluctuationRange();
+
+
             if (pm25.hasFluctuationRange()) {
                 sensoroSensorTest.pm25.fluctuationRange = pm25.getFluctuationRange();
             }
@@ -2164,6 +2191,7 @@ public class SensoroDeviceConnection {
             if (hasAlarmHigh) {
                 sensoroSensorTest.pm10.alarmHigh_float = pm10.getAlarmHigh();
             }
+            sensoroSensorTest.pm10.hasFluctuationRange = pm10.hasFluctuationRange();
 
             if (pm10.hasFluctuationRange()) {
                 sensoroSensorTest.pm10.fluctuationRange = pm10.getFluctuationRange();
@@ -2185,6 +2213,7 @@ public class SensoroDeviceConnection {
             sensoroSensorTest.smoke.has_status = true;
             sensoroSensorTest.smoke.status = smoke.getError().getNumber();
 
+            sensoroSensorTest.smoke.hasFluctuationRange = smoke.hasFluctuationRange();
 
             if (smoke.hasFluctuationRange()) {
                 sensoroSensorTest.smoke.fluctuationRange = smoke.getFluctuationRange();
@@ -3740,7 +3769,7 @@ public class SensoroDeviceConnection {
                 appBuilder.setAlertModeStatus(sensoroDevice.getAlertModeStatus());
             }
             if (sensoroDevice.hasBeepMuteTime()) {
-                appBuilder.setAlertModeStatus(sensoroDevice.getBeepMuteTime());
+                appBuilder.setBeepMuteTime(sensoroDevice.getBeepMuteTime());
             }
 
 

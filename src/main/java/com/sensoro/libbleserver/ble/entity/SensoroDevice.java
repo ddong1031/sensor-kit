@@ -66,7 +66,7 @@ public class SensoroDevice extends BLEDevice implements Parcelable, Cloneable {
     public Integer delay;
     transient List<Integer> channelMaskList;
     ArrayList<SensoroChannel> channelList;
-    ArrayList<SensoroAppCmd> cmdArrayList;
+    ArrayList<Integer> cmdArrayList;
     transient int maxEirp;
     transient int sglStatus;
     transient int sglFrequency;
@@ -1141,11 +1141,11 @@ public class SensoroDevice extends BLEDevice implements Parcelable, Cloneable {
         this.alertModeStatus = alertModeStatus;
     }
 
-    public ArrayList<SensoroAppCmd> getCmdArrayList() {
+    public ArrayList<Integer> getCmdArrayList() {
         return cmdArrayList;
     }
 
-    public void setCmdArrayList(ArrayList<SensoroAppCmd> cmdArrayList) {
+    public void setCmdArrayList(ArrayList<Integer> cmdArrayList) {
         this.cmdArrayList = cmdArrayList;
     }
 
@@ -1307,8 +1307,8 @@ public class SensoroDevice extends BLEDevice implements Parcelable, Cloneable {
         this.delay = (Integer) in.readValue(Integer.class.getClassLoader());
         this.channelList = new ArrayList<SensoroChannel>();
         in.readList(this.channelList, SensoroChannel.class.getClassLoader());
-        this.cmdArrayList = new ArrayList<SensoroAppCmd>();
-        in.readList(this.cmdArrayList, SensoroAppCmd.class.getClassLoader());
+        this.cmdArrayList = new ArrayList<Integer>();
+        in.readList(this.cmdArrayList, Integer.class.getClassLoader());
         this.dataVersion = in.readByte();
         this.isIBeaconEnabled = in.readByte() != 0;
         this.isDfu = in.readByte() != 0;
