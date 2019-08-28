@@ -26,50 +26,6 @@ public class BLEDevice implements Parcelable, Cloneable {
         lastFoundTime = System.currentTimeMillis();
     }
 
-    public BLEDevice(Parcel in) {
-        sn = in.readString();
-        hardwareVersion = in.readString();
-        firmwareVersion = in.readString();
-        macAddress = in.readString();
-        lastFoundTime = in.readLong();
-        type = in.readInt();
-        batteryLevel = in.readInt();
-        rssi = in.readInt();
-        iBeacon = (IBeacon) in.readSerializable();
-    }
-
-
-    @Override
-    public int describeContents() {
-        return 0;
-    }
-
-    @Override
-    public void writeToParcel(Parcel parcel, int i) {
-        parcel.writeString(sn);
-        parcel.writeString(hardwareVersion);
-        parcel.writeString(firmwareVersion);
-        parcel.writeString(macAddress);
-        parcel.writeLong(lastFoundTime);
-        parcel.writeInt(type);
-        parcel.writeInt(batteryLevel);
-        parcel.writeInt(rssi);
-        parcel.writeSerializable(iBeacon);
-
-    }
-
-    public static final Parcelable.Creator<BLEDevice> CREATOR = new Parcelable.Creator<BLEDevice>() {
-
-        @Override
-        public BLEDevice createFromParcel(Parcel parcel) {
-            return new BLEDevice(parcel);
-        }
-
-        @Override
-        public BLEDevice[] newArray(int size) {
-            return new BLEDevice[size];
-        }
-    };
 
     @Override
     public BLEDevice clone() throws CloneNotSupportedException {
@@ -151,4 +107,46 @@ public class BLEDevice implements Parcelable, Cloneable {
     public int hashCode() {
         return sn.hashCode() ^ this.macAddress.hashCode();
     }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeString(this.sn);
+        dest.writeString(this.hardwareVersion);
+        dest.writeString(this.firmwareVersion);
+        dest.writeString(this.macAddress);
+        dest.writeInt(this.batteryLevel);
+        dest.writeInt(this.rssi);
+        dest.writeInt(this.type);
+        dest.writeLong(this.lastFoundTime);
+        dest.writeParcelable(this.iBeacon, flags);
+    }
+
+    protected BLEDevice(Parcel in) {
+        this.sn = in.readString();
+        this.hardwareVersion = in.readString();
+        this.firmwareVersion = in.readString();
+        this.macAddress = in.readString();
+        this.batteryLevel = in.readInt();
+        this.rssi = in.readInt();
+        this.type = in.readInt();
+        this.lastFoundTime = in.readLong();
+        this.iBeacon = in.readParcelable(IBeacon.class.getClassLoader());
+    }
+
+    public static final Creator<BLEDevice> CREATOR = new Creator<BLEDevice>() {
+        @Override
+        public BLEDevice createFromParcel(Parcel source) {
+            return new BLEDevice(source);
+        }
+
+        @Override
+        public BLEDevice[] newArray(int size) {
+            return new BLEDevice[size];
+        }
+    };
 }

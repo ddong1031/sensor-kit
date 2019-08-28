@@ -24,6 +24,7 @@ import com.sensoro.libbleserver.ble.constants.CmdType;
 import com.sensoro.libbleserver.ble.constants.ResultCode;
 import com.sensoro.libbleserver.ble.entity.BLEDevice;
 import com.sensoro.libbleserver.ble.entity.SensoroAcrelFires;
+import com.sensoro.libbleserver.ble.entity.SensoroAppCmd;
 import com.sensoro.libbleserver.ble.entity.SensoroBaymax;
 import com.sensoro.libbleserver.ble.entity.SensoroCayManData;
 import com.sensoro.libbleserver.ble.entity.SensoroChannel;
@@ -58,6 +59,7 @@ import no.nordicsemi.android.dfu.DfuServiceListenerHelper;
 
 import static com.sensoro.libbleserver.ble.constants.CmdType.CMD_BB_TRACKER_UPGRADE;
 import static com.sensoro.libbleserver.ble.constants.CmdType.CMD_ON_DFU_MODE;
+import static com.sensoro.libbleserver.ble.proto.MsgNode1V1M5.AppCmd.APP_CMD_TIMING_MUTE;
 
 /**
  * Created by fangping on 2016/7/25.
@@ -693,6 +695,10 @@ public class SensoroDeviceConnection {
             final int cmdType = bluetoothLEHelper4.getSendCmdType();
             LogUtils.loge("parseChangedData cmdType" + cmdType + " 大小 " + data.length);
             switch (cmdType) {
+
+                case CmdType.CMD_APP_SUPPORTCMDS:
+                    parseAppCmdData(characteristic);
+                    break;
                 case CmdType.CMD_SET_ELEC_CMD:
                     parseElectData(characteristic);
                     break;
@@ -828,6 +834,35 @@ public class SensoroDeviceConnection {
             }
         }
 
+    }
+
+
+    /**
+     * 告知app,设备支持哪些cmd
+     *
+     * @param characteristic
+     */
+    private void parseAppCmdData(BluetoothGattCharacteristic characteristic) {
+        byte[] data = characteristic.getValue();
+        final byte retCode = data[3];
+        if (retCode == ResultCode.CODE_DEVICE_SUCCESS) {
+            runOnMainThread(new Runnable() {
+                @Override
+                public void run() {
+                    writeCallbackHashMap.get(CmdType.CMD_APP_SUPPORTCMDS).onWriteSuccess(null, CmdType.CMD_APP_SUPPORTCMDS);
+                }
+            });
+
+        } else {
+            LogUtils.loge("写入设备支持哪些cmd失败");
+            runOnMainThread(new Runnable() {
+                @Override
+                public void run() {
+                    writeCallbackHashMap.get(CmdType.CMD_APP_SUPPORTCMDS).onWriteFailure(retCode, CmdType.CMD_APP_SUPPORTCMDS);
+                }
+            });
+
+        }
     }
 
     /**
@@ -1271,6 +1306,22 @@ public class SensoroDeviceConnection {
             //ibeacon
             parseIbeacon(msgNode, sensoroSensorTest);
 
+
+//
+//            msgNode.getf
+//            boolean hasFlame = msgNode.hasFlame();
+//            sensoroSensorTest.hasFlame = hasFlame;
+//            if (hasFlame) {//aae7e4 ble on off temp lower disable
+//                MsgNode1V1M5.SensorDataInt flame = msgNode.getFlame();
+//                sensoroSensorTest.flame = new SensoroData();
+//                boolean hasData = flame.hasData();
+//                sensoroSensorTest.flame.has_data = hasData;
+//                if (hasData) {
+//                    sensoroSensorTest.flame.data_int = flame.getData();
+//                }
+//            }
+
+
             sensoroDevice.setSensoroSensorTest(sensoroSensorTest);
             sensoroDevice.setDataVersion(DATA_VERSION_05);
             sensoroDevice.setHasSensorParam(true);
@@ -1420,6 +1471,20 @@ public class SensoroDeviceConnection {
         sensoroDevice.setHasAppParam(hasAppParam);
         if (hasAppParam) {
             MsgNode1V1M5.AppParam appParam = msgNode.getAppParam();
+            //supportCmds
+            List<MsgNode1V1M5.AppCmd> supportCmdsList = appParam.getSupportCmdsList();
+            if (null != supportCmdsList && supportCmdsList.size() > 0) {
+                ArrayList<SensoroAppCmd> list = new ArrayList<>();
+                for (MsgNode1V1M5.AppCmd appCmd : supportCmdsList) {
+                    SensoroAppCmd sensoroAppCmd = new SensoroAppCmd();
+                    int number = appCmd.getNumber();
+                    sensoroAppCmd.value = number;
+                    list.add(sensoroAppCmd);
+                }
+                sensoroDevice.setCmdArrayList(list);
+            }
+
+
             boolean hasUploadInterval = appParam.hasUploadInterval();
             sensoroDevice.setHasUploadInterval(hasUploadInterval);
             if (hasUploadInterval) {
@@ -1664,6 +1729,11 @@ public class SensoroDeviceConnection {
             if (hasData) {
                 sensoroSensorTest.pitch.data_float = pitch.getData();
             }
+
+// TODO: 2019-08-26  fluctuationRange
+            if (pitch.hasFluctuationRange()) {
+                sensoroSensorTest.pitch.fluctuationRange = pitch.getFluctuationRange();
+            }
         }
     }
 
@@ -1688,6 +1758,9 @@ public class SensoroDeviceConnection {
             if (hasData) {
                 sensoroSensorTest.roll.data_float = roll.getData();
             }
+            if (roll.hasFluctuationRange()) {
+                sensoroSensorTest.roll.fluctuationRange = roll.getFluctuationRange();
+            }
         }
     }
 
@@ -1711,6 +1784,10 @@ public class SensoroDeviceConnection {
             sensoroSensorTest.yaw.has_data = hasData;
             if (hasData) {
                 sensoroSensorTest.yaw.data_float = yaw.getData();
+            }
+
+            if (yaw.hasFluctuationRange()) {
+                sensoroSensorTest.yaw.fluctuationRange = yaw.getFluctuationRange();
             }
         }
     }
@@ -1737,6 +1814,10 @@ public class SensoroDeviceConnection {
             if (hasData) {
                 sensoroSensorTest.waterPressure.data_float = waterPressure.getData();
             }
+
+            if (waterPressure.hasFluctuationRange()) {
+                sensoroSensorTest.waterPressure.fluctuationRange = waterPressure.getFluctuationRange();
+            }
         }
     }
 
@@ -1750,6 +1831,10 @@ public class SensoroDeviceConnection {
             sensoroSensorTest.ch20.has_data = hasData;
             if (hasData) {
                 sensoroSensorTest.ch20.data_float = ch2O.getData();
+            }
+
+            if (ch2O.hasFluctuationRange()) {
+                sensoroSensorTest.ch20.fluctuationRange = ch2O.getFluctuationRange();
             }
         }
     }
@@ -1770,6 +1855,10 @@ public class SensoroDeviceConnection {
             if (hasAlarmHigh) {
                 sensoroSensorTest.ch4.alarmHigh_float = ch4.getAlarmHigh();
             }
+
+            if (ch4.hasFluctuationRange()) {
+                sensoroSensorTest.ch4.fluctuationRange = ch4.getFluctuationRange();
+            }
         }
     }
 
@@ -1785,6 +1874,10 @@ public class SensoroDeviceConnection {
             sensoroSensorTest.coverStatus.has_data = hasData;
             if (hasData) {
                 sensoroSensorTest.coverStatus.data_float = cover.getData();
+            }
+
+            if (cover.hasFluctuationRange()) {
+                sensoroSensorTest.coverStatus.fluctuationRange = cover.getFluctuationRange();
             }
         }
     }
@@ -1805,6 +1898,9 @@ public class SensoroDeviceConnection {
             if (hasAlarmHigh) {
                 sensoroSensorTest.co.alarmHigh_float = co.getAlarmHigh();
             }
+            if (co.hasFluctuationRange()) {
+                sensoroSensorTest.co.fluctuationRange = co.getFluctuationRange();
+            }
         }
     }
 
@@ -1823,6 +1919,10 @@ public class SensoroDeviceConnection {
             sensoroSensorTest.co2.has_alarmHigh = hasAlarmHigh;
             if (hasAlarmHigh) {
                 sensoroSensorTest.co2.alarmHigh_float = co2.getAlarmHigh();
+            }
+
+            if (co2.hasFluctuationRange()) {
+                sensoroSensorTest.co2.fluctuationRange = co2.getFluctuationRange();
             }
         }
     }
@@ -1844,6 +1944,10 @@ public class SensoroDeviceConnection {
                 sensoroSensorTest.no2.alarmHigh_float = no2.getAlarmHigh();
             }
 
+            if (no2.hasFluctuationRange()) {
+                sensoroSensorTest.no2.fluctuationRange = no2.getFluctuationRange();
+            }
+
         }
     }
 
@@ -1862,6 +1966,10 @@ public class SensoroDeviceConnection {
             sensoroSensorTest.so2.has_alarmHigh = hasAlarmHigh;
             if (hasAlarmHigh) {
                 sensoroSensorTest.so2.alarmHigh_float = so2.getAlarmHigh();
+            }
+
+            if (so2.hasFluctuationRange()) {
+                sensoroSensorTest.so2.fluctuationRange = so2.getFluctuationRange();
             }
 //                sensoroSensor.setHasSo2(msgNode.hasSo2());
         }
@@ -1888,6 +1996,10 @@ public class SensoroDeviceConnection {
             if (hasAlarmLow) {
                 sensoroSensorTest.humidity.alarmLow_float = humidity.getAlarmLow();
             }
+
+            if (humidity.hasFluctuationRange()) {
+                sensoroSensorTest.humidity.fluctuationRange = humidity.getFluctuationRange();
+            }
         }
     }
 
@@ -1912,6 +2024,10 @@ public class SensoroDeviceConnection {
             if (hasAlarmLow) {
                 sensoroSensorTest.temperature.alarmLow_float = temperature.getAlarmLow();
             }
+
+            if (temperature.hasFluctuationRange()) {
+                sensoroSensorTest.temperature.fluctuationRange = temperature.getFluctuationRange();
+            }
         }
     }
 
@@ -1925,6 +2041,11 @@ public class SensoroDeviceConnection {
             sensoroSensorTest.light.has_data = hasData;
             if (hasData) {
                 sensoroSensorTest.light.data_float = light.getData();
+            }
+
+            // TODO: 2019-08-26
+            if (light.hasFluctuationRange()) {
+                sensoroSensorTest.light.fluctuationRange = light.getFluctuationRange();
             }
         }
     }
@@ -1940,7 +2061,9 @@ public class SensoroDeviceConnection {
             if (hasData) {
                 sensoroSensorTest.level.data_float = level.getData();
             }
-
+            if (level.hasFluctuationRange()) {
+                sensoroSensorTest.level.fluctuationRange = level.getFluctuationRange();
+            }
         }
     }
 
@@ -1960,6 +2083,10 @@ public class SensoroDeviceConnection {
             if (hasAlarmHigh) {
                 sensoroSensorTest.lpg.alarmHigh_float = lpg.getAlarmHigh();
             }
+
+            if (lpg.hasFluctuationRange()) {
+                sensoroSensorTest.lpg.fluctuationRange = lpg.getFluctuationRange();
+            }
         }
     }
 
@@ -1974,6 +2101,9 @@ public class SensoroDeviceConnection {
             if (hasData) {
                 sensoroSensorTest.o3.data_float = o3.getData();
             }
+            if (o3.hasFluctuationRange()) {
+                sensoroSensorTest.o3.fluctuationRange = o3.getFluctuationRange();
+            }
         }
     }
 
@@ -1987,6 +2117,10 @@ public class SensoroDeviceConnection {
             sensoroSensorTest.pm1.has_data = hasData;
             if (hasData) {
                 sensoroSensorTest.pm1.data_float = pm1.getData();
+            }
+
+            if (pm1.hasFluctuationRange()) {
+                sensoroSensorTest.pm1.fluctuationRange = pm1.getFluctuationRange();
             }
         }
     }
@@ -2007,6 +2141,10 @@ public class SensoroDeviceConnection {
             if (hasAlarmHigh) {
                 sensoroSensorTest.pm25.alarmHigh_float = pm25.getAlarmHigh();
             }
+
+            if (pm25.hasFluctuationRange()) {
+                sensoroSensorTest.pm25.fluctuationRange = pm25.getFluctuationRange();
+            }
         }
     }
 
@@ -2026,6 +2164,10 @@ public class SensoroDeviceConnection {
             if (hasAlarmHigh) {
                 sensoroSensorTest.pm10.alarmHigh_float = pm10.getAlarmHigh();
             }
+
+            if (pm10.hasFluctuationRange()) {
+                sensoroSensorTest.pm10.fluctuationRange = pm10.getFluctuationRange();
+            }
         }
     }
 
@@ -2042,6 +2184,11 @@ public class SensoroDeviceConnection {
             }
             sensoroSensorTest.smoke.has_status = true;
             sensoroSensorTest.smoke.status = smoke.getError().getNumber();
+
+
+            if (smoke.hasFluctuationRange()) {
+                sensoroSensorTest.smoke.fluctuationRange = smoke.getFluctuationRange();
+            }
         }
     }
 
@@ -2071,6 +2218,8 @@ public class SensoroDeviceConnection {
             if (hasAlarmStepLow) {
                 sensoroSensorTest.multiTemperature.alarmStepLow_int = multiTemp.getAlarmStepLow();
             }
+
+
         }
     }
 
@@ -2120,6 +2269,7 @@ public class SensoroDeviceConnection {
             if (hasCmd) {
                 sensoroSensorTest.elecFireData.cmd = fireData.getCmd();
             }
+
 
         }
     }
@@ -3015,6 +3165,9 @@ public class SensoroDeviceConnection {
             if (sensoroSensorTest.ch4.has_alarmHigh) {
                 ch4Builder.setAlarmHigh(sensoroSensorTest.ch4.alarmHigh_float);
             }
+            if (sensoroSensorTest.ch4.hasFluctuationRange) {
+                ch4Builder.setFluctuationRange(sensoroSensorTest.ch4.fluctuationRange);
+            }
             msgNodeBuilder.setCh4(ch4Builder);
         }
     }
@@ -3027,6 +3180,10 @@ public class SensoroDeviceConnection {
             }
             if (sensoroSensorTest.co.has_alarmHigh) {
                 coBuilder.setAlarmHigh(sensoroSensorTest.co.alarmHigh_float);
+            }
+
+            if (sensoroSensorTest.co.hasFluctuationRange) {
+                coBuilder.setFluctuationRange(sensoroSensorTest.co.fluctuationRange);
             }
             msgNodeBuilder.setCo(coBuilder);
         }
@@ -3041,6 +3198,9 @@ public class SensoroDeviceConnection {
             if (sensoroSensorTest.co2.has_alarmHigh) {
                 co2Builder.setAlarmHigh(sensoroSensorTest.co2.alarmHigh_float);
             }
+            if (sensoroSensorTest.co2.hasFluctuationRange) {
+                co2Builder.setFluctuationRange(sensoroSensorTest.co2.fluctuationRange);
+            }
             msgNodeBuilder.setCo2(co2Builder);
         }
     }
@@ -3053,6 +3213,9 @@ public class SensoroDeviceConnection {
             }
             if (sensoroSensorTest.no2.has_alarmHigh) {
                 no2Builder.setAlarmHigh(sensoroSensorTest.no2.alarmHigh_float);
+            }
+            if (sensoroSensorTest.no2.hasFluctuationRange) {
+                no2Builder.setFluctuationRange(sensoroSensorTest.no2.fluctuationRange);
             }
             msgNodeBuilder.setNo2(no2Builder);
         }
@@ -3067,6 +3230,9 @@ public class SensoroDeviceConnection {
             if (sensoroSensorTest.lpg.has_alarmHigh) {
                 lpgBuilder.setAlarmHigh(sensoroSensorTest.lpg.alarmHigh_float);
             }
+            if (sensoroSensorTest.lpg.hasFluctuationRange) {
+                lpgBuilder.setFluctuationRange(sensoroSensorTest.lpg.fluctuationRange);
+            }
             msgNodeBuilder.setLpg(lpgBuilder);
         }
     }
@@ -3080,6 +3246,10 @@ public class SensoroDeviceConnection {
             if (sensoroSensorTest.pm10.has_alarmHigh) {
                 pm10Builder.setAlarmHigh(sensoroSensorTest.pm10.alarmHigh_float);
             }
+
+            if (sensoroSensorTest.pm10.hasFluctuationRange) {
+                pm10Builder.setFluctuationRange(sensoroSensorTest.pm10.fluctuationRange);
+            }
             msgNodeBuilder.setPm10(pm10Builder);
         }
     }
@@ -3092,6 +3262,9 @@ public class SensoroDeviceConnection {
             }
             if (sensoroSensorTest.pm25.has_alarmHigh) {
                 pm25Builder.setAlarmHigh(sensoroSensorTest.pm25.alarmHigh_float);
+            }
+            if (sensoroSensorTest.pm25.hasFluctuationRange) {
+                pm25Builder.setFluctuationRange(sensoroSensorTest.pm25.fluctuationRange);
             }
             msgNodeBuilder.setPm25(pm25Builder);
         }
@@ -3109,6 +3282,10 @@ public class SensoroDeviceConnection {
             if (sensoroSensorTest.temperature.has_alarmLow) {
                 tempBuilder.setAlarmLow(sensoroSensorTest.temperature.alarmLow_float);
             }
+
+            if (sensoroSensorTest.temperature.hasFluctuationRange) {
+                tempBuilder.setFluctuationRange(sensoroSensorTest.temperature.fluctuationRange);
+            }
             msgNodeBuilder.setTemperature(tempBuilder);
         }
     }
@@ -3124,6 +3301,10 @@ public class SensoroDeviceConnection {
             }
             if (sensoroSensorTest.humidity.has_alarmLow) {
                 humidityBuilder.setAlarmLow(sensoroSensorTest.humidity.alarmLow_float);
+            }
+
+            if (sensoroSensorTest.humidity.hasFluctuationRange) {
+                humidityBuilder.setFluctuationRange(sensoroSensorTest.humidity.fluctuationRange);
             }
             msgNodeBuilder.setHumidity(humidityBuilder);
         }
@@ -3141,6 +3322,10 @@ public class SensoroDeviceConnection {
             if (sensoroSensorTest.pitch.has_alarmLow) {
                 pitchBuilder.setAlarmLow(sensoroSensorTest.pitch.alarmLow_float);
             }
+
+            if (sensoroSensorTest.pitch.hasFluctuationRange) {
+                pitchBuilder.setFluctuationRange(sensoroSensorTest.pitch.fluctuationRange);
+            }
             msgNodeBuilder.setPitch(pitchBuilder);
         }
     }
@@ -3156,6 +3341,9 @@ public class SensoroDeviceConnection {
             }
             if (sensoroSensorTest.roll.has_alarmLow) {
                 rollAngleBuilder.setAlarmLow(sensoroSensorTest.roll.alarmLow_float);
+            }
+            if (sensoroSensorTest.roll.hasFluctuationRange) {
+                rollAngleBuilder.setFluctuationRange(sensoroSensorTest.roll.fluctuationRange);
             }
             msgNodeBuilder.setRoll(rollAngleBuilder);
         }
@@ -3173,6 +3361,10 @@ public class SensoroDeviceConnection {
             if (sensoroSensorTest.yaw.has_alarmLow) {
                 yawAngleBuilder.setAlarmLow(sensoroSensorTest.yaw.alarmLow_float);
             }
+
+            if (sensoroSensorTest.yaw.hasFluctuationRange) {
+                yawAngleBuilder.setFluctuationRange(sensoroSensorTest.yaw.fluctuationRange);
+            }
             msgNodeBuilder.setYaw(yawAngleBuilder);
         }
     }
@@ -3188,6 +3380,10 @@ public class SensoroDeviceConnection {
             }
             if (sensoroSensorTest.waterPressure.has_alarmLow) {
                 waterPressureBuilder.setAlarmLow(sensoroSensorTest.waterPressure.alarmLow_float);
+            }
+
+            if (sensoroSensorTest.waterPressure.hasFluctuationRange) {
+                waterPressureBuilder.setFluctuationRange(sensoroSensorTest.waterPressure.fluctuationRange);
             }
             msgNodeBuilder.setWaterPressure(waterPressureBuilder);
         }
@@ -3543,6 +3739,9 @@ public class SensoroDeviceConnection {
             if (sensoroDevice.hasAlertModeStatus()) {
                 appBuilder.setAlertModeStatus(sensoroDevice.getAlertModeStatus());
             }
+            if (sensoroDevice.hasBeepMuteTime()) {
+                appBuilder.setAlertModeStatus(sensoroDevice.getBeepMuteTime());
+            }
 
 
             msgNodeBuilder.setAppParam(appBuilder);
@@ -3556,6 +3755,7 @@ public class SensoroDeviceConnection {
         byte[] data = msgNodeBuilder.build().toByteArray();
         writeData05Cmd(data, CmdType.CMD_SET_SMOKE, writeCallback);
     }
+
 
     /**
      * 使设备进入demo 演示模式，主要用于city
@@ -4279,42 +4479,17 @@ public class SensoroDeviceConnection {
     }
 
     /**
-     * @param beepTime      传入的单位是s
+     * 设备支持哪些cmd
+     *
+     * @param builder
      * @param writeCallback
      */
-    public void writeAppBeepMuteTime(int beepTime, SensoroWriteCallback writeCallback) {
-        writeCallbackHashMap.put(CmdType.CMD_W_CFG, writeCallback);
-//        MsgNode1V1M5.AppParam.Builder builder = MsgNode1V1M5.AppParam.newBuilder();
-//        builder.setBeepMuteTime(beepTime);
-//        builder.setCmd(MsgNode1V1M5.AppCmd.APP_CMD_TIMING_MUTE);
-//        byte[] bytes = builder.build().toByteArray();
-//        writeData05Cmd(bytes,CmdType.CMD_SET_ELEC_CMD,writeCallback);
-
-        MsgNode1V1M5.MsgNode.Builder nodeBuilder = MsgNode1V1M5.MsgNode.newBuilder();
-        MsgNode1V1M5.AppParam.Builder appBuilder = MsgNode1V1M5.AppParam.newBuilder();
-        appBuilder.setCmd(MsgNode1V1M5.AppCmd.APP_CMD_TIMING_MUTE);
-        appBuilder.setBeepMuteTime(beepTime);
-        nodeBuilder.setAppParam(appBuilder);
-        byte[] data = nodeBuilder.build().toByteArray();
-        int data_length = data.length;
-
-        int total_length = data_length + 3;
-
-        byte[] total_data = new byte[total_length];
-
-        byte[] length_data = SensoroUUID.intToByteArray(data_length + 1, 2);
-
-        byte[] version_data = SensoroUUID.intToByteArray(5, 1);
-
-        System.arraycopy(length_data, 0, total_data, 0, 2);
-        System.arraycopy(version_data, 0, total_data, 2, 1);
-        System.arraycopy(data, 0, total_data, 3, data_length);
-
-        int resultCode = bluetoothLEHelper4.writeConfigurations(total_data, CmdType.CMD_W_CFG,
-                BluetoothLEHelper4.GattInfo.SENSORO_DEVICE_WRITE_CHAR_UUID);
-        if (resultCode != ResultCode.SUCCESS) {
-            writeCallback.onWriteFailure(ResultCode.CODE_DEVICE_DFU_ERROR, CmdType.CMD_NULL);
-        }
+    public void writeAppParamCmd(MsgNode1V1M5.AppParam.Builder builder, SensoroWriteCallback writeCallback) {
+        writeCallbackHashMap.put(CmdType.CMD_APP_SUPPORTCMDS, writeCallback);
+        MsgNode1V1M5.MsgNode.Builder msgNodeBuilder = MsgNode1V1M5.MsgNode.newBuilder();
+        msgNodeBuilder.setAppParam(builder);
+        byte[] data = msgNodeBuilder.build().toByteArray();
+        writeData05Cmd(data, CmdType.CMD_APP_SUPPORTCMDS, writeCallback);
     }
 
 

@@ -76,4 +76,7 @@ public class CmdType {
     public static int CMD_BB_TRACKER_UPGRADE = 0x116;
     //dfu升级
     public static final int CMD_ON_DFU_MODE = 0x101;
+    //supportCmds告知app,设备支持哪些cmd
+    public static final int CMD_APP_SUPPORTCMDS = 0x120;
+
 }

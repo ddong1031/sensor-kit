@@ -34,6 +34,11 @@ public final class SensoroData implements Serializable {
     public Integer alarmStepLow_int;
     public Float alarmStepLow_float;
 
+
+    //波动范围
+    public boolean hasFluctuationRange;
+    public Float fluctuationRange;
+
     //
     public boolean has_data;
 

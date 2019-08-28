@@ -66,13 +66,13 @@ public class SensoroDevice extends BLEDevice implements Parcelable, Cloneable {
     public Integer delay;
     transient List<Integer> channelMaskList;
     ArrayList<SensoroChannel> channelList;
+    ArrayList<SensoroAppCmd> cmdArrayList;
     transient int maxEirp;
     transient int sglStatus;
     transient int sglFrequency;
     transient int sglDatarate;
     transient int lbtStatus;
     transient int lbtThreshold;
-
 
 
     transient int rx2Frequency;
@@ -107,7 +107,6 @@ public class SensoroDevice extends BLEDevice implements Parcelable, Cloneable {
     boolean hasBatteryBeep;
     boolean hasBeepMuteTime;
     boolean hasLedStatus;
-
 
 
     boolean hasAlertModeStatus;
@@ -341,217 +340,6 @@ public class SensoroDevice extends BLEDevice implements Parcelable, Cloneable {
         hasRx2Datarate = false;
         hasRx2Frequency = false;
     }
-
-    protected SensoroDevice(Parcel in) {
-        super(in);
-        major = in.readInt();
-        minor = in.readInt();
-        proximityUUID = in.readString();
-        macAddress = in.readString();
-        batteryLevel = in.readInt();
-        accelerometerCount = in.readInt();
-        power = in.readInt();
-        sf = in.readFloat();
-        lastFoundTime = in.readLong();
-        devEui = in.readString();
-        appEui = in.readString();
-        appKey = in.readString();
-        appSkey = in.readString();
-        nwkSkey = in.readString();
-        password = in.readString();
-        dfuInfo = in.readString();
-        devAdr = in.readInt();
-        loraDr = in.readInt();
-        loraAdr = in.readInt();
-        loraTxp = in.readInt();
-        loraInt = in.readFloat();
-        bleTxp = in.readInt();
-        bleInt = in.readFloat();
-        bleOnTime = in.readInt();
-        bleOffTime = in.readInt();
-        isIBeaconEnabled = in.readByte() != 0;
-        tempInterval = in.readInt();
-        lightInterval = in.readInt();
-        humidityInterval = in.readInt();
-        isDfu = (in.readByte() != 0);
-        slotArray = (SensoroSlot[]) in.readParcelableArray(SensoroSlot.class.getClassLoader());
-//        sensoroSensor = in.readParcelable(SensoroSensor.class.getClassLoader());
-        sensoroSensorTest = in.readParcelable(SensoroSensor.class.getClassLoader());
-        classBEnabled = in.readInt();
-        classBDataRate = in.readInt();
-        classBPeriodicity = in.readInt();
-        dfuProgress = in.readInt();
-        dataVersion = in.readByte();
-        band = in.readString();
-        uploadInterval = (Integer) in.readSerializable();
-        Serializable channels = in.readSerializable();
-        if (channels instanceof ArrayList) {
-            channelList = (ArrayList<SensoroChannel>) channels;
-        }
-        confirm = (Integer) in.readSerializable();
-        demoMode = (Integer) in.readSerializable();
-        batteryBeep = (Integer) in.readSerializable();
-        beepMuteTime = (Integer) in.readSerializable();
-        ledStatus = (Integer) in.readSerializable();
-        alertModeStatus = (Integer) in.readSerializable();
-        activation = (Integer) in.readSerializable();
-        delay = (Integer) in.readSerializable();
-
-        hasBleInterval = in.readByte() != 0;
-        hasBleOffTime = in.readByte() != 0;
-        hasBleOnOff = in.readByte() != 0;
-        hasBleOnTime = in.readByte() != 0;
-        hasBleTxp = in.readByte() != 0;
-        hasAdr = in.readByte() != 0;
-        hasAppEui = in.readByte() != 0;
-        hasAppKey = in.readByte() != 0;
-        hasAppSkey = in.readByte() != 0;
-        hasDevAddr = in.readByte() != 0;
-        hasDevEui = in.readByte() != 0;
-        hasNwkSkey = in.readByte() != 0;
-        hasLoraTxp = in.readByte() != 0;
-        hasActivation = in.readByte() != 0;
-        hasAppParam = in.readByte() != 0;
-        hasBleParam = in.readByte() != 0;
-        hasLoraParam = in.readByte() != 0;
-        hasUploadInterval = in.readByte() != 0;
-        hasConfirm = in.readByte() != 0;
-        hasDemoMode = in.readByte() != 0;
-        hasBatteryBeep = in.readByte() != 0;
-        hasBeepMuteTime = in.readByte() != 0;
-        hasLedStatus = in.readByte() != 0;
-        hasAlertModeStatus = in.readByte() != 0;
-        hasLoraInterval = in.readByte() != 0;
-        hasEddyStone = in.readByte() != 0;
-        hasIbeacon = in.readByte() != 0;
-        hasCustomPackage = in.readByte() != 0;
-        hasSensorBroadcast = in.readByte() != 0;
-        hasSensorParam = in.readByte() != 0;
-        hasDelay = in.readByte() != 0;
-        hasSglFrequency = in.readByte() != 0;
-        hasSglDatarate = in.readByte() != 0;
-        alarmStepHigh = (Integer) in.readSerializable();
-        alarmStepLow = (Integer) in.readSerializable();
-        alarmHigh = (Integer) in.readSerializable();
-        alarmLow = (Integer) in.readSerializable();
-        hasLbtStatus = in.readByte() != 0;
-        hasLbtThreshold = in.readByte() != 0;
-        hasRx2Datarate = in.readByte() != 0;
-        hasRx2Frequency = in.readByte() != 0;
-    }
-
-    @Override
-    public int describeContents() {
-        return 0;
-    }
-
-    @Override
-    public void writeToParcel(Parcel out, int flags) {
-        super.writeToParcel(out, flags);
-        out.writeInt(major);
-        out.writeInt(minor);
-        out.writeString(proximityUUID);
-        out.writeString(macAddress);
-        out.writeInt(batteryLevel);
-        out.writeInt(accelerometerCount);
-        out.writeInt(power);
-        out.writeFloat(sf);
-        out.writeLong(lastFoundTime);
-        out.writeString(devEui);
-        out.writeString(appEui);
-        out.writeString(appKey);
-        out.writeString(appSkey);
-        out.writeString(nwkSkey);
-        out.writeString(password);
-        out.writeString(dfuInfo);
-        out.writeInt(devAdr);
-        out.writeInt(loraDr);
-        out.writeInt(loraAdr);
-        out.writeInt(loraTxp);
-        out.writeFloat(loraInt);
-        out.writeInt(bleTxp);
-        out.writeFloat(bleInt);
-        out.writeInt(bleOnTime);
-        out.writeInt(bleOffTime);
-        out.writeByte((byte) (isIBeaconEnabled ? 1 : 0));
-        out.writeInt(tempInterval);
-        out.writeInt(lightInterval);
-        out.writeInt(humidityInterval);
-        out.writeByte((byte) (isDfu ? 1 : 0));
-        out.writeParcelableArray(slotArray, flags);
-//        out.writeParcelable(sensoroSensor, flags);
-        out.writeParcelable(sensoroSensorTest, flags);
-        out.writeInt(classBEnabled);
-        out.writeInt(classBDataRate);
-        out.writeInt(classBPeriodicity);
-        out.writeInt(dfuProgress);
-        out.writeByte(dataVersion);
-        out.writeString(band);
-        out.writeSerializable(channelList);
-        out.writeSerializable(uploadInterval);
-        out.writeSerializable(confirm);
-        out.writeSerializable(demoMode);
-        out.writeSerializable(batteryBeep);
-        out.writeSerializable(beepMuteTime);
-        out.writeSerializable(ledStatus);
-        out.writeSerializable(alertModeStatus);
-        out.writeSerializable(activation);
-        out.writeSerializable(delay);
-        out.writeByte((byte) (hasBleInterval ? 1 : 0));
-        out.writeByte((byte) (hasBleOffTime ? 1 : 0));
-        out.writeByte((byte) (hasBleOnOff ? 1 : 0));
-        out.writeByte((byte) (hasBleOnTime ? 1 : 0));
-        out.writeByte((byte) (hasBleTxp ? 1 : 0));
-        out.writeByte((byte) (hasAdr ? 1 : 0));
-        out.writeByte((byte) (hasAppEui ? 1 : 0));
-        out.writeByte((byte) (hasAppKey ? 1 : 0));
-        out.writeByte((byte) (hasAppSkey ? 1 : 0));
-        out.writeByte((byte) (hasDevAddr ? 1 : 0));
-        out.writeByte((byte) (hasDevEui ? 1 : 0));
-        out.writeByte((byte) (hasNwkSkey ? 1 : 0));
-        out.writeByte((byte) (hasLoraTxp ? 1 : 0));
-        out.writeByte((byte) (hasActivation ? 1 : 0));
-        out.writeByte((byte) (hasAppParam ? 1 : 0));
-        out.writeByte((byte) (hasBleParam ? 1 : 0));
-        out.writeByte((byte) (hasLoraParam ? 1 : 0));
-        out.writeByte((byte) (hasUploadInterval ? 1 : 0));
-        out.writeByte((byte) (hasConfirm ? 1 : 0));
-        out.writeByte((byte) (hasDemoMode ? 1 : 0));
-        out.writeByte((byte) (hasBatteryBeep ? 1 : 0));
-        out.writeByte((byte) (hasBeepMuteTime ? 1 : 0));
-        out.writeByte((byte) (hasLedStatus ? 1 : 0));
-        out.writeByte((byte) (hasAlertModeStatus ? 1 : 0));
-        out.writeByte((byte) (hasLoraInterval ? 1 : 0));
-        out.writeByte((byte) (hasEddyStone ? 1 : 0));
-        out.writeByte((byte) (hasIbeacon ? 1 : 0));
-        out.writeByte((byte) (hasCustomPackage ? 1 : 0));
-        out.writeByte((byte) (hasSensorBroadcast ? 1 : 0));
-        out.writeByte((byte) (hasSensorParam ? 1 : 0));
-        out.writeByte((byte) (hasDelay ? 1 : 0));
-        out.writeByte((byte) (hasSglFrequency ? 1 : 0));
-        out.writeByte((byte) (hasSglDatarate ? 1 : 0));
-        out.writeSerializable(alarmStepHigh);
-        out.writeSerializable(alarmStepLow);
-        out.writeSerializable(alarmHigh);
-        out.writeSerializable(alarmLow);
-        out.writeByte((byte) (hasLbtStatus ? 1 : 0));
-        out.writeByte((byte) (hasLbtThreshold ? 1 : 0));
-        out.writeByte((byte) (hasRx2Datarate ? 1 : 0));
-        out.writeByte((byte) (hasRx2Frequency ? 1 : 0));
-    }
-
-    public static final Creator<SensoroDevice> CREATOR = new Creator<SensoroDevice>() {
-
-        @Override
-        public SensoroDevice createFromParcel(Parcel parcel) {
-            return new SensoroDevice(parcel);
-        }
-
-        @Override
-        public SensoroDevice[] newArray(int size) {
-            return new SensoroDevice[size];
-        }
-    };
 
     @Override
     public SensoroDevice clone() throws CloneNotSupportedException {
@@ -1287,6 +1075,7 @@ public class SensoroDevice extends BLEDevice implements Parcelable, Cloneable {
     public void setRx2Datarate(int rx2Datarate) {
         this.rx2Datarate = rx2Datarate;
     }
+
     public int getLbtStatus() {
         return lbtStatus;
     }
@@ -1335,6 +1124,7 @@ public class SensoroDevice extends BLEDevice implements Parcelable, Cloneable {
     public void setHasSensorParam(boolean hasSensorParam) {
         this.hasSensorParam = hasSensorParam;
     }
+
     public boolean hasAlertModeStatus() {
         return hasAlertModeStatus;
     }
@@ -1351,5 +1141,250 @@ public class SensoroDevice extends BLEDevice implements Parcelable, Cloneable {
         this.alertModeStatus = alertModeStatus;
     }
 
+    public ArrayList<SensoroAppCmd> getCmdArrayList() {
+        return cmdArrayList;
+    }
+
+    public void setCmdArrayList(ArrayList<SensoroAppCmd> cmdArrayList) {
+        this.cmdArrayList = cmdArrayList;
+    }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        super.writeToParcel(dest, flags);
+        dest.writeInt(this.major);
+        dest.writeInt(this.minor);
+        dest.writeString(this.proximityUUID);
+        dest.writeInt(this.accelerometerCount);
+        dest.writeInt(this.power);
+        dest.writeFloat(this.sf);
+        dest.writeString(this.devEui);
+        dest.writeString(this.appEui);
+        dest.writeString(this.appKey);
+        dest.writeString(this.appSkey);
+        dest.writeString(this.nwkSkey);
+        dest.writeString(this.password);
+        dest.writeString(this.dfuInfo);
+        dest.writeString(this.band);
+        dest.writeInt(this.devAdr);
+        dest.writeInt(this.loraDr);
+        dest.writeInt(this.loraAdr);
+        dest.writeInt(this.loraTxp);
+        dest.writeInt(this.dfuProgress);
+        dest.writeFloat(this.loraInt);
+        dest.writeInt(this.bleTxp);
+        dest.writeFloat(this.bleInt);
+        dest.writeInt(this.bleOnTime);
+        dest.writeInt(this.bleOffTime);
+        dest.writeInt(this.tempInterval);
+        dest.writeInt(this.lightInterval);
+        dest.writeInt(this.humidityInterval);
+        dest.writeInt(this.classBEnabled);
+        dest.writeInt(this.classBDataRate);
+        dest.writeInt(this.classBPeriodicity);
+        dest.writeValue(this.uploadInterval);
+        dest.writeValue(this.confirm);
+        dest.writeValue(this.demoMode);
+        dest.writeValue(this.batteryBeep);
+        dest.writeValue(this.beepMuteTime);
+        dest.writeValue(this.ledStatus);
+        dest.writeValue(this.alertModeStatus);
+        dest.writeValue(this.activation);
+        dest.writeValue(this.delay);
+        dest.writeList(this.channelList);
+        dest.writeList(this.cmdArrayList);
+        dest.writeByte(this.dataVersion);
+        dest.writeByte(this.isIBeaconEnabled ? (byte) 1 : (byte) 0);
+        dest.writeByte(this.isDfu ? (byte) 1 : (byte) 0);
+        dest.writeByte(this.hasBleInterval ? (byte) 1 : (byte) 0);
+        dest.writeByte(this.hasBleOffTime ? (byte) 1 : (byte) 0);
+        dest.writeByte(this.hasBleOnTime ? (byte) 1 : (byte) 0);
+        dest.writeByte(this.hasBleOnOff ? (byte) 1 : (byte) 0);
+        dest.writeByte(this.hasBleTxp ? (byte) 1 : (byte) 0);
+        dest.writeByte(this.hasAdr ? (byte) 1 : (byte) 0);
+        dest.writeByte(this.hasAppEui ? (byte) 1 : (byte) 0);
+        dest.writeByte(this.hasAppKey ? (byte) 1 : (byte) 0);
+        dest.writeByte(this.hasAppSkey ? (byte) 1 : (byte) 0);
+        dest.writeByte(this.hasDevAddr ? (byte) 1 : (byte) 0);
+        dest.writeByte(this.hasDevEui ? (byte) 1 : (byte) 0);
+        dest.writeByte(this.hasNwkSkey ? (byte) 1 : (byte) 0);
+        dest.writeByte(this.hasNwkAddress ? (byte) 1 : (byte) 0);
+        dest.writeByte(this.hasLoraSf ? (byte) 1 : (byte) 0);
+        dest.writeByte(this.hasDataRate ? (byte) 1 : (byte) 0);
+        dest.writeByte(this.hasActivation ? (byte) 1 : (byte) 0);
+        dest.writeByte(this.hasLoraTxp ? (byte) 1 : (byte) 0);
+        dest.writeByte(this.hasLoraInterval ? (byte) 1 : (byte) 0);
+        dest.writeByte(this.hasLoraParam ? (byte) 1 : (byte) 0);
+        dest.writeByte(this.hasBleParam ? (byte) 1 : (byte) 0);
+        dest.writeByte(this.hasAppParam ? (byte) 1 : (byte) 0);
+        dest.writeByte(this.hasConfirm ? (byte) 1 : (byte) 0);
+        dest.writeByte(this.hasDemoMode ? (byte) 1 : (byte) 0);
+        dest.writeByte(this.hasBatteryBeep ? (byte) 1 : (byte) 0);
+        dest.writeByte(this.hasBeepMuteTime ? (byte) 1 : (byte) 0);
+        dest.writeByte(this.hasLedStatus ? (byte) 1 : (byte) 0);
+        dest.writeByte(this.hasAlertModeStatus ? (byte) 1 : (byte) 0);
+        dest.writeByte(this.hasUploadInterval ? (byte) 1 : (byte) 0);
+        dest.writeByte(this.hasEddyStone ? (byte) 1 : (byte) 0);
+        dest.writeByte(this.hasIbeacon ? (byte) 1 : (byte) 0);
+        dest.writeByte(this.hasSensorBroadcast ? (byte) 1 : (byte) 0);
+        dest.writeByte(this.hasSensorParam ? (byte) 1 : (byte) 0);
+        dest.writeByte(this.hasCustomPackage ? (byte) 1 : (byte) 0);
+        dest.writeByte(this.hasDelay ? (byte) 1 : (byte) 0);
+        dest.writeByte(this.hasLbtStatus ? (byte) 1 : (byte) 0);
+        dest.writeByte(this.hasLbtThreshold ? (byte) 1 : (byte) 0);
+        dest.writeByte(this.hasSglFrequency ? (byte) 1 : (byte) 0);
+        dest.writeByte(this.hasRx2Frequency ? (byte) 1 : (byte) 0);
+        dest.writeByte(this.hasRx2Datarate ? (byte) 1 : (byte) 0);
+        dest.writeByte(this.hasSglDatarate ? (byte) 1 : (byte) 0);
+        dest.writeTypedArray(this.slotArray, flags);
+        dest.writeParcelable(this.sensoroSensorTest, flags);
+        dest.writeLong(this.lastFoundTime);
+        dest.writeValue(this.alarmStepHigh);
+        dest.writeValue(this.alarmStepLow);
+        dest.writeValue(this.alarmHigh);
+        dest.writeValue(this.alarmLow);
+        dest.writeByte(this.hasAlarmHigh ? (byte) 1 : (byte) 0);
+        dest.writeByte(this.hasAlarmLow ? (byte) 1 : (byte) 0);
+        dest.writeByte(this.hasAlarmStepHigh ? (byte) 1 : (byte) 0);
+        dest.writeByte(this.hasAlarmStepLow ? (byte) 1 : (byte) 0);
+        dest.writeByte(this.hasMultiTemperature ? (byte) 1 : (byte) 0);
+        dest.writeString(this.sn);
+        dest.writeString(this.hardwareVersion);
+        dest.writeString(this.firmwareVersion);
+        dest.writeString(this.macAddress);
+        dest.writeInt(this.batteryLevel);
+        dest.writeInt(this.rssi);
+        dest.writeInt(this.type);
+        dest.writeLong(this.lastFoundTime);
+        dest.writeParcelable(this.iBeacon, flags);
+    }
+
+    protected SensoroDevice(Parcel in) {
+        super(in);
+        this.major = in.readInt();
+        this.minor = in.readInt();
+        this.proximityUUID = in.readString();
+        this.accelerometerCount = in.readInt();
+        this.power = in.readInt();
+        this.sf = in.readFloat();
+        this.devEui = in.readString();
+        this.appEui = in.readString();
+        this.appKey = in.readString();
+        this.appSkey = in.readString();
+        this.nwkSkey = in.readString();
+        this.password = in.readString();
+        this.dfuInfo = in.readString();
+        this.band = in.readString();
+        this.devAdr = in.readInt();
+        this.loraDr = in.readInt();
+        this.loraAdr = in.readInt();
+        this.loraTxp = in.readInt();
+        this.dfuProgress = in.readInt();
+        this.loraInt = in.readFloat();
+        this.bleTxp = in.readInt();
+        this.bleInt = in.readFloat();
+        this.bleOnTime = in.readInt();
+        this.bleOffTime = in.readInt();
+        this.tempInterval = in.readInt();
+        this.lightInterval = in.readInt();
+        this.humidityInterval = in.readInt();
+        this.classBEnabled = in.readInt();
+        this.classBDataRate = in.readInt();
+        this.classBPeriodicity = in.readInt();
+        this.uploadInterval = (Integer) in.readValue(Integer.class.getClassLoader());
+        this.confirm = (Integer) in.readValue(Integer.class.getClassLoader());
+        this.demoMode = (Integer) in.readValue(Integer.class.getClassLoader());
+        this.batteryBeep = (Integer) in.readValue(Integer.class.getClassLoader());
+        this.beepMuteTime = (Integer) in.readValue(Integer.class.getClassLoader());
+        this.ledStatus = (Integer) in.readValue(Integer.class.getClassLoader());
+        this.alertModeStatus = (Integer) in.readValue(Integer.class.getClassLoader());
+        this.activation = (Integer) in.readValue(Integer.class.getClassLoader());
+        this.delay = (Integer) in.readValue(Integer.class.getClassLoader());
+        this.channelList = new ArrayList<SensoroChannel>();
+        in.readList(this.channelList, SensoroChannel.class.getClassLoader());
+        this.cmdArrayList = new ArrayList<SensoroAppCmd>();
+        in.readList(this.cmdArrayList, SensoroAppCmd.class.getClassLoader());
+        this.dataVersion = in.readByte();
+        this.isIBeaconEnabled = in.readByte() != 0;
+        this.isDfu = in.readByte() != 0;
+        this.hasBleInterval = in.readByte() != 0;
+        this.hasBleOffTime = in.readByte() != 0;
+        this.hasBleOnTime = in.readByte() != 0;
+        this.hasBleOnOff = in.readByte() != 0;
+        this.hasBleTxp = in.readByte() != 0;
+        this.hasAdr = in.readByte() != 0;
+        this.hasAppEui = in.readByte() != 0;
+        this.hasAppKey = in.readByte() != 0;
+        this.hasAppSkey = in.readByte() != 0;
+        this.hasDevAddr = in.readByte() != 0;
+        this.hasDevEui = in.readByte() != 0;
+        this.hasNwkSkey = in.readByte() != 0;
+        this.hasNwkAddress = in.readByte() != 0;
+        this.hasLoraSf = in.readByte() != 0;
+        this.hasDataRate = in.readByte() != 0;
+        this.hasActivation = in.readByte() != 0;
+        this.hasLoraTxp = in.readByte() != 0;
+        this.hasLoraInterval = in.readByte() != 0;
+        this.hasLoraParam = in.readByte() != 0;
+        this.hasBleParam = in.readByte() != 0;
+        this.hasAppParam = in.readByte() != 0;
+        this.hasConfirm = in.readByte() != 0;
+        this.hasDemoMode = in.readByte() != 0;
+        this.hasBatteryBeep = in.readByte() != 0;
+        this.hasBeepMuteTime = in.readByte() != 0;
+        this.hasLedStatus = in.readByte() != 0;
+        this.hasAlertModeStatus = in.readByte() != 0;
+        this.hasUploadInterval = in.readByte() != 0;
+        this.hasEddyStone = in.readByte() != 0;
+        this.hasIbeacon = in.readByte() != 0;
+        this.hasSensorBroadcast = in.readByte() != 0;
+        this.hasSensorParam = in.readByte() != 0;
+        this.hasCustomPackage = in.readByte() != 0;
+        this.hasDelay = in.readByte() != 0;
+        this.hasLbtStatus = in.readByte() != 0;
+        this.hasLbtThreshold = in.readByte() != 0;
+        this.hasSglFrequency = in.readByte() != 0;
+        this.hasRx2Frequency = in.readByte() != 0;
+        this.hasRx2Datarate = in.readByte() != 0;
+        this.hasSglDatarate = in.readByte() != 0;
+        this.slotArray = in.createTypedArray(SensoroSlot.CREATOR);
+        this.sensoroSensorTest = in.readParcelable(SensoroSensor.class.getClassLoader());
+        this.lastFoundTime = in.readLong();
+        this.alarmStepHigh = (Integer) in.readValue(Integer.class.getClassLoader());
+        this.alarmStepLow = (Integer) in.readValue(Integer.class.getClassLoader());
+        this.alarmHigh = (Integer) in.readValue(Integer.class.getClassLoader());
+        this.alarmLow = (Integer) in.readValue(Integer.class.getClassLoader());
+        this.hasAlarmHigh = in.readByte() != 0;
+        this.hasAlarmLow = in.readByte() != 0;
+        this.hasAlarmStepHigh = in.readByte() != 0;
+        this.hasAlarmStepLow = in.readByte() != 0;
+        this.hasMultiTemperature = in.readByte() != 0;
+        this.sn = in.readString();
+        this.hardwareVersion = in.readString();
+        this.firmwareVersion = in.readString();
+        this.macAddress = in.readString();
+        this.batteryLevel = in.readInt();
+        this.rssi = in.readInt();
+        this.type = in.readInt();
+        this.lastFoundTime = in.readLong();
+        this.iBeacon = in.readParcelable(IBeacon.class.getClassLoader());
+    }
+
+    public static final Creator<SensoroDevice> CREATOR = new Creator<SensoroDevice>() {
+        @Override
+        public SensoroDevice createFromParcel(Parcel source) {
+            return new SensoroDevice(source);
+        }
+
+        @Override
+        public SensoroDevice[] newArray(int size) {
+            return new SensoroDevice[size];
+        }
+    };
 }
 
