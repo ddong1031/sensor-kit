@@ -24,7 +24,6 @@ import com.sensoro.libbleserver.ble.constants.CmdType;
 import com.sensoro.libbleserver.ble.constants.ResultCode;
 import com.sensoro.libbleserver.ble.entity.BLEDevice;
 import com.sensoro.libbleserver.ble.entity.SensoroAcrelFires;
-import com.sensoro.libbleserver.ble.entity.SensoroAppCmd;
 import com.sensoro.libbleserver.ble.entity.SensoroBaymax;
 import com.sensoro.libbleserver.ble.entity.SensoroCayManData;
 import com.sensoro.libbleserver.ble.entity.SensoroChannel;
@@ -59,7 +58,6 @@ import no.nordicsemi.android.dfu.DfuServiceListenerHelper;
 
 import static com.sensoro.libbleserver.ble.constants.CmdType.CMD_BB_TRACKER_UPGRADE;
 import static com.sensoro.libbleserver.ble.constants.CmdType.CMD_ON_DFU_MODE;
-import static com.sensoro.libbleserver.ble.proto.MsgNode1V1M5.AppCmd.APP_CMD_TIMING_MUTE;
 
 /**
  * Created by fangping on 2016/7/25.
