@@ -40,7 +40,7 @@ public class BLEDeviceService extends Service implements BLEScanCallback {
     public void onCreate() {
         super.onCreate();
         bleScanner = BLEScanner.createScanner(this, this);
-        executorService = Executors.newCachedThreadPool();
+        executorService = Executors.newFixedThreadPool(4);
         List<ScanBLEFilter> scanBLEResults = new ArrayList<>();
         ScanBLEFilter scanBLEFilter = new ScanBLEFilter.Builder()
                 .build();

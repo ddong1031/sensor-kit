@@ -2562,7 +2562,6 @@ public class SensoroDeviceConnection {
             if (acrelData.hasIn()) {
                 sensoroSensorTest.acrelFires.in = acrelData.getIn();
             }
-
             sensoroSensorTest.acrelFires.hasBuzzer = acrelData.hasBuzzer();
             if (acrelData.hasBuzzer()) {
                 sensoroSensorTest.acrelFires.buzzer = acrelData.getBuzzer();
@@ -3546,7 +3545,6 @@ public class SensoroDeviceConnection {
                 builder.setPasswd(sensoroSensorTest.acrelFires.passwd);
             }
             if (sensoroSensorTest.acrelFires.hasT1Th) {
-                int t1Th = sensoroSensorTest.acrelFires.t1Th;
                 builder.setT1Th(sensoroSensorTest.acrelFires.t1Th);
             }
             if (sensoroSensorTest.acrelFires.hasT2Th) {
@@ -3592,13 +3590,12 @@ public class SensoroDeviceConnection {
             }
 
             if (sensoroSensorTest.acrelFires.hasIn) {
-                builder.setCt(sensoroSensorTest.acrelFires.in);
+                builder.setIn(sensoroSensorTest.acrelFires.in);
             }
 
             if (sensoroSensorTest.acrelFires.hasBuzzer) {
-                builder.setCt(sensoroSensorTest.acrelFires.buzzer);
+                builder.setBuzzer(sensoroSensorTest.acrelFires.buzzer);
             }
-
             msgNodeBuilder.setAcrelData(builder);
 
         }
@@ -4446,6 +4443,15 @@ public class SensoroDeviceConnection {
         writeData05Cmd(data, CmdType.CMD_SET_ELEC_CMD, writeCallback);
     }
 
+    public void writeCaymanCmd(MsgNode1V1M5.Cayman.Builder builder, SensoroWriteCallback writeCallback) {
+        MsgNode1V1M5.MsgNode.Builder msgNodeBuilder = MsgNode1V1M5.MsgNode.newBuilder();
+        msgNodeBuilder.setCaymanData(builder);
+        byte[] data = msgNodeBuilder.build().toByteArray();
+        writeCallbackHashMap.put(CmdType.CMD_SET_CAYMAN_CMD, writeCallback);
+        writeData05Cmd(data, CmdType.CMD_SET_CAYMAN_CMD, writeCallback);
+
+    }
+
     public void writeCaymanCmd(MsgNode1V1M5.Cayman.Builder builder, int cmdCaymanReset, SensoroWriteCallback writeCallback) {
         MsgNode1V1M5.MsgNode.Builder msgNodeBuilder = MsgNode1V1M5.MsgNode.newBuilder();
         msgNodeBuilder.setCaymanData(builder);
@@ -4458,6 +4464,14 @@ public class SensoroDeviceConnection {
             writeData05Cmd(data, CmdType.CMD_CAYMAN_RESET, writeCallback);
         }
 
+    }
+
+    public void writeCaymanCmdReset(MsgNode1V1M5.Cayman.Builder builder, SensoroWriteCallback writeCallback) {
+        MsgNode1V1M5.MsgNode.Builder msgNodeBuilder = MsgNode1V1M5.MsgNode.newBuilder();
+        msgNodeBuilder.setCaymanData(builder);
+        byte[] data = msgNodeBuilder.build().toByteArray();
+        writeCallbackHashMap.put(CmdType.CMD_CAYMAN_RESET, writeCallback);
+        writeData05Cmd(data, CmdType.CMD_CAYMAN_RESET, writeCallback);
     }
 
     public void setOnSensoroDirectWriteDfuCallBack(SensoroDirectWriteDfuCallBack sensoroDirectWriteDfuCallBack) {
@@ -4509,7 +4523,13 @@ public class SensoroDeviceConnection {
 
 
     /**
+     * <<<<<<< HEAD
+     *
      * @param beepTime      传入的单位是s
+     *                      =======
+     *                      消音时间范围限定1-30minute
+     * @param beepTime      传入的单位是minute
+     *                      >>>>>>> new_test
      * @param writeCallback
      */
     public void writeAppBeepMuteTime(int beepTime, SensoroWriteCallback writeCallback) {
@@ -4523,7 +4543,7 @@ public class SensoroDeviceConnection {
         MsgNode1V1M5.MsgNode.Builder nodeBuilder = MsgNode1V1M5.MsgNode.newBuilder();
         MsgNode1V1M5.AppParam.Builder appBuilder = MsgNode1V1M5.AppParam.newBuilder();
         appBuilder.setCmd(MsgNode1V1M5.AppCmd.APP_CMD_TIMING_MUTE);
-        appBuilder.setBeepMuteTime(beepTime);
+        appBuilder.setBeepMuteTime(beepTime * 60);//传给设备的单位是s，所以*60
         nodeBuilder.setAppParam(appBuilder);
         byte[] data = nodeBuilder.build().toByteArray();
         int data_length = data.length;
@@ -4546,6 +4566,7 @@ public class SensoroDeviceConnection {
             writeCallback.onWriteFailure(ResultCode.CODE_DEVICE_DFU_ERROR, CmdType.CMD_NULL);
         }
     }
+
     /**
      * 设备支持哪些cmd
      *
