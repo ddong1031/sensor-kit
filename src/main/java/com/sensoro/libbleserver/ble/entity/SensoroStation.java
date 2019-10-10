@@ -9,22 +9,22 @@ import android.os.Parcelable;
 
 public class SensoroStation extends BLEDevice implements Parcelable, Cloneable {
 
-    String sn;
-    String hardwareModelName;// hardware version.
-    String firmwareVersion;// firmware version.
-    int workStatus;
-    int netStatus;
-    int wifiStatus;
-    int ethStatus;
-    int cellularStatus;
-    String ip;
-    String gateway;
-    String mask;
-    String pdns;
-    String adns;
-    String sid;
-    String pwd;
-    String encrpt;
+    public String sn;
+    public String hardwareModelName;// hardware version.
+    public String firmwareVersion;// firmware version.
+    public int workStatus;
+    public int netStatus;
+    public int wifiStatus;
+    public int ethStatus;
+    public int cellularStatus;
+    public String ip;
+    public String gateway;
+    public String mask;
+    public String pdns;
+    public String adns;
+    public String sid;
+    public String pwd;
+    public String encrpt;
 
     public int getSgl_dr() {
         return sgl_dr;
@@ -35,7 +35,7 @@ public class SensoroStation extends BLEDevice implements Parcelable, Cloneable {
     }
 
     //单通道基站DR
-    int sgl_dr;
+    public int sgl_dr;
 
     public int getSgl_freq() {
         return sgl_freq;
@@ -45,15 +45,15 @@ public class SensoroStation extends BLEDevice implements Parcelable, Cloneable {
         this.sgl_freq = sgl_freq;
     }
 
-    int sgl_freq;
+    public int sgl_freq;
 
-    int accessMode;
-    int allocationMode;
-    int rssi;
-    String netid;
-    String cloudaddress;
-    String cloudport;
-    String key;
+    public int accessMode;
+    public int allocationMode;
+    public int rssi;
+    public String netid;
+    public String cloudaddress;
+    public String cloudport;
+    public String key;
     public long lastFoundTime;
 
     public SensoroStation() {
