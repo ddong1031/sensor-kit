@@ -3832,6 +3832,25 @@ public class SensoroDeviceConnection {
             if (sensoroDevice.hasBeepMuteTime()) {
                 appBuilder.setBeepMuteTime(sensoroDevice.getBeepMuteTime());
             }
+            //
+            if (sensoroDevice.hasAlarmShieldSwitch()) {
+                appBuilder.setAlarmShieldSwitch(sensoroDevice.getAlarmShieldSwitch());
+            }
+            if (sensoroDevice.hasAlarmShieldTime()) {
+                appBuilder.setAlarmShieldTime(sensoroDevice.getAlarmShieldTime());
+            }
+            if (sensoroDevice.hasErrorInsulateSwitch()) {
+                appBuilder.setErrorInsulateSwitch(sensoroDevice.getErrorInsulateSwitch());
+            }
+            if (sensoroDevice.hasWarningSwitch()) {
+                appBuilder.setWarningSwitch(sensoroDevice.getWarningSwitch());
+            }
+            if (sensoroDevice.hasDeployStatus()) {
+                appBuilder.setDeployStatus(sensoroDevice.getDeployStatus());
+            }
+            if (sensoroDevice.hasInsuranceStatus()) {
+                appBuilder.setInsuranceStatus(sensoroDevice.getInsuranceStatus());
+            }
 
 
             msgNodeBuilder.setAppParam(appBuilder);
