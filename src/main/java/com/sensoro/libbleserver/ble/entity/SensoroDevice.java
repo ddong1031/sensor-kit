@@ -3,7 +3,6 @@ package com.sensoro.libbleserver.ble.entity;
 import android.os.Parcel;
 import android.os.Parcelable;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -121,7 +120,38 @@ public class SensoroDevice extends BLEDevice implements Parcelable, Cloneable {
 
     boolean hasLbtStatus;
     boolean hasLbtThreshold;
+    //报警永久屏蔽开关
+    boolean hasAlarmShieldSwitch;
+    //报警永久屏蔽开关, 范围 [0 - 1], (上|下)
+    private Integer alarmShieldSwitch;
+    //报警临时屏蔽时间
+    private boolean hasAlarmShieldTime;
+    // 报警临时屏蔽时间, 单位s, (上|下)
+    private Integer alarmShieldTime;
+    // 故障隔离开关, 范围 [0 - 1], (上|下)
+    private boolean hasErrorInsulateSwitch;
+    private Integer errorInsulateSwitch;
+    // 预警开关, 范围 [0 - 1], (上|下)
+    private boolean hasWarningSwitch;
+    private Integer warningSwitch;
+    // 部署状态, 范围 [0 - 1], (上|下)
+    private boolean hasDeployStatus;
+    private Integer deployStatus;
+    private boolean hasInsuranceStatus;
+    private Integer insuranceStatus;
+    public boolean hasAlarmShieldSwitch() {
+        return hasAlarmShieldSwitch;
+    }
+    public void setHasAlarmShieldSwitch(boolean hasAlarmShieldSwitch) {
+        this.hasAlarmShieldSwitch = hasAlarmShieldSwitch;
+    }
+    public Integer getDeployStatus() {
+        return deployStatus;
+    }
 
+    public void setDeployStatus(Integer deployStatus) {
+        this.deployStatus = deployStatus;
+    }
     public boolean hasLbtStatus() {
         return hasLbtStatus;
     }
@@ -337,6 +367,12 @@ public class SensoroDevice extends BLEDevice implements Parcelable, Cloneable {
         hasSglDatarate = false;
         hasLbtStatus = false;
         hasLbtThreshold = false;
+        hasAlarmShieldSwitch = false;
+        hasAlarmShieldTime = false;
+        hasErrorInsulateSwitch = false;
+        hasWarningSwitch = false;
+        hasDeployStatus = false;
+        hasInsuranceStatus = false;
         hasRx2Datarate = false;
         hasRx2Frequency = false;
     }
@@ -1237,6 +1273,18 @@ public class SensoroDevice extends BLEDevice implements Parcelable, Cloneable {
         dest.writeByte(this.hasDelay ? (byte) 1 : (byte) 0);
         dest.writeByte(this.hasLbtStatus ? (byte) 1 : (byte) 0);
         dest.writeByte(this.hasLbtThreshold ? (byte) 1 : (byte) 0);
+        dest.writeByte(this.hasAlarmShieldSwitch ? (byte) 1 : (byte) 0);
+        dest.writeValue(this.alarmShieldSwitch);
+        dest.writeByte(this.hasAlarmShieldTime ? (byte) 1 : (byte) 0);
+        dest.writeValue(this.alarmShieldTime);
+        dest.writeByte(this.hasErrorInsulateSwitch ? (byte) 1 : (byte) 0);
+        dest.writeValue(this.errorInsulateSwitch);
+        dest.writeByte(this.hasWarningSwitch ? (byte) 1 : (byte) 0);
+        dest.writeValue(this.warningSwitch);
+        dest.writeByte(this.hasDeployStatus ? (byte) 1 : (byte) 0);
+        dest.writeValue(this.deployStatus);
+        dest.writeByte(this.hasInsuranceStatus ? (byte) 1 : (byte) 0);
+        dest.writeValue(this.insuranceStatus);
         dest.writeByte(this.hasSglFrequency ? (byte) 1 : (byte) 0);
         dest.writeByte(this.hasRx2Frequency ? (byte) 1 : (byte) 0);
         dest.writeByte(this.hasRx2Datarate ? (byte) 1 : (byte) 0);
@@ -1348,6 +1396,18 @@ public class SensoroDevice extends BLEDevice implements Parcelable, Cloneable {
         this.hasDelay = in.readByte() != 0;
         this.hasLbtStatus = in.readByte() != 0;
         this.hasLbtThreshold = in.readByte() != 0;
+        this.hasAlarmShieldSwitch = in.readByte() != 0;
+        this.alarmShieldSwitch = (Integer) in.readValue(Integer.class.getClassLoader());
+        this.hasAlarmShieldTime = in.readByte() != 0;
+        this.alarmShieldTime = (Integer) in.readValue(Integer.class.getClassLoader());
+        this.hasErrorInsulateSwitch = in.readByte() != 0;
+        this.errorInsulateSwitch = (Integer) in.readValue(Integer.class.getClassLoader());
+        this.hasWarningSwitch = in.readByte() != 0;
+        this.warningSwitch = (Integer) in.readValue(Integer.class.getClassLoader());
+        this.hasDeployStatus = in.readByte() != 0;
+        this.deployStatus = (Integer) in.readValue(Integer.class.getClassLoader());
+        this.hasInsuranceStatus = in.readByte() != 0;
+        this.insuranceStatus = (Integer) in.readValue(Integer.class.getClassLoader());
         this.hasSglFrequency = in.readByte() != 0;
         this.hasRx2Frequency = in.readByte() != 0;
         this.hasRx2Datarate = in.readByte() != 0;
@@ -1386,5 +1446,85 @@ public class SensoroDevice extends BLEDevice implements Parcelable, Cloneable {
             return new SensoroDevice[size];
         }
     };
+
+    public Integer getAlarmShieldSwitch() {
+        return alarmShieldSwitch;
+    }
+
+    public void setAlarmShieldSwitch(Integer alarmShieldSwitch) {
+        this.alarmShieldSwitch = alarmShieldSwitch;
+    }
+
+    public boolean hasAlarmShieldTime() {
+        return hasAlarmShieldTime;
+    }
+
+    public void setHasAlarmShieldTime(boolean hasAlarmShieldTime) {
+        this.hasAlarmShieldTime = hasAlarmShieldTime;
+    }
+
+    public Integer getAlarmShieldTime() {
+        return alarmShieldTime;
+    }
+
+    public void setAlarmShieldTime(Integer alarmShieldTime) {
+        this.alarmShieldTime = alarmShieldTime;
+    }
+
+    public boolean hasErrorInsulateSwitch() {
+        return hasErrorInsulateSwitch;
+    }
+
+    public void setHasErrorInsulateSwitch(boolean hasErrorInsulateSwitch) {
+        this.hasErrorInsulateSwitch = hasErrorInsulateSwitch;
+    }
+
+    public Integer getErrorInsulateSwitch() {
+        return errorInsulateSwitch;
+    }
+
+    public void setErrorInsulateSwitch(Integer errorInsulateSwitch) {
+        this.errorInsulateSwitch = errorInsulateSwitch;
+    }
+
+    public boolean hasWarningSwitch() {
+        return hasWarningSwitch;
+    }
+
+    public void setHasWarningSwitch(boolean hasWarningSwitch) {
+        this.hasWarningSwitch = hasWarningSwitch;
+    }
+
+    public Integer getWarningSwitch() {
+        return warningSwitch;
+    }
+
+    public void setWarningSwitch(Integer warningSwitch) {
+        this.warningSwitch = warningSwitch;
+    }
+
+    public boolean hasDeployStatus() {
+        return hasDeployStatus;
+    }
+
+    public void setHasDeployStatus(boolean hasDeployStatus) {
+        this.hasDeployStatus = hasDeployStatus;
+    }
+
+    public boolean hasInsuranceStatus() {
+        return hasInsuranceStatus;
+    }
+
+    public void setHasInsuranceStatus(boolean hasInsuranceStatus) {
+        this.hasInsuranceStatus = hasInsuranceStatus;
+    }
+
+    public Integer getInsuranceStatus() {
+        return insuranceStatus;
+    }
+
+    public void setInsuranceStatus(Integer insuranceStatus) {
+        this.insuranceStatus = insuranceStatus;
+    }
 }
 
