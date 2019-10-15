@@ -3883,6 +3883,21 @@ public class SensoroDeviceConnection {
     }
 
     /**
+     * 使设备进入故障隔离模式，主要用于city
+     * @param errorInsulateSwitch   0 关 1 开
+     * @param writeCallback
+     */
+    public void writeErrorInsulateSwitchCmd(int errorInsulateSwitch, SensoroWriteCallback writeCallback) {
+        writeCallbackHashMap.put(CmdType.CMD_SET_ELEC_CMD, writeCallback);
+        MsgNode1V1M5.AppParam.Builder builder = MsgNode1V1M5.AppParam.newBuilder();
+        builder.setErrorInsulateSwitch(errorInsulateSwitch);
+        MsgNode1V1M5.MsgNode.Builder msgNode = MsgNode1V1M5.MsgNode.newBuilder();
+        msgNode.setAppParam(builder);
+        byte[] data = msgNode.build().toByteArray();
+        writeData05Cmd(data, CmdType.CMD_SET_ELEC_CMD, writeCallback);
+    }
+
+    /**
      * 写入电表命令
      *
      * @param builder
