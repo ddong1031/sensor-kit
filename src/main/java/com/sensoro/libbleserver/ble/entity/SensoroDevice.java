@@ -21,107 +21,107 @@ public class SensoroDevice extends BLEDevice implements Parcelable, Cloneable {
 //    public static final float FV_1_2 = 1.2f;
     public static final String FV_1_2 = "1.2";
 
-    int major; // major
-    int minor; // minor
-    String proximityUUID; // proximityUuid
+    public int major; // major
+    public int minor; // minor
+    public String proximityUUID; // proximityUuid
 
-    int accelerometerCount; // accelerometer reConnectCount.
-    int power;//功率
-    float sf;//BL间隔
+    public int accelerometerCount; // accelerometer reConnectCount.
+    public int power;//功率
+    public float sf;//BL间隔
     public String devEui;
     public String appEui;
     public String appKey;
     public String appSkey;
     public String nwkSkey;
-    String password;
-    String dfuInfo;
-    String band;
+    public String password;
+    public String dfuInfo;
+    public String band;
     public int devAdr;
-    int loraDr;
-    int loraAdr;
-    int loraTxp;
-    int dfuProgress;
-    float loraInt;
-    int bleTxp;
-    float bleInt;
-    int bleOnTime;
-    int bleOffTime;
-    int tempInterval;
-    int lightInterval;
-    int humidityInterval;
+    public int loraDr;
+    public int loraAdr;
+    public int loraTxp;
+    public int dfuProgress;
+    public float loraInt;
+    public int bleTxp;
+    public float bleInt;
+    public int bleOnTime;
+    public int bleOffTime;
+    public int tempInterval;
+    public int lightInterval;
+    public int humidityInterval;
     public int classBEnabled;
-    int classBDataRate;
-    int classBPeriodicity;
-    Integer uploadInterval;
-    Integer confirm;
-    Integer demoMode;
-    Integer batteryBeep;
-    Integer beepMuteTime;
-    Integer ledStatus;
+    public int classBDataRate;
+    public int classBPeriodicity;
+    public Integer uploadInterval;
+    public Integer confirm;
+    public Integer demoMode;
+    public Integer batteryBeep;
+    public Integer beepMuteTime;
+    public Integer ledStatus;
 
 
-    Integer alertModeStatus;
-    Integer activation;
+    public Integer alertModeStatus;
+    public Integer activation;
     public Integer delay;
-    transient List<Integer> channelMaskList;
-    ArrayList<SensoroChannel> channelList;
-    ArrayList<Integer> cmdArrayList;
-    transient int maxEirp;
-    transient int sglStatus;
-    transient int sglFrequency;
-    transient int sglDatarate;
-    transient int lbtStatus;
-    transient int lbtThreshold;
+    public transient List<Integer> channelMaskList;
+    public ArrayList<SensoroChannel> channelList;
+    public ArrayList<Integer> cmdArrayList;
+    public transient int maxEirp;
+    public transient int sglStatus;
+    public transient int sglFrequency;
+    public transient int sglDatarate;
+    public transient int lbtStatus;
+    public transient int lbtThreshold;
 
 
-    transient int rx2Frequency;
-    transient int rx2Datarate;
+    public transient int rx2Frequency;
+    public transient int rx2Datarate;
 
-    byte dataVersion;
-    boolean isIBeaconEnabled; // is beacon function enable.
+    public byte dataVersion;
+    public boolean isIBeaconEnabled; // is beacon function enable.
     public boolean isDfu;
-    boolean hasBleInterval;
-    boolean hasBleOffTime;
-    boolean hasBleOnTime;
-    boolean hasBleOnOff;
-    boolean hasBleTxp;
-    boolean hasAdr;
-    boolean hasAppEui;
-    boolean hasAppKey;
-    boolean hasAppSkey;
-    boolean hasDevAddr;
-    boolean hasDevEui;
-    boolean hasNwkSkey;
-    boolean hasNwkAddress;
-    boolean hasLoraSf;
-    boolean hasDataRate;
-    boolean hasActivation;
-    boolean hasLoraTxp;
-    boolean hasLoraInterval;
-    boolean hasLoraParam;
-    boolean hasBleParam;
-    boolean hasAppParam;
-    boolean hasConfirm;
-    boolean hasDemoMode;
-    boolean hasBatteryBeep;
-    boolean hasBeepMuteTime;
-    boolean hasLedStatus;
+    public boolean hasBleInterval;
+    public boolean hasBleOffTime;
+    public boolean hasBleOnTime;
+    public boolean hasBleOnOff;
+    public boolean hasBleTxp;
+    public boolean hasAdr;
+    public boolean hasAppEui;
+    public boolean hasAppKey;
+    public boolean hasAppSkey;
+    public boolean hasDevAddr;
+    public boolean hasDevEui;
+    public boolean hasNwkSkey;
+    public boolean hasNwkAddress;
+    public boolean hasLoraSf;
+    public boolean hasDataRate;
+    public boolean hasActivation;
+    public boolean hasLoraTxp;
+    public boolean hasLoraInterval;
+    public boolean hasLoraParam;
+    public boolean hasBleParam;
+    public boolean hasAppParam;
+    public boolean hasConfirm;
+    public boolean hasDemoMode;
+    public boolean hasBatteryBeep;
+    public boolean hasBeepMuteTime;
+    public boolean hasLedStatus;
 
 
-    boolean hasAlertModeStatus;
-    boolean hasUploadInterval;
-    boolean hasEddyStone;
-    boolean hasIbeacon;
-    boolean hasSensorBroadcast;
-    boolean hasSensorParam;
-    boolean hasCustomPackage;
-    boolean hasDelay;
+    public boolean hasAlertModeStatus;
+    public boolean hasUploadInterval;
+    public boolean hasEddyStone;
+    public boolean hasIbeacon;
+    public boolean hasSensorBroadcast;
+    public boolean hasSensorParam;
+    public boolean hasCustomPackage;
+    public boolean hasDelay;
 
 
-    boolean hasLbtStatus;
-    boolean hasLbtThreshold;
+    public boolean hasLbtStatus;
+    public boolean hasLbtThreshold;
     //报警永久屏蔽开关
-    boolean hasAlarmShieldSwitch;
+    public boolean hasAlarmShieldSwitch;
     //报警永久屏蔽开关, 范围 [0 - 1], (上|下)
     private Integer alarmShieldSwitch;
     //报警临时屏蔽时间
@@ -176,7 +176,7 @@ public class SensoroDevice extends BLEDevice implements Parcelable, Cloneable {
         this.hasSglFrequency = hasSglFrequency;
     }
 
-    boolean hasSglFrequency;
+    public boolean hasSglFrequency;
 
 
     public boolean hasRx2Frequency() {
@@ -187,7 +187,7 @@ public class SensoroDevice extends BLEDevice implements Parcelable, Cloneable {
         this.hasRx2Frequency = hasRx2Frequency;
     }
 
-    boolean hasRx2Frequency;
+    public boolean hasRx2Frequency;
 
     public boolean hasRx2Datarate() {
         return hasRx2Datarate;
@@ -197,7 +197,7 @@ public class SensoroDevice extends BLEDevice implements Parcelable, Cloneable {
         this.hasRx2Datarate = hasRx2Datarate;
     }
 
-    boolean hasRx2Datarate;
+    public boolean hasRx2Datarate;
 
     public boolean hasSglDatarate() {
         return hasSglDatarate;
@@ -207,7 +207,7 @@ public class SensoroDevice extends BLEDevice implements Parcelable, Cloneable {
         this.hasSglDatarate = hasSglDatarate;
     }
 
-    boolean hasSglDatarate;
+    public boolean hasSglDatarate;
 
     public boolean hasSglStatus() {
         return hasSglStatus;
@@ -217,9 +217,9 @@ public class SensoroDevice extends BLEDevice implements Parcelable, Cloneable {
         this.hasSglStatus = hasSglStatus;
     }
 
-    transient boolean hasSglStatus;
-    transient boolean hasMaxEirp;
-    SensoroSlot slotArray[];
+    public transient boolean hasSglStatus;
+    public transient boolean hasMaxEirp;
+    public SensoroSlot slotArray[];
     //    SensoroSensor sensoroSensor;
     private SensoroSensor sensoroSensorTest;
     public long lastFoundTime;
@@ -259,15 +259,15 @@ public class SensoroDevice extends BLEDevice implements Parcelable, Cloneable {
     /**
      * 报警设定的上下限的步长支持
      */
-    Integer alarmStepHigh;
-    Integer alarmStepLow;
-    Integer alarmHigh;
-    Integer alarmLow;
-    boolean hasAlarmHigh;
-    boolean hasAlarmLow;
-    boolean hasAlarmStepHigh;
-    boolean hasAlarmStepLow;
-    boolean hasMultiTemperature;
+    public Integer alarmStepHigh;
+    public Integer alarmStepLow;
+    public Integer alarmHigh;
+    public Integer alarmLow;
+    public boolean hasAlarmHigh;
+    public boolean hasAlarmLow;
+    public boolean hasAlarmStepHigh;
+    public boolean hasAlarmStepLow;
+    public boolean hasMultiTemperature;
 
     public boolean hasMultiTemperature() {
         return hasMultiTemperature;
