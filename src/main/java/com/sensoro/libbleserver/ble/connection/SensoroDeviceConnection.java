@@ -24,7 +24,6 @@ import com.sensoro.libbleserver.ble.constants.CmdType;
 import com.sensoro.libbleserver.ble.constants.ResultCode;
 import com.sensoro.libbleserver.ble.entity.BLEDevice;
 import com.sensoro.libbleserver.ble.entity.SensoroAcrelFires;
-import com.sensoro.libbleserver.ble.entity.SensoroAppCmd;
 import com.sensoro.libbleserver.ble.entity.SensoroBaymax;
 import com.sensoro.libbleserver.ble.entity.SensoroCayManData;
 import com.sensoro.libbleserver.ble.entity.SensoroChannel;
@@ -59,7 +58,6 @@ import no.nordicsemi.android.dfu.DfuServiceListenerHelper;
 
 import static com.sensoro.libbleserver.ble.constants.CmdType.CMD_BB_TRACKER_UPGRADE;
 import static com.sensoro.libbleserver.ble.constants.CmdType.CMD_ON_DFU_MODE;
-import static com.sensoro.libbleserver.ble.proto.MsgNode1V1M5.AppCmd.APP_CMD_TIMING_MUTE;
 
 /**
  * Created by fangping on 2016/7/25.
@@ -1525,8 +1523,40 @@ public class SensoroDeviceConnection {
             if (hasAlertModeStatus) {
                 sensoroDevice.setAlertModeStatus(appParam.getAlertModeStatus());
             }
-
-
+            //报警永久屏蔽开关
+            boolean hasAlarmShieldSwitch = appParam.hasAlarmShieldSwitch();
+            sensoroDevice.setHasAlarmShieldSwitch(hasAlarmShieldSwitch);
+            if (hasAlarmShieldSwitch) {
+                sensoroDevice.setAlarmShieldSwitch(appParam.getAlarmShieldSwitch());
+            }
+            boolean hasAlarmShieldTime = appParam.hasAlarmShieldTime();
+            sensoroDevice.setHasAlarmShieldSwitch(hasAlarmShieldSwitch);
+            if (hasAlarmShieldTime) {
+                sensoroDevice.setAlarmShieldTime(appParam.getAlarmShieldTime());
+            }
+            boolean hasErrorInsulateSwitch = appParam.hasErrorInsulateSwitch();
+            sensoroDevice.setHasErrorInsulateSwitch(hasErrorInsulateSwitch);
+            if (hasErrorInsulateSwitch) {
+                sensoroDevice.setErrorInsulateSwitch(appParam.getErrorInsulateSwitch());
+            }
+            boolean hasWarningSwitch = appParam.hasWarningSwitch();
+            sensoroDevice.setHasWarningSwitch(hasWarningSwitch);
+            if (hasWarningSwitch) {
+                int warningSwitch = appParam.getWarningSwitch();
+                sensoroDevice.setWarningSwitch(warningSwitch);
+            }
+            boolean hasDeployStatus = appParam.hasDeployStatus();
+            sensoroDevice.setHasDeployStatus(hasDeployStatus);
+            if (hasDeployStatus) {
+                int deployStatus = appParam.getDeployStatus();
+                sensoroDevice.setDeployStatus(deployStatus);
+            }
+            boolean hasInsuranceStatus = appParam.hasInsuranceStatus();
+            sensoroDevice.setHasInsuranceStatus(hasInsuranceStatus);
+            if (hasInsuranceStatus) {
+                int insuranceStatus = appParam.getInsuranceStatus();
+                sensoroDevice.setInsuranceStatus(insuranceStatus);
+            }
         }
     }
 
@@ -2478,7 +2508,26 @@ public class SensoroDeviceConnection {
             if (caymanData.hasInvadeAlarm()) {
                 sensoroSensorTest.cayManData.invadeAlarm = caymanData.getInvadeAlarm();
             }
-
+            sensoroSensorTest.cayManData.hasCdsSwitch = caymanData.hasCdsSwitch();
+            if (caymanData.hasCdsSwitch()) {
+                sensoroSensorTest.cayManData.cdsSwitch = caymanData.getCdsSwitch();
+            }
+            sensoroSensorTest.cayManData.hasNightLightSwitch = caymanData.hasNightLightSwitch();
+            if (caymanData.hasNightLightSwitch()) {
+                sensoroSensorTest.cayManData.nightLightSwitch = caymanData.getNightLightSwitch();
+            }
+            sensoroSensorTest.cayManData.hasHumanDetectionSwitch = caymanData.hasHumanDetectionSwitch();
+            if (caymanData.hasHumanDetectionSwitch()) {
+                sensoroSensorTest.cayManData.humanDetectionSwitch = caymanData.getHumanDetectionSwitch();
+            }
+            sensoroSensorTest.cayManData.hasHumanDetectionSync = caymanData.hasHumanDetectionSync();
+            if (caymanData.hasHumanDetectionSync()) {
+                sensoroSensorTest.cayManData.humanDetectionSync = caymanData.getHumanDetectionSync();
+            }
+            sensoroSensorTest.cayManData.hasVoicePlayIndex = caymanData.hasVoicePlayIndex();
+            if (caymanData.hasVoicePlayIndex()) {
+                sensoroSensorTest.cayManData.voicePlayIndex = caymanData.getVoicePlayIndex();
+            }
 
         }
     }
@@ -3664,6 +3713,21 @@ public class SensoroDeviceConnection {
             if (sensoroSensorTest.cayManData.hasInvadeAlarm) {
                 builder.setInvadeAlarm(sensoroSensorTest.cayManData.invadeAlarm);
             }
+            if (sensoroSensorTest.cayManData.hasCdsSwitch) {
+                builder.setCdsSwitch(sensoroSensorTest.cayManData.cdsSwitch);
+            }
+            if (sensoroSensorTest.cayManData.hasNightLightSwitch) {
+                builder.setNightLightSwitch(sensoroSensorTest.cayManData.nightLightSwitch);
+            }
+            if (sensoroSensorTest.cayManData.hasHumanDetectionSwitch) {
+                builder.setHumanDetectionSwitch(sensoroSensorTest.cayManData.humanDetectionSwitch);
+            }
+            if (sensoroSensorTest.cayManData.hasHumanDetectionSync) {
+                builder.setHumanDetectionSync(sensoroSensorTest.cayManData.humanDetectionSync);
+            }
+            if (sensoroSensorTest.cayManData.hasVoicePlayIndex) {
+                builder.setVoicePlayIndex(sensoroSensorTest.cayManData.voicePlayIndex);
+            }
 
             msgNodeBuilder.setCaymanData(builder);
         }
@@ -3768,6 +3832,25 @@ public class SensoroDeviceConnection {
             if (sensoroDevice.hasBeepMuteTime()) {
                 appBuilder.setBeepMuteTime(sensoroDevice.getBeepMuteTime());
             }
+            //
+            if (sensoroDevice.hasAlarmShieldSwitch()) {
+                appBuilder.setAlarmShieldSwitch(sensoroDevice.getAlarmShieldSwitch());
+            }
+            if (sensoroDevice.hasAlarmShieldTime()) {
+                appBuilder.setAlarmShieldTime(sensoroDevice.getAlarmShieldTime());
+            }
+            if (sensoroDevice.hasErrorInsulateSwitch()) {
+                appBuilder.setErrorInsulateSwitch(sensoroDevice.getErrorInsulateSwitch());
+            }
+            if (sensoroDevice.hasWarningSwitch()) {
+                appBuilder.setWarningSwitch(sensoroDevice.getWarningSwitch());
+            }
+            if (sensoroDevice.hasDeployStatus()) {
+                appBuilder.setDeployStatus(sensoroDevice.getDeployStatus());
+            }
+            if (sensoroDevice.hasInsuranceStatus()) {
+                appBuilder.setInsuranceStatus(sensoroDevice.getInsuranceStatus());
+            }
 
 
             msgNodeBuilder.setAppParam(appBuilder);
@@ -3793,6 +3876,21 @@ public class SensoroDeviceConnection {
         writeCallbackHashMap.put(CmdType.CMD_SET_ELEC_CMD, writeCallback);
         MsgNode1V1M5.AppParam.Builder builder = MsgNode1V1M5.AppParam.newBuilder();
         builder.setDemoMode(demoMode);
+        MsgNode1V1M5.MsgNode.Builder msgNode = MsgNode1V1M5.MsgNode.newBuilder();
+        msgNode.setAppParam(builder);
+        byte[] data = msgNode.build().toByteArray();
+        writeData05Cmd(data, CmdType.CMD_SET_ELEC_CMD, writeCallback);
+    }
+
+    /**
+     * 使设备进入故障隔离模式，主要用于city
+     * @param errorInsulateSwitch   0 关 1 开
+     * @param writeCallback
+     */
+    public void writeErrorInsulateSwitchCmd(int errorInsulateSwitch, SensoroWriteCallback writeCallback) {
+        writeCallbackHashMap.put(CmdType.CMD_SET_ELEC_CMD, writeCallback);
+        MsgNode1V1M5.AppParam.Builder builder = MsgNode1V1M5.AppParam.newBuilder();
+        builder.setErrorInsulateSwitch(errorInsulateSwitch);
         MsgNode1V1M5.MsgNode.Builder msgNode = MsgNode1V1M5.MsgNode.newBuilder();
         msgNode.setAppParam(builder);
         byte[] data = msgNode.build().toByteArray();

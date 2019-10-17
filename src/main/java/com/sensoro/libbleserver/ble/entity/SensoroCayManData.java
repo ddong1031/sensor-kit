@@ -36,6 +36,12 @@ public class SensoroCayManData implements Serializable {
     public boolean hasDefenseModeStartTime;
     public boolean hasDefenseModeStopTime;
     public boolean hasInvadeAlarm;
+    //
+    public boolean hasCdsSwitch;
+    public boolean hasNightLightSwitch;
+    public boolean hasHumanDetectionSwitch;
+    public boolean hasHumanDetectionSync;
+    public boolean hasVoicePlayIndex;
 
 
     public int isSmoke;// 烟雾状态 0 无烟 1 有烟
@@ -58,5 +64,11 @@ public class SensoroCayManData implements Serializable {
     public int defenseModeStartTime;//定时设防开始时间, 单位 min, 范围 [0 - 1439], (上|下)
     public int defenseModeStopTime;//定时设防结束时间, 单位 min, 范围 [0 - 1439], (上|下)
     public int invadeAlarm;//入侵报警开关, 范围 [0 - 1], (上|下)
+    //
+    public int cdsSwitch;           // 凝露检测开关, 范围 [0 - 1], (上|下)
+    public int nightLightSwitch;    // 夜灯开关, 范围 [0 - 1], (上|下)
+    public int humanDetectionSwitch;// 人体检测开关, 范围 [0 - 1], (上|下)
+    public int humanDetectionSync;  // 人体检测同步开关, 范围 [0 - 1], (上|下)
+    public int voicePlayIndex;      // 语音播放 index, (下) (α Tool 无需关心)
 
 }
