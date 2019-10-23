@@ -2594,10 +2594,13 @@ public class SensoroDeviceConnection {
             if (acrelData.hasCurrHighType()) {
                 sensoroSensorTest.acrelFires.currHighType = acrelData.getCurrHighType();
             }
-            sensoroSensorTest.acrelFires.hasCmd = acrelData.hasCmd();
-            if (acrelData.hasCmd()) {
-                sensoroSensorTest.acrelFires.cmd = acrelData.getCmd();
-            }
+            //这里认为cmd统一不回执，直接设置为true
+//            sensoroSensorTest.acrelFires.hasCmd = acrelData.hasCmd();
+//            if (acrelData.hasCmd()) {
+//                sensoroSensorTest.acrelFires.cmd = acrelData.getCmd();
+//            }
+            sensoroSensorTest.acrelFires.hasCmd = true;
+            sensoroSensorTest.acrelFires.cmd = acrelData.getCmd();
             sensoroSensorTest.acrelFires.hasIct = acrelData.hasIct();
             if (acrelData.hasIct()) {
                 sensoroSensorTest.acrelFires.ict = acrelData.getIct();
@@ -3884,7 +3887,8 @@ public class SensoroDeviceConnection {
 
     /**
      * 使设备进入故障隔离模式，主要用于city
-     * @param errorInsulateSwitch   0 关 1 开
+     *
+     * @param errorInsulateSwitch 0 关 1 开
      * @param writeCallback
      */
     public void writeErrorInsulateSwitchCmd(int errorInsulateSwitch, SensoroWriteCallback writeCallback) {
