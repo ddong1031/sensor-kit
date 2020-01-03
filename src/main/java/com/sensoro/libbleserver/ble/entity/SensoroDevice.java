@@ -131,7 +131,7 @@ public class SensoroDevice extends BLEDevice implements Parcelable, Cloneable {
     // 故障隔离开关, 范围 [0 - 1], (上|下)
     private boolean hasErrorInsulateSwitch;
     private Integer errorInsulateSwitch;
-    // 预警开关, 范围 [0 - 1], (上|下)
+    // 报警开关, 范围 [0 - 1], (上|下)
     private boolean hasWarningSwitch;
     private Integer warningSwitch;
     // 部署状态, 范围 [0 - 1], (上|下)

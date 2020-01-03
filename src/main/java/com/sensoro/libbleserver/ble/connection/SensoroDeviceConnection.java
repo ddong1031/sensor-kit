@@ -211,18 +211,19 @@ public class SensoroDeviceConnection {
                 } else if (bluetoothLEHelper4.checkGattServices(gattServiceList, BluetoothLEHelper4.GattInfo
                         .SENSORO_DEVICE_SERVICE_UUID_ON_DFU_MODE)) {
 
-                    if (sensoroDevice != null) {
-                        sensoroConnectionCallback.onConnectedSuccess(null, CMD_ON_DFU_MODE);
-                        return;
-                    }
-                    freshCache();
-                    runOnMainThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            sensoroConnectionCallback.onConnectedFailure(ResultCode.SYSTEM_ERROR);
-                            LogUtils.loge("ddong--->>不能升级");
-                        }
-                    });
+//                    if ( != null) {
+                    LogUtils.loge("ddong--->>当前处于dfu模式");
+                    sensoroConnectionCallback.onConnectedSuccess(sensoroDevice, CMD_ON_DFU_MODE);
+//                        return;
+//                    }
+//                    freshCache();
+//                    runOnMainThread(new Runnable() {
+//                        @Override
+//                        public void run() {
+//                            sensoroConnectionCallback.onConnectedFailure(ResultCode.SYSTEM_ERROR);
+//                            LogUtils.loge("ddong--->>不能升级");
+//                        }
+//                    });
                 } else {
                     freshCache();
                     runOnMainThread(new Runnable() {
