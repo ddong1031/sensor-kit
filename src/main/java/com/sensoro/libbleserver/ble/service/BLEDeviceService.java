@@ -41,7 +41,7 @@ public class BLEDeviceService extends Service implements BLEScanCallback {
     public void onCreate() {
         super.onCreate();
         bleScanner = BLEScanner.createScanner(this, this);
-        executorService = Executors.newFixedThreadPool(4);
+        executorService = Executors.newCachedThreadPool();
         List<ScanBLEFilter> scanBLEResults = new ArrayList<>();
         ScanBLEFilter scanBLEFilter = new ScanBLEFilter.Builder()
                 .build();
@@ -75,7 +75,7 @@ public class BLEDeviceService extends Service implements BLEScanCallback {
     @Override
     public void onDestroy() {
         bleScanner.stop();
-        executorService.shutdown();
+//        executorService.shutdown();此处可能导致线程异常 暂时去掉
         mainHandler.removeCallbacksAndMessages(null);
         super.onDestroy();
     }
