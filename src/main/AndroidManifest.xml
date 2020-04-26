@@ -12,6 +12,11 @@
         <service
             android:name=".ble.service.DfuService"
             android:exported="true" />
+
+        <service
+            android:name=".ble.service.DfuService"
+            android:exported="true" />
+        <service android:name=".ble.service.BLEDeviceService" />
     </application>
 
 </manifest>
