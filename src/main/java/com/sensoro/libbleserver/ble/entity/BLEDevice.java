@@ -2,6 +2,7 @@ package com.sensoro.libbleserver.ble.entity;
 
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.text.TextUtils;
 
 /**
  * Created by sensoro on 16/8/12.
@@ -12,6 +13,7 @@ public class BLEDevice implements Parcelable, Cloneable {
     public static final int TYPE_DEVICE = 0x00;
     public static final int TYPE_SENSOR = 0x01;
     public static final int TYPE_STATION = 0x02;
+    public static final int TYPE_CAMERA = 0x03;
     public String sn;
     public String hardwareVersion;// hardware version.
     public String firmwareVersion;// firmware version.
@@ -105,7 +107,14 @@ public class BLEDevice implements Parcelable, Cloneable {
 
     @Override
     public int hashCode() {
-        return sn.hashCode() ^ this.macAddress.hashCode();
+        if (!TextUtils.isEmpty(sn) && !TextUtils.isEmpty(macAddress)) {
+            return sn.hashCode() ^ this.macAddress.hashCode();
+        } else if (!TextUtils.isEmpty(sn)) {
+            return sn.hashCode();
+        } else if (!TextUtils.isEmpty(macAddress)) {
+            return this.macAddress.hashCode();
+        }
+        return super.hashCode();
     }
 
     @Override
@@ -138,15 +147,4 @@ public class BLEDevice implements Parcelable, Cloneable {
         this.iBeacon = in.readParcelable(IBeacon.class.getClassLoader());
     }
 
-    public static final Creator<BLEDevice> CREATOR = new Creator<BLEDevice>() {
-        @Override
-        public BLEDevice createFromParcel(Parcel source) {
-            return new BLEDevice(source);
-        }
-
-        @Override
-        public BLEDevice[] newArray(int size) {
-            return new BLEDevice[size];
-        }
-    };
 }

@@ -7,6 +7,7 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
 import android.text.TextUtils;
+import android.util.Log;
 
 import androidx.annotation.Nullable;
 
@@ -109,9 +110,11 @@ public class BLEDeviceService extends Service implements BLEScanCallback {
     private void processScanDevice(BLEDevice device) {
         BLEDevice containedDevice = scanDeviceHashMap.get(device.getMacAddress());
         if (containedDevice == null) {
+            Log.d("TAG", "processScanDevice:1 "+device.getSn());
             scanDeviceHashMap.put(device.getMacAddress(), device);
             enterDevice(device);
         } else {
+            Log.d("TAG", "processScanDevice:2 "+device.sn);
             updateDeviceInfo(device, containedDevice);
         }
     }
@@ -215,6 +218,7 @@ public class BLEDeviceService extends Service implements BLEScanCallback {
                         BLEDevice bleDevice = deviceFactory.create();
                         if (bleDevice != null) {//&& bleDevice.getSn().equals("10310117C5A3FD2D")
                             String sn = bleDevice.getSn();
+                            Log.e("onLeScan","---扫描到了设备sn-----》"+sn);
                             processScanDevice(bleDevice);
                         }
                     }

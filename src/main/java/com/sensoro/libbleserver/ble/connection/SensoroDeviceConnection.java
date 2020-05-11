@@ -188,6 +188,7 @@ public class SensoroDeviceConnection {
             LogUtils.loge("ddong--->>发现服务了");
             bluetoothLEHelper4.bluetoothGatt = gatt;
             if (status == BluetoothGatt.GATT_SUCCESS) {//发现服务
+                LogUtils.loge("onServicesDiscovered--->>连接成功");
                 List<BluetoothGattService> gattServiceList = gatt.getServices();
                 if (bluetoothLEHelper4.checkGattServices(gattServiceList, BluetoothLEHelper4.GattInfo
                         .SENSORO_DEVICE_SERVICE_UUID)) {
@@ -224,6 +225,9 @@ public class SensoroDeviceConnection {
 //                            LogUtils.loge("ddong--->>不能升级");
 //                        }
 //                    });
+                } else if(bluetoothLEHelper4.checkGattServices(gattServiceList, BluetoothLEHelper4.GattInfo
+                        .SENSORO_CAMERA_DEVICE_SERVICE_UUID)){
+                    sensoroConnectionCallback.onConnectedSuccess(sensoroDevice, CmdType.CMD_NULL);
                 } else {
                     freshCache();
                     runOnMainThread(new Runnable() {

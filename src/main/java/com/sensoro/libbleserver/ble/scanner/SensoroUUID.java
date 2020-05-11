@@ -254,4 +254,11 @@ public class SensoroUUID {
     }
 
 
+    public static final String byteArrayToString(byte[] paramArrayOfByte, int length) {
+        StringBuilder stringBuilder = new StringBuilder();
+        for (int i = 0; i < length; i++) {
+            stringBuilder.append((char) paramArrayOfByte[i]);
+        }
+        return stringBuilder.toString();
+    }
 }

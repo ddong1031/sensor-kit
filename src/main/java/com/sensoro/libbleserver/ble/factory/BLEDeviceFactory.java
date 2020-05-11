@@ -5,6 +5,7 @@ import android.util.Log;
 
 import com.sensoro.libbleserver.ble.entity.BLEDevice;
 import com.sensoro.libbleserver.ble.entity.IBeacon;
+import com.sensoro.libbleserver.ble.entity.SensoroCamera;
 import com.sensoro.libbleserver.ble.entity.SensoroData;
 import com.sensoro.libbleserver.ble.entity.SensoroDevice;
 import com.sensoro.libbleserver.ble.entity.SensoroSensor;
@@ -391,11 +392,13 @@ public class BLEDeviceFactory {
             ParcelUuid stationParcelUuid = BLEFilter.createServiceDataUUID(BLEFilter.STATION_SERVICE_DATA_UUID);
             ParcelUuid deviceParcelUuid = BLEFilter.createServiceDataUUID(BLEFilter.DEVICE_SERVICE_DATA_UUID);
             ParcelUuid sensorParcelUuid = BLEFilter.createServiceDataUUID(BLEFilter.SENSOR_SERVICE_UUID_E3412);
+            ParcelUuid cameraParcelUuid = BLEFilter.createServiceDataUUID(BLEFilter.CAMERA_SERVICE_DATA_UUID);
 
 
             byte sensor_data[] = scanBLEResult.getScanRecord().getServiceData(sensorParcelUuid);
             byte device_data[] = scanBLEResult.getScanRecord().getServiceData(deviceParcelUuid);
             byte station_data[] = scanBLEResult.getScanRecord().getServiceData(stationParcelUuid);
+            byte camera_data[] = scanBLEResult.getScanRecord().getServiceData(cameraParcelUuid);
             IBeacon iBeacon = IBeacon.createIBeacon(scanBLEResult);
 
 
@@ -616,7 +619,7 @@ public class BLEDeviceFactory {
                 }
 
                 bleDevice.setSn(SensoroUUID.parseSN(sn));
-                Log.e("zxh", ":parse::" + bleDevice.getSn() + ">>" + bleDevice.getSn().contains("BB8F"));
+//                Log.e("zxh", ":parse::" + bleDevice.getSn() + ">>" + bleDevice.getSn().contains("BB8F"));
 
                 byte[] hardware = new byte[2];
                 System.arraycopy(device_data, 8, hardware, 0, hardware.length);
@@ -655,7 +658,8 @@ public class BLEDeviceFactory {
                     bleDevice.iBeacon = iBeacon;
                 }
                 return bleDevice;
-            } else if (station_data != null) {
+            }
+            if (station_data != null) {
                 SensoroStation bleDevice = new SensoroStation();
                 byte[] sn = new byte[8];
                 System.arraycopy(station_data, 0, sn, 0, sn.length);
@@ -690,14 +694,59 @@ public class BLEDeviceFactory {
                     sensoroSensor.iBeacon = iBeacon;
                 }
                 return bleDevice;
-            } else {
-                if (sensor_data != null) {
-                    return sensoroSensor;
-                } else {
+            }
+            if (camera_data != null) {
+                SensoroCamera bleDevice = new SensoroCamera();
+                //sn 8
+                byte[] sn = new byte[8];
+                try {
+                    System.arraycopy(camera_data, 0, sn, 0, sn.length);
+                } catch (Exception e) {
+                    e.printStackTrace();
                     return null;
                 }
 
+                bleDevice.setSn(SensoroUUID.parseSN(sn));
+                Log.e("SensoroCamera", "SensoroCamera:sn::" + bleDevice.getSn());
+
+                //modelName 4
+                byte[] modelName = new byte[4];
+                System.arraycopy(camera_data, 8, modelName, 0, modelName.length);
+                bleDevice.setModelName(SensoroUUID.byteArrayToString(modelName, modelName.length));
+                Log.e("SensoroCamera", "SensoroCamera:modelName::" + bleDevice.getModelName());
+                //modelId 2
+                byte[] modelId = new byte[2];
+                System.arraycopy(camera_data, 12, modelId, 0, modelId.length);
+                bleDevice.setModelId(SensoroUUID.byteArrayToInt(modelId));
+                Log.e("SensoroCamera", "SensoroCamera:modelId::" + bleDevice.getModelId());
+                //hardware 2
+                byte[] hardware = new byte[2];
+                System.arraycopy(camera_data, 14, hardware, 0, hardware.length);
+                int hardwareCode = (int) hardware[0] & 0xff;
+                String hardwareVersion = Integer.toHexString(hardwareCode).toUpperCase();
+                bleDevice.setHardwareVersion(hardwareVersion);
+                Log.e("SensoroCamera", "SensoroCamera:hardware::" + bleDevice.getHardwareVersion());
+                //wifi 1
+                byte[] wifi = new byte[1];
+                System.arraycopy(camera_data, 16, wifi, 0, wifi.length);
+                bleDevice.setWifiStatus(SensoroUUID.byteArrayToInt(wifi));
+                Log.e("SensoroCamera", "SensoroCamera:wifi::" + bleDevice.getWifiStatus());
+                //bind 1
+                byte[] bind = new byte[1];
+                System.arraycopy(camera_data, 17, bind, 0, bind.length);
+                bleDevice.setWifiStatus(SensoroUUID.byteArrayToInt(bind));
+                Log.e("SensoroCamera", "SensoroCamera:bind::" + bleDevice.getBindStatus());
+
+                bleDevice.setMacAddress(scanBLEResult.getDevice().getAddress());
+
+                bleDevice.setRssi(scanBLEResult.getRssi());
+                bleDevice.setType(BLEDevice.TYPE_CAMERA);
+                if (null != iBeacon) {
+                    bleDevice.iBeacon = iBeacon;
+                }
+                return bleDevice;
             }
+
         } catch (Throwable t) {
             t.printStackTrace();
         }
