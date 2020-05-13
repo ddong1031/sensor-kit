@@ -1,0 +1,1 @@
+package com.sensoro.libbleserver.ble.callback;/** * @author : bin.tian * date   : 2020/5/13 */public interface SensoroCameraNetConfigListener {    boolean onReceiveCameraNetConfigResult(byte[] data);    void onReceiveCameraNetConfigFail(int code, int cmd);}

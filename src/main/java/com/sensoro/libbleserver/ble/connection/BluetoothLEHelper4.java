@@ -571,7 +571,6 @@ public class BluetoothLEHelper4 implements Serializable {
         public static final UUID SENSORO_CAMERA_DEVICE_SERVICE_UUID = UUID.fromString
                 ("DEAE0700-7A4E-1BA2-834A-50A30CCAE0E4");
         public static final UUID SENSORO_CAMERA_WRITE_CHAR_UUID = UUID.fromString("DEAE0701-7A4E-1BA2-834A-50A30CCAE0E4");
-        public static final UUID SENSORO_CAMERA_READ_CHAR_UUID = UUID.fromString("DEAE0701-7A4E-1BA2-834A-50A30CCAE0E4");
         public static final UUID SENSORO_CAMERA_AUTH_CHAR_UUID = UUID.fromString("DEAE0702-7A4E-1BA2-834A-50A30CCAE0E4");
     }
 }

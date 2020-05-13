@@ -79,4 +79,6 @@ public class CmdType {
     //supportCmds告知app,设备支持哪些cmd
     public static final int CMD_APP_SUPPORTCMDS = 0x120;
 
+    //摄像头网络配置
+    public static final int CMD_CAMERA_NETCONFIG = 0x121;
 }
