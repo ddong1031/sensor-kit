@@ -30,8 +30,8 @@ import java.util.UUID;
 public class SensoroCameraConnection {
     private static final String TAG = SensoroCameraConnection.class.getSimpleName();
     private static final long CONNECT_TIME_OUT = 30000; // 30s connect timeout
-    private static final long DATA_SEND_TIME_OUT = 10000; //
-    private static final long DATA_RECEIVE_TIME_OUT = 30000; //
+    private static final long DATA_SEND_TIME_OUT = 30000; //
+    private static final long DATA_RECEIVE_TIME_OUT = 60000; //
     private Context context;
     private Handler handler;
     private BLEDevice bleDevice;
@@ -39,7 +39,6 @@ public class SensoroCameraConnection {
     private Map<Integer, SensoroWriteCallback> writeCallbackHashMap;
     private String password;
     private BluetoothLEHelper4 bluetoothLEHelper4;
-    private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private SensoroCameraNetConfigListener mSensoroCameraNetConfigListener;
 
     public SensoroCameraConnection(Context context, BLEDevice bleDevice) {
