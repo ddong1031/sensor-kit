@@ -1,5 +1,7 @@
 package com.sensoro.libbleserver.ble.callback;
 
+import androidx.annotation.Nullable;
+
 import com.sensoro.libbleserver.ble.entity.BLEDevice;
 
 /**
@@ -8,7 +10,7 @@ import com.sensoro.libbleserver.ble.entity.BLEDevice;
 
 public interface SensoroConnectionCallback {
 
-    void onConnectedSuccess(BLEDevice bleDevice, int cmd);
+    void onConnectedSuccess(@Nullable BLEDevice bleDevice, int cmd);
 
     void onConnectedFailure(int errorCode);
 

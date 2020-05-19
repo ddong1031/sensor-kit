@@ -1,5 +1,7 @@
 package com.sensoro.libbleserver.ble.callback;
 
+import androidx.annotation.Nullable;
+
 public interface OnDeviceUpdateObserver {
     //正在切换至DFU
     void onEnteringDFU(String deviceMacAddress, String filePath, String msg);
@@ -15,7 +17,7 @@ public interface OnDeviceUpdateObserver {
     void onUpdateValidating(String deviceMacAddress, String msg);
 
     //业务超时
-    void onUpdateTimeout(int code, Object data, String msg);
+    void onUpdateTimeout(int code, @Nullable Object data, String msg);
 
     //断开连接
     void onDisconnecting();
