@@ -29,7 +29,7 @@ import java.util.UUID;
 
 public class SensoroCameraConnection {
     private static final String TAG = SensoroCameraConnection.class.getSimpleName();
-    private static final long CONNECT_TIME_OUT = 30000; // 30s connect timeout
+    private static final long CONNECT_TIME_OUT = 15000; // 30s connect timeout
     private static final long DATA_SEND_TIME_OUT = 30000; //
     private static final long DATA_RECEIVE_TIME_OUT = 60000; //
     private Context context;
