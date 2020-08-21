@@ -38,14 +38,14 @@ public class SensoroCameraConnection {
     private SensoroConnectionCallback sensoroConnectionCallback;
     private Map<Integer, SensoroWriteCallback> writeCallbackHashMap;
     private String password;
-    private BluetoothLEHelper4 bluetoothLEHelper4;
+    private BluetoothLEHelper bluetoothLEHelper4;
     private SensoroCameraNetConfigListener mSensoroCameraNetConfigListener;
 
     public SensoroCameraConnection(Context context, BLEDevice bleDevice) {
         this.context = context;
         handler = new Handler(Looper.getMainLooper());
         this.bleDevice = bleDevice;
-        bluetoothLEHelper4 = new BluetoothLEHelper4(context);
+        bluetoothLEHelper4 = new BluetoothLEHelper(context);
         writeCallbackHashMap = new HashMap<>();
     }
 
@@ -126,9 +126,9 @@ public class SensoroCameraConnection {
 
             if (status == BluetoothGatt.GATT_SUCCESS) {//发现服务
                 List<BluetoothGattService> gattServiceList = gatt.getServices();
-                if (bluetoothLEHelper4.checkGattServices(gattServiceList, BluetoothLEHelper4.GattInfo
+                if (bluetoothLEHelper4.checkGattServices(gattServiceList, BluetoothLEHelper.GattInfo
                         .SENSORO_CAMERA_DEVICE_SERVICE_UUID)) {
-                    bluetoothLEHelper4.listenDescriptor(BluetoothLEHelper4.GattInfo.SENSORO_CAMERA_WRITE_CHAR_UUID);
+                    bluetoothLEHelper4.listenDescriptor(BluetoothLEHelper.GattInfo.SENSORO_CAMERA_WRITE_CHAR_UUID);
                 } else {
                     sensoroConnectionCallback.onConnectedFailure(ResultCode.SYSTEM_ERROR);
                     disconnect();
@@ -142,9 +142,9 @@ public class SensoroCameraConnection {
         @Override
         public void onDescriptorWrite(BluetoothGatt gatt, BluetoothGattDescriptor descriptor, int status) {
             super.onDescriptorWrite(gatt, descriptor, status);
-            if (descriptor.getUuid().equals(BluetoothLEHelper4.GattInfo.CLIENT_CHARACTERISTIC_CONFIG)) {
+            if (descriptor.getUuid().equals(BluetoothLEHelper.GattInfo.CLIENT_CHARACTERISTIC_CONFIG)) {
                 if (status == BluetoothGatt.GATT_SUCCESS) {
-                    UUID auth_uuid = BluetoothLEHelper4.GattInfo.SENSORO_CAMERA_AUTH_CHAR_UUID;
+                    UUID auth_uuid = BluetoothLEHelper.GattInfo.SENSORO_CAMERA_AUTH_CHAR_UUID;
                     int resultCode = bluetoothLEHelper4.requireWritePermission(password, auth_uuid);
 //                    Log.d("SensoroCameraConnection","------发送密码------>"+(resultCode == ResultCode.SUCCESS));
                     if (resultCode != ResultCode.SUCCESS) {
@@ -165,7 +165,7 @@ public class SensoroCameraConnection {
 
         private void parseCharacteristicWrite(BluetoothGattCharacteristic characteristic, int status) {
             // check pwd
-            if (characteristic.getUuid().equals(BluetoothLEHelper4.GattInfo.SENSORO_CAMERA_AUTH_CHAR_UUID)) {
+            if (characteristic.getUuid().equals(BluetoothLEHelper.GattInfo.SENSORO_CAMERA_AUTH_CHAR_UUID)) {
                 if (status == BluetoothGatt.GATT_SUCCESS) {
                     handler.removeCallbacks(connectTimeoutRunnable);
                     sensoroConnectionCallback.onConnectedSuccess(bleDevice, CmdType.CMD_NULL);
@@ -178,7 +178,7 @@ public class SensoroCameraConnection {
                 }
             }
 
-            if (characteristic.getUuid().equals(BluetoothLEHelper4.GattInfo.SENSORO_CAMERA_WRITE_CHAR_UUID)) {
+            if (characteristic.getUuid().equals(BluetoothLEHelper.GattInfo.SENSORO_CAMERA_WRITE_CHAR_UUID)) {
                 Log.v(TAG, "onCharacteristicWrite status::" + status);
                 Log.v(TAG, "onCharacteristicWrite data::" + characteristic.getValue().length);
                 int cmdType = bluetoothLEHelper4.getSendCmdType();
@@ -212,7 +212,7 @@ public class SensoroCameraConnection {
     private void parseChangedData(BluetoothGattCharacteristic characteristic) {
         byte[] data = characteristic.getValue();
         UUID uuid = characteristic.getUuid();
-        if (uuid.equals(BluetoothLEHelper4.GattInfo.SENSORO_CAMERA_WRITE_CHAR_UUID)) { //出现先change后read情况
+        if (uuid.equals(BluetoothLEHelper.GattInfo.SENSORO_CAMERA_WRITE_CHAR_UUID)) { //出现先change后read情况
             if (mSensoroCameraNetConfigListener != null) {
                 boolean isReceiveComplete = mSensoroCameraNetConfigListener.onReceiveCameraNetConfigResult(data);
                 if(isReceiveComplete){
@@ -228,7 +228,7 @@ public class SensoroCameraConnection {
         handler.postDelayed(dataSendTimeoutRunnable, DATA_SEND_TIME_OUT);
         writeCallbackHashMap.put(CmdType.CMD_CAMERA_NETCONFIG, writeCallback);
         int resultCode = bluetoothLEHelper4.writeConfigurations(totalData, CmdType.CMD_CAMERA_NETCONFIG,
-                BluetoothLEHelper4.GattInfo.SENSORO_CAMERA_WRITE_CHAR_UUID);
+                BluetoothLEHelper.GattInfo.SENSORO_CAMERA_WRITE_CHAR_UUID);
         if (resultCode != ResultCode.SUCCESS) {
             writeCallback.onWriteFailure(resultCode, CmdType.CMD_CAMERA_NETCONFIG);
         } else {

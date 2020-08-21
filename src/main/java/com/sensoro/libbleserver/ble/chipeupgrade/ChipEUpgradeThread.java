@@ -3,7 +3,7 @@ package com.sensoro.libbleserver.ble.chipeupgrade;
 import android.os.Handler;
 import android.os.Looper;
 
-import com.sensoro.libbleserver.ble.connection.BluetoothLEHelper4;
+import com.sensoro.libbleserver.ble.connection.BluetoothLEHelper;
 import com.sensoro.libbleserver.ble.constants.CmdType;
 import com.sensoro.libbleserver.ble.callback.SensoroWriteCallback;
 import com.sensoro.libbleserver.ble.utils.LogUtils;
@@ -17,7 +17,7 @@ public class ChipEUpgradeThread extends Thread {
 
     private final String upgradeFilePath;
     private final SensoroWriteCallback writeCallback;
-    private final BluetoothLEHelper4 bluetoothLEHelper4;
+    private final BluetoothLEHelper bluetoothLEHelper4;
     private final Semaphore dataWriteSemaphore;
     private final Semaphore cmdResponseSemaphore;
     private FileInputStream mFsInput;
@@ -32,7 +32,7 @@ public class ChipEUpgradeThread extends Thread {
     private int mFileOffset;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
 
-    public ChipEUpgradeThread(SensoroWriteCallback writeCallback, String upgradeFilePath, BluetoothLEHelper4 bluetoothLEHelper4) {
+    public ChipEUpgradeThread(SensoroWriteCallback writeCallback, String upgradeFilePath, BluetoothLEHelper bluetoothLEHelper4) {
         this.upgradeFilePath = upgradeFilePath;
         this.writeCallback = writeCallback;
         this.bluetoothLEHelper4 = bluetoothLEHelper4;

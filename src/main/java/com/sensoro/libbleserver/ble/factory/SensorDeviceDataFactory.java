@@ -1,7 +1,7 @@
 package com.sensoro.libbleserver.ble.factory;
 
 import com.sensoro.libbleserver.ble.callback.SensoroWriteCallback;
-import com.sensoro.libbleserver.ble.connection.BluetoothLEHelper4;
+import com.sensoro.libbleserver.ble.connection.BluetoothLEHelper;
 import com.sensoro.libbleserver.ble.constants.CmdType;
 import com.sensoro.libbleserver.ble.constants.ResultCode;
 import com.sensoro.libbleserver.ble.proto.MsgNode1V1M5;
@@ -11,15 +11,15 @@ import com.sensoro.libbleserver.ble.scanner.SensoroUUID;
 
 import java.util.Map;
 
-import static com.sensoro.libbleserver.ble.connection.SensoroDeviceConnection.DATA_VERSION_03;
-import static com.sensoro.libbleserver.ble.connection.SensoroDeviceConnection.DATA_VERSION_04;
-import static com.sensoro.libbleserver.ble.connection.SensoroDeviceConnection.DATA_VERSION_05;
+import static com.sensoro.libbleserver.ble.constants.CodeConstants.DATA_VERSION_03;
+import static com.sensoro.libbleserver.ble.constants.CodeConstants.DATA_VERSION_04;
+import static com.sensoro.libbleserver.ble.constants.CodeConstants.DATA_VERSION_05;
 
 public class SensorDeviceDataFactory {
     private SensorDeviceDataFactory() {
     }
 
-    public static void writeCmd(SensoroWriteCallback writeCallback, Map<Integer, SensoroWriteCallback> writeCallbackHashMap, byte dataVersion, BluetoothLEHelper4 bluetoothLEHelper4) {
+    public static void writeCmd(SensoroWriteCallback writeCallback, Map<Integer, SensoroWriteCallback> writeCallbackHashMap, byte dataVersion, BluetoothLEHelper bluetoothLEHelper4) {
         writeCallbackHashMap.put(CmdType.CMD_W_CFG, writeCallback);
         switch (dataVersion) {
             case DATA_VERSION_03: {
@@ -42,7 +42,7 @@ public class SensorDeviceDataFactory {
                 System.arraycopy(data, 0, total_data, 3, data_length);
 
                 int resultCode = bluetoothLEHelper4.writeConfigurations(total_data, CmdType.CMD_W_CFG,
-                        BluetoothLEHelper4.GattInfo.SENSORO_DEVICE_WRITE_CHAR_UUID);
+                        BluetoothLEHelper.GattInfo.SENSORO_DEVICE_WRITE_CHAR_UUID);
                 if (resultCode != ResultCode.SUCCESS) {
                     writeCallback.onWriteFailure(ResultCode.CODE_DEVICE_DFU_ERROR, CmdType.CMD_NULL);
                 }
@@ -72,7 +72,7 @@ public class SensorDeviceDataFactory {
                 System.arraycopy(data, 0, total_data, 3, data_length);
 
                 int resultCode = bluetoothLEHelper4.writeConfigurations(total_data, CmdType.CMD_W_CFG,
-                        BluetoothLEHelper4.GattInfo.SENSORO_DEVICE_WRITE_CHAR_UUID);
+                        BluetoothLEHelper.GattInfo.SENSORO_DEVICE_WRITE_CHAR_UUID);
                 if (resultCode != ResultCode.SUCCESS) {
                     writeCallback.onWriteFailure(ResultCode.CODE_DEVICE_DFU_ERROR, CmdType.CMD_NULL);
                 }
@@ -99,7 +99,7 @@ public class SensorDeviceDataFactory {
                 System.arraycopy(data, 0, total_data, 3, data_length);
 
                 int resultCode = bluetoothLEHelper4.writeConfigurations(total_data, CmdType.CMD_W_CFG,
-                        BluetoothLEHelper4.GattInfo.SENSORO_DEVICE_WRITE_CHAR_UUID);
+                        BluetoothLEHelper.GattInfo.SENSORO_DEVICE_WRITE_CHAR_UUID);
                 if (resultCode != ResultCode.SUCCESS) {
                     writeCallback.onWriteFailure(ResultCode.CODE_DEVICE_DFU_ERROR, CmdType.CMD_NULL);
                 }

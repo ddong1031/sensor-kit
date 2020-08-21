@@ -14,34 +14,41 @@ import android.bluetooth.BluetoothGattDescriptor;
 import android.bluetooth.BluetoothGattService;
 import android.bluetooth.BluetoothManager;
 import android.content.Context;
+import android.util.Log;
 
+import com.sensoro.libbleserver.ble.utils.SensoroUtils;
+import com.sensoro.libbleserver.ble.constants.CmdType;
 import com.sensoro.libbleserver.ble.constants.ResultCode;
+import com.sensoro.libbleserver.ble.scanner.BLEDeviceManager;
+import com.sensoro.libbleserver.ble.chipeupgrade.SampleGattAttributes;
+import com.sensoro.libbleserver.ble.utils.LogUtils;
 
 import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.regex.Pattern;
+
+import static android.content.ContentValues.TAG;
 
 public class BluetoothLEHelper implements Serializable {
-    private static final long serialVersionUID = -3875124305428095694L;
+    private static final String PASSWORD_KEY = "CtKnQ8BVb3C2khd6HQv6FFBuoHzxWi";
+    private static final String BROADCAST_KEY_SECRET = "password";
 
     private Context context = null;
-    private BluetoothManager bluetoothManager = null;
     private BluetoothAdapter bluetoothAdapter = null;
     private String bluetoothDeviceAddress = null;
     public BluetoothGatt bluetoothGatt = null;
 
-    private BluetoothGattService baseSettingsService = null;
-    private BluetoothGattCharacteristic baseSettingsChar = null;
-    private BluetoothGattService sensoSettingsService = null;
-    private BluetoothGattCharacteristic sensoSettingsChar = null;
-    private BluetoothGattCharacteristic dynamicMMChar = null;
-    private BluetoothGattCharacteristic workModeChar = null;
-    private BluetoothGattCharacteristic acceleratorChar = null;
-    protected int sendPacketNumber = 1;
-    protected ArrayList<byte[]> writePackets;
+    private ArrayList<byte[]> writePackets;
+    private int sendPacketNumber = 1;
     private int sendCmdType = -1;
+    protected BluetoothGattService sensoroService = null;
+    //bingbang tracker 人员定位器升级所需要的
+    private BluetoothGattCharacteristic mAmotaRxChar;
+    private BluetoothGattCharacteristic mAmotaTxChar;
 
     public BluetoothLEHelper(Context context) {
         this.context = context;
@@ -56,20 +63,21 @@ public class BluetoothLEHelper implements Serializable {
         // For API level 18 and above, get a reference to BluetoothAdapter
         // through
         // BluetoothManager.
-        if (bluetoothManager == null) {
-            bluetoothManager = (BluetoothManager) context.getSystemService(Context.BLUETOOTH_SERVICE);
-            if (bluetoothManager == null) {
-//                Log.e(TAG, "Unable to initialize BluetoothManager.");
-                return false;
-            }
-        }
-
-        bluetoothAdapter = bluetoothManager.getAdapter();
         if (bluetoothAdapter == null) {
-//            Log.e(TAG, "Unable to obtain a BluetoothAdapter.");
-            return false;
+            bluetoothAdapter = BLEDeviceManager.getInstance(context.getApplicationContext()).getBluetoothAdapter();
+            if (bluetoothAdapter == null) {
+                BluetoothManager bluetoothManager = (BluetoothManager) context.getSystemService(Context.BLUETOOTH_SERVICE);
+                if (bluetoothManager != null) {
+                    bluetoothAdapter = bluetoothManager.getAdapter();
+                    return bluetoothAdapter != null;
+                }
+                return false;
+            } else {
+                return true;
+            }
+        } else {
+            return true;
         }
-        return true;
     }
 
     /**
@@ -81,14 +89,14 @@ public class BluetoothLEHelper implements Serializable {
      * {@code BluetoothGattCallback#onConnectionStateChange(android.bluetooth.BluetoothGatt, int, int)}
      * callback.
      */
-    public boolean connect(final String address, BluetoothGattCallback gattCallback) {
+    public boolean connect(String address, BluetoothGattCallback gattCallback) {
         if (bluetoothAdapter == null || address == null) {
 //            Log.w(TAG, "BluetoothAdapter not initialized or unspecified address.");
             return false;
         }
 
         // Previously connected device. Try to reconnect.
-        if (bluetoothDeviceAddress != null && address.equals(bluetoothDeviceAddress) && bluetoothGatt != null) {
+        if (address.equals(bluetoothDeviceAddress) && bluetoothGatt != null) {
 //            Log.d(TAG, "Trying to use an existing mBluetoothGatt for connection.");
             return bluetoothGatt.connect();
         }
@@ -101,145 +109,38 @@ public class BluetoothLEHelper implements Serializable {
         bluetoothGatt = device.connectGatt(context, false, gattCallback);
 //        Log.d(TAG, "Trying to create a new connection.");
         System.out.println("device.getBondState==" + device.getBondState());
-        return true;
-    }
-
-    /**
-     * Disconnects an existing connection or cancel a pending connection. The
-     * disconnection result is reported asynchronously through the
-     * {@code BluetoothGattCallback#onConnectionStateChange(android.bluetooth.BluetoothGatt, int, int)}
-     * callback.
-     */
-    public boolean disconnect() {
-        if (bluetoothAdapter == null || bluetoothGatt == null) {
-//            Log.w(TAG, "BluetoothAdapter not initialized");
-            return false;
-        }
-        if (bluetoothGatt != null) {
-            bluetoothGatt.disconnect();
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    /**
-     * close gatt connection
-     */
-    public boolean close() {
-        if (bluetoothGatt != null) {
-            bluetoothGatt.close();
-            bluetoothGatt = null;
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    //check gatt services.
-    public boolean checkGattServices(String hardwareVersion, String firmwareVersion, List<BluetoothGattService> gattServiceList) {
-        for (BluetoothGattService bluetoothGattService : gattServiceList) {
-            UUID serviceUUID = bluetoothGattService.getUuid();
-
-            if (serviceUUID.equals(GattInfo.BASE_SERVICE_UUID)) {
-                baseSettingsService = bluetoothGattService;
-            } else if (serviceUUID.equals(GattInfo.SENSO_SERVICE_UUID)) {
-                sensoSettingsService = bluetoothGattService;
-            }
-        }
 
         return true;
     }
 
-    /**
-     * check beacon service.
-     *
-     * @param gattServiceList
-     * @return
-     */
-    public boolean checkGattServices(List<BluetoothGattService> gattServiceList) {
-        for (BluetoothGattService bluetoothGattService : gattServiceList) {
-            UUID serviceUUID = bluetoothGattService.getUuid();
-            if (serviceUUID.equals(GattInfo.SENSORO_SENSOR_SERVICE_UUID)) {
-                baseSettingsService = bluetoothGattService;
+    public int setPassword(String password, UUID uuid) {
+        if (sensoroService != null) {
+            BluetoothGattCharacteristic writeChar = sensoroService.getCharacteristic(uuid);
+            if (writeChar != null) {
+                // package bytes
+
+                byte[] passwordBytes;
+                if (password == null) {
+                    passwordBytes = new byte[16];
+                } else {
+                    passwordBytes = convertPassword2Bytes(password);
+                }
+
+                if (passwordBytes == null) {
+                    return ResultCode.INVALID_PARAM;
+                }
+
+//                CmdSetPasswordRequest cmdSetPasswordRequest = new CmdSetPasswordRequest(beacon, passwordBytes);
+//                byte[] requireWritePermissionBytes = cmdSetPasswordRequest.getBytes();
+//                return writeCharAllBytes(writeChar, requireWritePermissionBytes, cmdSetPasswordRequest.getCmdType());
             }
         }
-
-        return baseSettingsService != null;
+        return ResultCode.SYSTEM_ERROR;
     }
 
-    /**
-     * reset to factory.
-     */
-    public boolean resetToFactorySettings() {
-        if (baseSettingsService != null) {
-            BluetoothGattCharacteristic resetToFactoryChar = baseSettingsService.getCharacteristic(GattInfo.BASE_WORK_MODE_UUID);
-            if (resetToFactoryChar != null) {
-                resetToFactoryChar.setValue(new byte[]{(byte) 0xe0});  //恢复出厂设置
-                bluetoothGatt.writeCharacteristic(resetToFactoryChar);
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /**
-     * reset accelerometer reConnectCount.
-     *
-     * @return result.
-     */
-    public boolean resetAccelerometerCount() {
-        if (sensoSettingsService != null) {
-            acceleratorChar = sensoSettingsService.getCharacteristic(GattInfo.SENSO_ACCELERATOR_UUID);
-            if (acceleratorChar != null) {
-                acceleratorChar.setValue(new byte[]{0x00, 0x00, 0x00, 0x00});  //重制加速度计数器为0
-                bluetoothGatt.writeCharacteristic(acceleratorChar);
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /**
-     * update password.
-     *
-     * @param password password
-     * @return result
-     */
-    public boolean updateWritePassword(byte[] password) {
-        if (baseSettingsService != null) {
-            BluetoothGattCharacteristic updateWritePwdChar = baseSettingsService.getCharacteristic(GattInfo.BASE_CHANGE_PWD_UUID);
-            if (updateWritePwdChar != null) {
-                updateWritePwdChar.setValue(password);
-                bluetoothGatt.writeCharacteristic(updateWritePwdChar);
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /**
-     * check password
-     *
-     * @param password password
-     * @return result.
-     */
-    public boolean requireWritePermission(byte[] password) {
-        if (baseSettingsService != null) {
-            BluetoothGattCharacteristic writePermissionChar = baseSettingsService.getCharacteristic(GattInfo.BASE_CHECK_PWD_UUID);
-            if (writePermissionChar != null) {
-                writePermissionChar.setValue(password);
-                bluetoothGatt.writeCharacteristic(writePermissionChar);
-                return true;
-            }
-        }
-        return false;
-    }
-
-    public int requireWritePermission(String password) {
-        if (baseSettingsService != null) {
-            BluetoothGattCharacteristic authorizationChar = baseSettingsService.getCharacteristic(GattInfo
-                    .SENSORO_AUTHORIZATION_CHAR_UUID);
+    public int requireWritePermission(String password, UUID uuid) {
+        if (sensoroService != null) {
+            BluetoothGattCharacteristic authorizationChar = sensoroService.getCharacteristic(uuid);
             if (authorizationChar != null) {
                 byte[] passwordBytes = convertPassword2Bytes(password);
                 if (passwordBytes == null) {
@@ -251,22 +152,62 @@ public class BluetoothLEHelper implements Serializable {
         return ResultCode.SYSTEM_ERROR;
     }
 
-    /**
-     * write bytes to char.
-     *
-     * @param writeChar
-     * @param writeBytes
-     * @return
-     */
-    private int writeCharacteristic(BluetoothGattCharacteristic writeChar, byte[] writeBytes) {
-        if (writeChar == null || writeBytes == null || writeBytes.length < 0 || writeBytes.length > 20) {
-            return ResultCode.SYSTEM_ERROR;
-        } else {
-            writeChar.setValue(writeBytes);
-            bluetoothGatt.writeCharacteristic(writeChar);
-            return ResultCode.SUCCESS;
+    private boolean isNIDInValid(String uid) {
+        if (uid.length() != 32) {
+            return true;
         }
+        String nid = uid.substring(0, 20);
+        String regex = "[a-f0-9A-F]{20}";
+        return !Pattern.matches(regex, nid);
     }
+
+    private boolean isBIDInValid(String uid) {
+        if (uid.length() != 32) {
+            return true;
+        }
+        String bid = uid.substring(20, 32);
+        String regex = "[a-f0-9A-F]{12}";
+        return !Pattern.matches(regex, bid);
+    }
+
+    private boolean isURLInValid(String url) {
+        String regex = "(http|ftp|https):\\/\\/[\\w\\-_]+(\\.[\\w\\-_]+)+([\\w\\-\\.,@?^=%&amp;" +
+                ":/~\\+#]*[\\w\\-\\@?^=%&amp;/~\\+#])?";
+        if (Pattern.matches(regex, url)) {
+            //匹配成功
+            return false;
+        }
+        byte[] urlBytes = SensoroUtils.encodeUrl(url);
+        return urlBytes != null && urlBytes.length <= 17;
+    }
+
+    private boolean isExpired(String broadcastKey) {
+        int keyLength = broadcastKey.length();
+        if (keyLength == 90) {
+            String decrypt = SensoroUtils.decrypt_AES_256(broadcastKey.substring(2, keyLength), BROADCAST_KEY_SECRET);
+            if (decrypt == null) {
+                return true;
+            } else {
+                long expiryDate = (long) Integer.parseInt(decrypt.substring(40, decrypt.length()), 16);
+                long currentDate = System.currentTimeMillis();
+                return currentDate > expiryDate * 1000;
+            }
+        }
+        return false;
+    }
+
+
+    /**
+     * 生成 LED 序列命令
+     *
+     * @param cmdLEDBytes
+     */
+    private void createLEDBytes(byte sequence, int cycle, byte[] cmdLEDBytes) {
+        cmdLEDBytes[0] = 0x00;
+        cmdLEDBytes[1] = sequence;
+        cmdLEDBytes[2] = (byte) (cycle & 0xff);
+    }
+
 
     private byte[] convertPassword2Bytes(String password) {
         // encrypt paasword by HMAC-SHA512，get 16 bytes before.
@@ -287,12 +228,14 @@ public class BluetoothLEHelper implements Serializable {
         return passwordBytes;
     }
 
-    public boolean getBaseSettings() {
-        if (baseSettingsService != null) {
-            baseSettingsChar = baseSettingsService.getCharacteristic(GattInfo.BASE_PARAMS_SETTINGS_UUID);
-            if (baseSettingsChar != null) {
-                readCharacteristic(baseSettingsChar);
-            }
+    /**
+     * close gatt connection
+     */
+    public boolean close() {
+        if (bluetoothGatt != null) {
+            refreshDeviceCache(bluetoothGatt);
+            bluetoothGatt.disconnect();
+//            bluetoothGatt = null;
             return true;
         } else {
             return false;
@@ -300,301 +243,176 @@ public class BluetoothLEHelper implements Serializable {
     }
 
     /**
-     * read all parameters in SensorSettings
-     */
-    public boolean getSensoroSettings() {
-        if (sensoSettingsService != null) {
-            sensoSettingsChar = sensoSettingsService.getCharacteristic(GattInfo.SENSO_PARAMS_SETTINGS_UUID);
-            if (sensoSettingsChar != null) {
-                readCharacteristic(sensoSettingsChar);
-                return true;
-            } else {
-                return false;
-            }
-        } else {
-            return false;
-        }
-    }
-
-    /**
-     * read rotation broadcast period.
-     */
-    public boolean getSecureBroadcastRotation() {
-        if (baseSettingsService != null) {
-            dynamicMMChar = baseSettingsService.getCharacteristic(GattInfo.BASE_SECURE_BROADCAST_UUID);
-            if (dynamicMMChar != null) {
-                readCharacteristic(dynamicMMChar);
-                return true;
-            } else {
-                return false;
-            }
-        } else {
-            return false;
-        }
-    }
-
-    /**
-     * listen temperature changing.
-     */
-    public void listenTemperatureChar() {
-        BluetoothGattCharacteristic temperatureChar = sensoSettingsService.getCharacteristic(GattInfo.SENSO_TEMPERATURE_UUID);
-        bluetoothGatt.setCharacteristicNotification(temperatureChar, true);
-        BluetoothGattDescriptor temperatureDescriptor = temperatureChar.getDescriptor(GattInfo.CLIENT_CHARACTERISTIC_CONFIG);
-        temperatureDescriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
-        bluetoothGatt.writeDescriptor(temperatureDescriptor);
-    }
-
-    /**
-     * listen light changing.
-     */
-    public void listenBrightnessChar() {
-        BluetoothGattCharacteristic brightChar = sensoSettingsService.getCharacteristic(GattInfo.SENSO_BRIGHT_UUID);
-        bluetoothGatt.setCharacteristicNotification(brightChar, true);
-        BluetoothGattDescriptor brightDescriptor = brightChar.getDescriptor(GattInfo.CLIENT_CHARACTERISTIC_CONFIG);
-        brightDescriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
-        bluetoothGatt.writeDescriptor(brightDescriptor);
-    }
-
-    /**
-     * listen accelerometer reConnectCount changing.
-     */
-    public void listenAcceleratorCountChar() {
-        BluetoothGattCharacteristic isMovingChar = sensoSettingsService.getCharacteristic(GattInfo.SENSO_IS_MOVING_UUID);
-        bluetoothGatt.setCharacteristicNotification(isMovingChar, true);
-        BluetoothGattDescriptor brightDescriptor = isMovingChar.getDescriptor(GattInfo.CLIENT_CHARACTERISTIC_CONFIG);
-        brightDescriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
-        bluetoothGatt.writeDescriptor(brightDescriptor);
-    }
-
-    /**
-     * listen moving state changing.
-     */
-    public void listenAcceleratorMovingChar() {
-        BluetoothGattCharacteristic isMovingChar = sensoSettingsService.getCharacteristic(GattInfo.SENSO_ACCELERATOR_UUID);
-        bluetoothGatt.setCharacteristicNotification(isMovingChar, true);
-        BluetoothGattDescriptor brightDescriptor = isMovingChar.getDescriptor(GattInfo.CLIENT_CHARACTERISTIC_CONFIG);
-        brightDescriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
-        bluetoothGatt.writeDescriptor(brightDescriptor);
-    }
-
-    public boolean writeBaseSettings(byte[] baseSetiings) {
-        if (baseSettingsService != null) {
-            baseSettingsChar = baseSettingsService.getCharacteristic(GattInfo.BASE_PARAMS_SETTINGS_UUID);
-            if (baseSettingsChar != null) {
-                baseSettingsChar.setValue(baseSetiings);
-                bluetoothGatt.writeCharacteristic(baseSettingsChar);
-                return true;
-            }
-        }
-        return false;
-    }
-
-    public boolean writeSensoSettings(byte[] sensoSettings) {
-        if (sensoSettingsService != null) {
-            sensoSettingsChar = sensoSettingsService.getCharacteristic(GattInfo.SENSO_PARAMS_SETTINGS_UUID);
-            if (sensoSettingsChar != null) {
-                sensoSettingsChar.setValue(sensoSettings);
-                bluetoothGatt.writeCharacteristic(sensoSettingsChar);
-                return true;
-            }
-        }
-        return false;
-    }
-
-    public boolean writeProximityUUID(byte[] uuid) {
-        if (baseSettingsService != null) {
-            BluetoothGattCharacteristic uuidChar = baseSettingsService.getCharacteristic(GattInfo.BASE_UUID_UUID);
-            if (uuidChar != null) {
-                uuidChar.setValue(uuid);
-                bluetoothGatt.writeCharacteristic(uuidChar);
-                return true;
-            }
-        }
-        return false;
-    }
-
-    public boolean writeMajorMinor(byte[] majorMinor) {
-        if (baseSettingsService != null) {
-            BluetoothGattCharacteristic majorMinorChar = baseSettingsService.getCharacteristic(GattInfo.BASE_MAJOR_MINOR_UUID);
-            if (majorMinorChar != null) {
-                majorMinorChar.setValue(majorMinor);
-                bluetoothGatt.writeCharacteristic(majorMinorChar);
-                return true;
-            }
-        }
-        return false;
-    }
-
-    public boolean reloadSensoroData() {
-        if (sensoSettingsService != null) {
-            BluetoothGattCharacteristic forceUpdateSeneoChar = sensoSettingsService.getCharacteristic(GattInfo.SENSO_FORCE_UPDATE_UUID);
-            if (forceUpdateSeneoChar != null) {
-                forceUpdateSeneoChar.setValue(new byte[]{(byte) 0xff});
-                bluetoothGatt.writeCharacteristic(forceUpdateSeneoChar);
-                return true;
-            }
-        }
-        return false;
-    }
-
-    public boolean writeSecureBroadcastInterval(byte[] interval) {
-        if (baseSettingsService != null) {
-            BluetoothGattCharacteristic dinamicMMChar = baseSettingsService.getCharacteristic(GattInfo.BASE_SECURE_BROADCAST_UUID);
-            if (dinamicMMChar != null) {
-                dinamicMMChar.setValue(interval);
-                bluetoothGatt.writeCharacteristic(dinamicMMChar);
-                return true;
-            }
-        }
-        return false;
-    }
-
-    public boolean onFlashLightWitCommand(byte[] cmdLED) {
-        if (sensoSettingsService != null) {
-            BluetoothGattCharacteristic writeLedChar = sensoSettingsService.getCharacteristic(GattInfo.SENSO_LED_UUID);
-            if (writeLedChar != null) {
-                writeLedChar.setValue(cmdLED);
-                bluetoothGatt.writeCharacteristic(writeLedChar);
-                return true;
-            }
-        }
-        return false;
-    }
-
-    public boolean writeBroadcastKey(byte[] broadcastKey) {
-        if (baseSettingsService != null) {
-            BluetoothGattCharacteristic broadcastKeyChar = baseSettingsService.getCharacteristic(GattInfo.BASE_BROADCAST_KEY_UUID);
-            if (broadcastKeyChar != null) {
-                broadcastKeyChar.setValue(broadcastKey);
-                bluetoothGatt.writeCharacteristic(broadcastKeyChar);
-                return true;
-            }
-        }
-        return false;
-    }
-
-    public boolean enableIBeacon(byte[] workMode) {
-        if (baseSettingsService != null) {
-            BluetoothGattCharacteristic workModeChar = baseSettingsService.getCharacteristic(GattInfo.BASE_ENABLE_IBEACON_UUID);
-            if (workModeChar != null) {
-                workModeChar.setValue(workMode);
-                bluetoothGatt.writeCharacteristic(workModeChar);
-                return true;
-            }
-        }
-        return false;
-    }
-
-    public boolean enableAliBeacon(byte[] enableAliBeacon) {
-        if (baseSettingsService != null) {
-            BluetoothGattCharacteristic writeAliBeaconChar = baseSettingsService.getCharacteristic(GattInfo.BASE_ENABLE_ALIBEACON_UUID);
-            if (writeAliBeaconChar != null) {
-                writeAliBeaconChar.setValue(enableAliBeacon);
-                bluetoothGatt.writeCharacteristic(writeAliBeaconChar);
-                return true;
-            }
-        }
-        return false;
-    }
-
-
-    public boolean enableBackgroundEnhancement(byte[] enableBackgroundEnhancement) {
-        if (baseSettingsService != null) {
-            BluetoothGattCharacteristic writeBackgroundEnhancementChar = baseSettingsService.getCharacteristic(GattInfo.BASE_ENABLE_BACKGROUND_ENHANCEMENT_UUID);
-            if (writeBackgroundEnhancementChar != null) {
-                writeBackgroundEnhancementChar.setValue(enableBackgroundEnhancement);
-                bluetoothGatt.writeCharacteristic(writeBackgroundEnhancementChar);
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /**
-     * Request a read on a given {@code BluetoothGattCharacteristic}. The read
-     * result is reported asynchronously through the
-     * {@code BluetoothGattCallback#onCharacteristicRead(android.bluetooth.BluetoothGatt, android.bluetooth.BluetoothGattCharacteristic, int)}
-     * callback.
+     * 刷新缓存
      *
-     * @param characteristic The characteristic to read from.
+     * @param bluetoothGatt
+     * @return
      */
-    private void readCharacteristic(BluetoothGattCharacteristic characteristic) {
-        if (bluetoothGatt == null) {
-//            Log.w(TAG, "bluetoothGatt not initialized");
-            return;
+    public boolean refreshDeviceCache(BluetoothGatt bluetoothGatt) {
+        try {
+            final Method refresh = BluetoothGatt.class.getMethod("refresh");
+            if (refresh != null) {
+                boolean success = (Boolean) refresh.invoke(bluetoothGatt);
+                Log.i("", "refreshDeviceCache, is success:  " + success);
+                return success;
+            }
+        } catch (Exception e) {
+            Log.i("", "exception occur while refreshing device: " + e.getMessage());
+            e.printStackTrace();
+        } finally {
+            bluetoothGatt.close();
         }
-        bluetoothGatt.readCharacteristic(characteristic);
+        return false;
     }
 
-    public static class GattInfo {
-        public static final UUID BASE_SERVICE_UUID = UUID.fromString("DEAE0000-7A4E-1BA2-834A-50A30CCAE0E4");
-        public static final UUID BASE_CHECK_PWD_UUID = UUID.fromString("DEAE0001-7A4E-1BA2-834A-50A30CCAE0E4");
-        public static final UUID BASE_CHANGE_PWD_UUID = UUID.fromString("DEAE0002-7A4E-1BA2-834A-50A30CCAE0E4");
-        public static final UUID BASE_PARAMS_SETTINGS_UUID = UUID.fromString("DEAE0003-7A4E-1BA2-834A-50A30CCAE0E4");
-        public static final UUID BASE_UUID_UUID = UUID.fromString("DEAE0004-7A4E-1BA2-834A-50A30CCAE0E4");
-        public static final UUID BASE_MAJOR_MINOR_UUID = UUID.fromString("DEAE0005-7A4E-1BA2-834A-50A30CCAE0E4");
-        public static final UUID BASE_WORK_MODE_UUID = UUID.fromString("DEAE0006-7A4E-1BA2-834A-50A30CCAE0E4");
-        public static final UUID BASE_SECURE_BROADCAST_UUID = UUID.fromString("DEAE0007-7A4E-1BA2-834A-50A30CCAE0E4");
-        public static final UUID BASE_BROADCAST_KEY_UUID = UUID.fromString("DEAE0008-7A4E-1BA2-834A-50A30CCAE0E4");
-        public static final UUID BASE_ENABLE_IBEACON_UUID = UUID.fromString("DEAE0009-7A4E-1BA2-834A-50A30CCAE0E4");
-        public static final UUID BASE_ENABLE_ALIBEACON_UUID = UUID.fromString("DEAE000A-7A4E-1BA2-834A-50A30CCAE0E4");
-        public static final UUID BASE_ENABLE_BACKGROUND_ENHANCEMENT_UUID = UUID.fromString("DEAE000B-7A4E-1BA2-834A-50A30CCAE0E4");
-
-        public static final UUID SENSO_SERVICE_UUID = UUID.fromString("DEAE0100-7A4E-1BA2-834A-50A30CCAE0E4");
-        public static final UUID SENSO_PARAMS_SETTINGS_UUID = UUID.fromString("DEAE0101-7A4E-1BA2-834A-50A30CCAE0E4");
-        public static final UUID SENSO_TEMPERATURE_UUID = UUID.fromString("DEAE0102-7A4E-1BA2-834A-50A30CCAE0E4");
-        public static final UUID SENSO_BRIGHT_UUID = UUID.fromString("DEAE0103-7A4E-1BA2-834A-50A30CCAE0E4");
-        public static final UUID SENSO_ACCELERATOR_UUID = UUID.fromString("DEAE0104-7A4E-1BA2-834A-50A30CCAE0E4");
-        public static final UUID SENSO_FORCE_UPDATE_UUID = UUID.fromString("DEAE0105-7A4E-1BA2-834A-50A30CCAE0E4");
-        public static final UUID SENSO_IS_MOVING_UUID = UUID.fromString("DEAE0106-7A4E-1BA2-834A-50A30CCAE0E4");
-        public static final UUID SENSO_LED_UUID = UUID.fromString("DEAE0107-7A4E-1BA2-834A-50A30CCAE0E4");
-
-        public static final UUID CLIENT_CHARACTERISTIC_CONFIG = UUID.fromString("00002902-0000-1000-8000-00805f9b34fb");
-        //
-        public static final UUID SENSORO_SENSOR_SERVICE_UUID = UUID.fromString("DEAE0500-7A4E-1BA2-834A-50A30CCAE0E4");
-        public static final UUID SENSORO_AUTHORIZATION_CHAR_UUID = UUID.fromString
-                ("DEAE0503-7A4E-1BA2-834A-50A30CCAE0E4");
-        public static final UUID SENSORO_SENSOR_WRITE_UUID = UUID.fromString("DEAE0501-7A4E-1BA2-834A-50A30CCAE0E4");
-        public static final UUID SENSORO_SENSOR_INDICATE_UUID = UUID.fromString("DEAE0502-7A4E-1BA2-834A-50A30CCAE0E4");
-    }
-
-    public void listenNotifyChar() {
-        if (baseSettingsService!=null){
-            BluetoothGattCharacteristic notifyChar = baseSettingsService.getCharacteristic(GattInfo
-                    .SENSORO_SENSOR_INDICATE_UUID);
-            bluetoothGatt.setCharacteristicNotification(notifyChar, true);
-            BluetoothGattDescriptor notifyDescriptor = notifyChar.getDescriptor(GattInfo.CLIENT_CHARACTERISTIC_CONFIG);
-            notifyDescriptor.setValue(BluetoothGattDescriptor.ENABLE_INDICATION_VALUE);
-            bluetoothGatt.writeDescriptor(notifyDescriptor);
+    /**
+     * check beacon service.
+     *
+     * @param gattServiceList
+     * @return
+     */
+    private boolean checkGattServices(List<BluetoothGattService> gattServiceList) {
+        for (BluetoothGattService bluetoothGattService : gattServiceList) {
+            UUID serviceUUID = bluetoothGattService.getUuid();
+            if (serviceUUID.equals(GattInfo.SENSORO_DEVICE_SERVICE_UUID)) {
+                sensoroService = bluetoothGattService;
+            }
         }
 
+        return sensoroService != null;
+
     }
-    public int getSendPacketNumber() {
-        return sendPacketNumber;
+
+    public boolean checkGattServices(List<BluetoothGattService> gattServiceList, UUID targetServiceUUID) {
+        for (BluetoothGattService bluetoothGattService : gattServiceList) {
+            UUID serviceUUID = bluetoothGattService.getUuid();
+            if (serviceUUID.equals(targetServiceUUID)) {
+                sensoroService = bluetoothGattService;
+            }
+        }
+
+        return sensoroService != null;
+
     }
+
+    public void listenDescriptor(UUID targetReadCharUUID) {
+        try {
+            this.sendCmdType = CmdType.CMD_R_CFG;
+            BluetoothGattCharacteristic readChar = sensoroService.getCharacteristic(targetReadCharUUID);
+            bluetoothGatt.setCharacteristicNotification(readChar, true);
+            BluetoothGattDescriptor readDescriptor = readChar.getDescriptor(GattInfo.CLIENT_CHARACTERISTIC_CONFIG);
+            readDescriptor.setValue(BluetoothGattDescriptor.ENABLE_INDICATION_VALUE);
+            bluetoothGatt.writeDescriptor(readDescriptor);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void listenSignalChar(UUID targetReadCharUUID) {
+        try {
+            this.sendCmdType = CmdType.CMD_R_CFG;
+            BluetoothGattCharacteristic readChar = sensoroService.getCharacteristic(targetReadCharUUID);
+            bluetoothGatt.setCharacteristicNotification(readChar, true);
+            BluetoothGattDescriptor readDescriptor = readChar.getDescriptor(GattInfo.CLIENT_CHARACTERISTIC_CONFIG);
+            readDescriptor.setValue(BluetoothGattDescriptor.ENABLE_INDICATION_VALUE);
+            bluetoothGatt.writeDescriptor(readDescriptor);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    public void listenOnCharactertisticRead(UUID targetReadCharUUID) {
+        BluetoothGattCharacteristic readChar = sensoroService.getCharacteristic(targetReadCharUUID);
+        bluetoothGatt.readCharacteristic(readChar);
+    }
+
     public void resetSendPacket() {
         writePackets = null;
         sendPacketNumber = 1;
     }
+
+    public int getSendCmdType() {
+        return sendCmdType;
+    }
+
+    public void setSendCmdType(int cmdType) {
+        this.sendCmdType = cmdType;
+    }
+
     /**
      * series to write package.
      *
      * @param characteristic
      */
-    public void sendPacket(BluetoothGattCharacteristic characteristic) {
+    public boolean sendPacket(BluetoothGattCharacteristic characteristic) {
         if (writePackets != null && sendPacketNumber == writePackets.size()) {
             // packets are all writen.
             resetSendPacket();
+            return true;
         } else {
-            byte[] writePacket = writePackets.get(sendPacketNumber);
+            byte[] writePacket = new byte[0];
+            if (writePackets != null) {
+                writePacket = writePackets.get(sendPacketNumber);
+            }
             // packet not write over.
             writeCharacteristic(characteristic, writePacket);
             sendPacketNumber++;
+            return false;
         }
     }
-    public ArrayList<byte[]> getWritePackets() {
-        return writePackets;
+
+    /**
+     * check UUID.
+     *
+     * @param uuid
+     * @return
+     */
+    private boolean checkUUIDLegal(String uuid) {
+        // length error
+        if (uuid.length() != 36) {
+            return false;
+        }
+        // postion 7,14,19,24 is not '-'
+        if (uuid.charAt(8) != '-' && uuid.charAt(13) != '-' && uuid.charAt(18) != '-' && uuid.charAt(23) != '-') {
+            return false;
+        }
+
+        // check bytes( '0~f' and '-')
+        uuid = uuid.toLowerCase();
+        for (int i = 0; i < uuid.length(); i++) {
+            if (uuid.charAt(i) >= 'a' && uuid.charAt(i) <= 'f' || uuid.charAt(i) <= '9' && uuid.charAt(i) >= '0' ||
+                    uuid.charAt(i) == '-') {
+                continue;
+            } else {
+                return false;
+            }
+        }
+
+        return true;
     }
+
+    private int writeDeviceConfigurations(byte[] writeConfigurationBytes, int cmdType) {
+        if (sensoroService != null) {
+            BluetoothGattCharacteristic writeChar = sensoroService.getCharacteristic(GattInfo
+                    .SENSORO_DEVICE_WRITE_CHAR_UUID);
+            if (writeChar != null) {
+                return writeCharAllBytes(writeChar, writeConfigurationBytes, cmdType);
+            }
+        }
+        return ResultCode.SYSTEM_ERROR;
+    }
+
+    public int writeConfigurations(byte[] writeConfigurationBytes, int cmdType, UUID targetWriteCharUUID) {
+        if (sensoroService != null) {
+            BluetoothGattCharacteristic writeChar = sensoroService.getCharacteristic(targetWriteCharUUID);
+            if (writeChar != null) {
+                return writeCharAllBytes(writeChar, writeConfigurationBytes, cmdType);
+            }
+        }
+        return ResultCode.SYSTEM_ERROR;
+    }
+
     /**
      * write all bytes to char.
      *
@@ -617,6 +435,7 @@ public class BluetoothLEHelper implements Serializable {
             return ResultCode.MCU_BUSY;
         }
     }
+
     /**
      * package all writing bytes.
      *
@@ -642,22 +461,116 @@ public class BluetoothLEHelper implements Serializable {
         }
         return writePackages;
     }
-    public int writeConfiguration(byte[] data, int sendCmdType) {
-        if (baseSettingsService != null) {
-            BluetoothGattCharacteristic writeChar = baseSettingsService.getCharacteristic(GattInfo
-                    .SENSORO_SENSOR_WRITE_UUID);
-            if (writeChar != null) {
-                // check beaconConfiguration
-                return writeCharAllBytes(writeChar, data, sendCmdType);
-            }
+
+
+    /**
+     * write bytes to char.
+     *
+     * @param writeChar
+     * @param writeBytes
+     * @return
+     */
+    public int writeCharacteristic(BluetoothGattCharacteristic writeChar, byte[] writeBytes) {
+        String s = "";
+        for (byte writeByte : writeBytes) {
+            LogUtils.loge("发送信号数据" + Integer.toHexString(writeByte));
+            s = s + Integer.toHexString(writeByte);
         }
-        return ResultCode.SYSTEM_ERROR;
+        LogUtils.loge("发送信号数据" + s);
+
+        if (writeChar == null || writeBytes == null || writeBytes.length < 0 || writeBytes.length > 20) {
+            return ResultCode.SYSTEM_ERROR;
+        } else {
+            writeChar.setValue(writeBytes);
+            bluetoothGatt.writeCharacteristic(writeChar);
+            return ResultCode.SUCCESS;
+        }
     }
-    public int getSendCmdType() {
-        return sendCmdType;
+
+    public boolean writeChipECharacteristic(byte[] writeBytes) {
+        if (mAmotaRxChar == null || writeBytes == null || writeBytes.length < 0 || writeBytes.length > 20) {
+            return false;
+        } else {
+            mAmotaRxChar.setValue(writeBytes);
+            bluetoothGatt.writeCharacteristic(mAmotaRxChar);
+            return true;
+        }
     }
-    private int writeCharSingleBytes(BluetoothGattCharacteristic writeChar, byte[] writeBytes, int sendCmdType) {
-        this.sendCmdType = sendCmdType;
-        return writeCharacteristic(writeChar, writeBytes);
+
+    public boolean initChipEServices(List<BluetoothGattService> gattServiceList) {
+        for (BluetoothGattService bluetoothGattService : gattServiceList) {
+
+            List<BluetoothGattCharacteristic> characteristics = bluetoothGattService.getCharacteristics();
+            for (BluetoothGattCharacteristic characteristic : characteristics) {
+                String uuid = characteristic.getUuid().toString();
+                if (uuid.equals(SampleGattAttributes.ATT_UUID_AMOTA_RX)) {
+//                    LogUtils.loge(TAG, "Ambiq OTA RX Characteristic found");
+                    mAmotaRxChar = characteristic;
+                } else if (uuid.equals(SampleGattAttributes.ATT_UUID_AMOTA_TX)) {
+//                    Log.i(TAG, "Ambiq OTA TX Characteristic found");
+                    mAmotaTxChar = characteristic;
+                }
+            }
+
+        }
+
+        if (mAmotaTxChar != null) {
+            setCharacteristicNotification(mAmotaTxChar, true);
+        }
+
+        return mAmotaTxChar != null && mAmotaRxChar != null;
+    }
+
+    public void setCharacteristicNotification(BluetoothGattCharacteristic characteristic,
+                                              boolean enabled) {
+        if (bluetoothAdapter == null || bluetoothAdapter == null) {
+            Log.w(TAG, "BluetoothAdapter not initialized");
+            return;
+        }
+        bluetoothGatt.setCharacteristicNotification(characteristic, enabled);
+
+        // This is specific to Heart Rate Measurement.
+        if (GattInfo.UUID_HEART_RATE_MEASUREMENT.equals(characteristic.getUuid()) ||
+                GattInfo.UUID_AMOTA_TX.equals(characteristic.getUuid())) {
+            BluetoothGattDescriptor descriptor = characteristic.getDescriptor(
+                    UUID.fromString(SampleGattAttributes.CLIENT_CHARACTERISTIC_CONFIG));
+            descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
+            bluetoothGatt.writeDescriptor(descriptor);
+        }
+    }
+
+
+    public static class GattInfo {
+        public static final UUID SENSORO_DEVICE_SERVICE_UUID = UUID.fromString("DEAE0300-7A4E-1BA2-834A-50A30CCAE0E4");
+        public static final UUID SENSORO_SENSOR_SERVICE_UUID = UUID.fromString("DEAE0500-7A4E-1BA2-834A-50A30CCAE0E4");
+        public static final UUID SENSORO_DEVICE_AUTHORIZATION_CHAR_UUID = UUID.fromString
+                ("DEAE0302-7A4E-1BA2-834A-50A30CCAE0E4");
+        public static final UUID SENSORO_DEVICE_WRITE_CHAR_UUID = UUID.fromString
+                ("DEAE0301-7A4E-1BA2-834A-50A30CCAE0E4");
+        public static final UUID SENSORO_DEVICE_READ_CHAR_UUID = UUID.fromString
+                ("DEAE0301-7A4E-1BA2-834A-50A30CCAE0E4");
+        public static final UUID SENSORO_DEVICE_SIGNAL_UUID = UUID.fromString("DEAE0303-7A4E-1BA2-834A-50A30CCAE0E4");
+        public static final UUID SENSORO_SENSOR_CHAR_UUID = UUID.fromString("DEAE0301-7A4E-1BA2-834A-50A30CCAE0E4");
+        public static final UUID CLIENT_CHARACTERISTIC_CONFIG = UUID.fromString("00002902-0000-1000-8000-00805f9b34fb");
+
+        public static final UUID SENSORO_STATION_SERVICE_UUID = UUID.fromString("DEAE0400-7A4E-1BA2-834A-50A30CCAE0E4");
+        public static final UUID SENSORO_STATION_AUTHORIZATION_CHAR_UUID = UUID.fromString
+                ("DEAE0402-7A4E-1BA2-834A-50A30CCAE0E4");
+        public static final UUID SENSORO_STATION_WRITE_CHAR_UUID = UUID.fromString
+                ("DEAE0401-7A4E-1BA2-834A-50A30CCAE0E4");
+        public static final UUID SENSORO_STATION_READ_CHAR_UUID = UUID.fromString
+                ("DEAE0401-7A4E-1BA2-834A-50A30CCAE0E4");
+        public static final UUID SENSORO_DEVICE_SERVICE_UUID_ON_DFU_MODE = UUID.fromString
+                ("00001530-1212-EFDE-1523-785FEABCD123");
+        //bigbang 人员定位器
+        public final static UUID UUID_HEART_RATE_MEASUREMENT =
+                UUID.fromString(SampleGattAttributes.HEART_RATE_MEASUREMENT);
+        public final static UUID UUID_AMOTA_TX =
+                UUID.fromString(SampleGattAttributes.ATT_UUID_AMOTA_TX);
+        //Camera
+        public static final UUID SENSORO_CAMERA_DEVICE_SERVICE_UUID = UUID.fromString
+                ("DEAE0700-7A4E-1BA2-834A-50A30CCAE0E4");
+        public static final UUID SENSORO_CAMERA_WRITE_CHAR_UUID = UUID.fromString("DEAE0701-7A4E-1BA2-834A-50A30CCAE0E4");
+        public static final UUID SENSORO_CAMERA_AUTH_CHAR_UUID = UUID.fromString("DEAE0702-7A4E-1BA2-834A-50A30CCAE0E4");
     }
 }
