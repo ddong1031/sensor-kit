@@ -419,14 +419,13 @@ public class SensoroDeviceConnection {
             taskHandler.postDelayed(new Runnable() {
                 @Override
                 public void run() {
-                    taskHandler.postDelayed(connectTimeoutRunnable, CONNECT_TIME_OUT);
                     LogUtils.loge("ddong--->>超时连接发送 reConnectCount = " + reConnectCount);
                     if (!bluetoothLEHelper.connect(macAddress, bluetoothGattCallback)) {
                         LogUtils.loge("ddong--->>连接失败 无参数");
                         freshCache();
                     }
                 }
-            }, 100);
+            }, 200);
         } else {
             taskHandler.removeCallbacks(connectTimeoutRunnable);
             runOnMainThread(new Runnable() {
