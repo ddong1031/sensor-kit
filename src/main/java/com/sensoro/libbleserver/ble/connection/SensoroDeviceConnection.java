@@ -559,7 +559,7 @@ public class SensoroDeviceConnection {
 
     /////////////////////////////////////////////
 
-    //连接回调
+    //固件升级连接回调
     private final SensoroConnectionCallback mSensoroConnectionCallback = new SensoroConnectionCallback() {
         @Override
         public void onConnectedSuccess(BLEDevice bleDevice, int cmd) {
@@ -581,16 +581,19 @@ public class SensoroDeviceConnection {
 
         @Override
         public void onConnectedFailure(final int errorCode) {
-            freshCache();
-            runOnMainThread(new Runnable() {
-                @Override
-                public void run() {
-                    if (mOnDeviceUpdateObserver != null) {
-                        mOnDeviceUpdateObserver.onFailed(macAddress, "连接失败:errorCode = " +
-                                errorCode, null);
+            if (isChipE) {
+                //暂时只针对isChipE接入回调ok
+                freshCache();
+                runOnMainThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (mOnDeviceUpdateObserver != null) {
+                            mOnDeviceUpdateObserver.onFailed(macAddress, "连接失败:errorCode = " +
+                                    errorCode, null);
+                        }
                     }
-                }
-            });
+                });
+            }
 
         }
 
@@ -726,7 +729,7 @@ public class SensoroDeviceConnection {
         mTempUpdateFilePath = updateFilePath;
         taskHandler.removeCallbacks(updateConnectOverTime);
         taskHandler.removeCallbacks(updateOverTime);
-        taskHandler.postDelayed(updateConnectOverTime, 15 * 1000);
+        taskHandler.postDelayed(updateConnectOverTime, 30 * 1000);
         taskHandler.postDelayed(updateOverTime, 60 * 1000 * 3);
         try {
             connect(pwd, mSensoroConnectionCallback);
