@@ -24,6 +24,12 @@ package com.sensoro.libbleserver.ble.service;
 
 import android.app.Activity;
 
+import androidx.annotation.NonNull;
+import androidx.core.app.NotificationCompat;
+
+import com.sensoro.libbleserver.BuildConfig;
+import com.sensoro.libbleserver.ble.NotificationActivity;
+
 import no.nordicsemi.android.dfu.DfuBaseService;
 
 public class DfuService extends DfuBaseService {
@@ -43,7 +49,19 @@ public class DfuService extends DfuBaseService {
 		 * This method may be used to restore the target activity in case the application was closed or is open. It may also be used to recreate an activity
 		 * history (see NotificationActivity).
 		 */
-		return null;
+		return NotificationActivity.class;
+	}
+	@Override
+	protected boolean isDebug() {
+		// Here return true if you want the service to print more logs in LogCat.
+		// Library's BuildConfig in current version of Android Studio is always set to DEBUG=false, so
+		// make sure you return true or your.app.BuildConfig.DEBUG here.
+		return BuildConfig.DEBUG;
+	}
+
+	@Override
+	protected void updateForegroundNotification(@NonNull final NotificationCompat.Builder builder) {
+		// Customize the foreground service notification here.
 	}
 
 }

@@ -8,6 +8,7 @@ import android.bluetooth.BluetoothGattDescriptor;
 import android.bluetooth.BluetoothGattService;
 import android.bluetooth.BluetoothProfile;
 import android.content.Context;
+import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
@@ -729,7 +730,7 @@ public class SensoroDeviceConnection {
         taskHandler.removeCallbacks(updateConnectOverTime);
         taskHandler.removeCallbacks(updateOverTime);
         taskHandler.postDelayed(updateConnectOverTime, 30 * 1000);
-        taskHandler.postDelayed(updateOverTime, 60 * 1000 * 3);
+        taskHandler.postDelayed(updateOverTime, 60 * 1000 * 5);
         try {
             connect(pwd, mSensoroConnectionCallback);
         } catch (final Exception e) {
@@ -1071,6 +1072,9 @@ public class SensoroDeviceConnection {
         writeCallbackHashMap = new HashMap<>();
         this.isContainSignal = false;
         this.macAddress = bleDevice.getMacAddress();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            DfuServiceInitiator.createDfuNotificationChannel(context);
+        }
     }
 
     public SensoroDeviceConnection(Context context, String macAddress) {
@@ -1079,6 +1083,9 @@ public class SensoroDeviceConnection {
         writeCallbackHashMap = new HashMap<>();
         this.isContainSignal = false;
         this.macAddress = macAddress;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            DfuServiceInitiator.createDfuNotificationChannel(context);
+        }
     }
 
     public SensoroDeviceConnection(Context context, SensoroDevice sensoroDevice) {
@@ -1088,11 +1095,17 @@ public class SensoroDeviceConnection {
         this.sensoroDevice = sensoroDevice;
         this.isContainSignal = false;
         this.macAddress = sensoroDevice.getMacAddress();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            DfuServiceInitiator.createDfuNotificationChannel(context);
+        }
     }
 
     public SensoroDeviceConnection(Activity mActivity, String macAddress, boolean isContainSignal, boolean isDfu, boolean isChipE) {
         this(mActivity, macAddress, isContainSignal, isDfu);
         this.isChipE = isChipE;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            DfuServiceInitiator.createDfuNotificationChannel(context);
+        }
     }
 
     public SensoroDeviceConnection(Context context, String macAddress, boolean isContainSignal, boolean isDfu) {
@@ -1102,6 +1115,9 @@ public class SensoroDeviceConnection {
         this.macAddress = macAddress;
         this.isContainSignal = isContainSignal;
         this.isDfu = isDfu;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            DfuServiceInitiator.createDfuNotificationChannel(context);
+        }
     }
 
 
@@ -1111,6 +1127,9 @@ public class SensoroDeviceConnection {
         writeCallbackHashMap = new HashMap<>();
         this.isContainSignal = isContainSignal;
         this.macAddress = macAddress;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            DfuServiceInitiator.createDfuNotificationChannel(context);
+        }
     }
 
     private void parseChangedData(BluetoothGattCharacteristic characteristic) throws InvalidProtocolBufferException {

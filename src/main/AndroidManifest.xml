@@ -17,6 +17,8 @@
             android:name=".ble.service.DfuService"
             android:exported="true" />
         <service android:name=".ble.service.BLEDeviceService" />
+
+        <activity android:name=".ble.NotificationActivity" />
     </application>
 
 </manifest>
