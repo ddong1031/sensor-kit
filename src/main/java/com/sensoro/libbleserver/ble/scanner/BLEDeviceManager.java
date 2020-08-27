@@ -120,6 +120,7 @@ public class BLEDeviceManager {
         public void onServiceDisconnected(ComponentName name) {
             serviceState = SERVICE_STATE_UNBOUND;
             bleDeviceService = null;
+            stopScan();
         }
 
         @Override
@@ -131,6 +132,8 @@ public class BLEDeviceManager {
                 if (bleDeviceService != null) {
                     bleDeviceService.setBackgroundMode(isBackgroundMode);
                 }
+                stopScan();
+                startScan();
                 if (mBoundListener != null) {
                     mBoundListener.onSuccess();
                 }
@@ -236,14 +239,14 @@ public class BLEDeviceManager {
     /**
      * 进入后台停止扫描
      */
-    public void stopScan() {
+    private void stopScan() {
         if (bleDeviceService != null) {
             bleDeviceService.stopScan();
         }
     }
 
     //进入前台开始扫描
-    public void startScan() {
+    private void startScan() {
         if (bleDeviceService != null) {
             bleDeviceService.startScan();
         }
