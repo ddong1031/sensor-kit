@@ -466,39 +466,29 @@ public class SensoroDeviceConnection {
 
         initData();
         // 开始连接，启动连接超时
+        this.sensoroConnectionCallback = sensoroConnectionCallback;
         runOnMainThread(new Runnable() {
             @Override
             public void run() {
                 if (bluetoothLEHelper != null) {
                     bluetoothLEHelper.close();
-                }
-            }
-        });
-        this.sensoroConnectionCallback = sensoroConnectionCallback;
-
-        if (bluetoothLEHelper != null) {
-            if (!bluetoothLEHelper.initialize()) {
-                runOnMainThread(new Runnable() {
-                    @Override
-                    public void run() {
+                    if (!bluetoothLEHelper.initialize()) {
                         sensoroConnectionCallback.onConnectedFailure(ResultCode.BLUETOOTH_ERROR);
                         LogUtils.loge("ddong--->>初始化失败");
                         freshCache();
+                    } else {
+                        reConnectCount = 0;
+                        connectDevice(sensoroConnectionCallback);
                     }
-                });
+                }
 
-            } else {
-                reConnectCount = 0;
-                connectDevice(sensoroConnectionCallback);
             }
-        }
-
-
+        });
     }
 
     private void connectDevice(final SensoroConnectionCallback sensoroConnectionCallback) {
         taskHandler.postDelayed(connectTimeoutRunnable, CONNECT_TIME_OUT);
-        LogUtils.loge("ddong--->> 开始连接");
+        LogUtils.loge("ddong--->> 开始连接 macAddress = " + macAddress);
         //todo 暂时重置
         reConnectCount = 0;
         runOnMainThread(new Runnable() {
