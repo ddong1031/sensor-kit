@@ -14,14 +14,15 @@ import android.bluetooth.BluetoothGattDescriptor;
 import android.bluetooth.BluetoothGattService;
 import android.bluetooth.BluetoothManager;
 import android.content.Context;
+import android.os.Build;
 import android.util.Log;
 
-import com.sensoro.libbleserver.ble.utils.SensoroUtils;
+import com.sensoro.libbleserver.ble.chipeupgrade.SampleGattAttributes;
 import com.sensoro.libbleserver.ble.constants.CmdType;
 import com.sensoro.libbleserver.ble.constants.ResultCode;
 import com.sensoro.libbleserver.ble.scanner.BLEDeviceManager;
-import com.sensoro.libbleserver.ble.chipeupgrade.SampleGattAttributes;
 import com.sensoro.libbleserver.ble.utils.LogUtils;
+import com.sensoro.libbleserver.ble.utils.SensoroUtils;
 
 import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
@@ -31,6 +32,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.regex.Pattern;
 
+import static android.bluetooth.BluetoothDevice.TRANSPORT_LE;
 import static android.content.ContentValues.TAG;
 
 public class BluetoothLEHelper implements Serializable {
@@ -106,7 +108,11 @@ public class BluetoothLEHelper implements Serializable {
         // autoConnect
         // parameter to false.
         bluetoothDeviceAddress = address;
-        bluetoothGatt = device.connectGatt(context, false, gattCallback);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            bluetoothGatt = device.connectGatt(context, false, gattCallback, TRANSPORT_LE);
+        } else {
+            bluetoothGatt = device.connectGatt(context, false, gattCallback);
+        }
 //        Log.d(TAG, "Trying to create a new connection.");
         System.out.println("device.getBondState==" + device.getBondState());
 

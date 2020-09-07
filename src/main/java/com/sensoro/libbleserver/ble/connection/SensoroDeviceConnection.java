@@ -137,8 +137,8 @@ public class SensoroDeviceConnection {
         @Override
         public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
             super.onConnectionStateChange(gatt, status, newState);
-            bluetoothLEHelper.bluetoothGatt = gatt;
             LogUtils.loge("ddong--->>连接状态改变");
+            bluetoothLEHelper.bluetoothGatt = gatt;
             if (newState == BluetoothProfile.STATE_CONNECTED) {//连接成功
                 if (status == BluetoothGatt.GATT_SUCCESS) {
                     taskHandler.removeCallbacks(connectTimeoutRunnable);
@@ -491,16 +491,11 @@ public class SensoroDeviceConnection {
         LogUtils.loge("ddong--->> 开始连接 macAddress = " + macAddress);
         //todo 暂时重置
         reConnectCount = 0;
-        runOnMainThread(new Runnable() {
-            @Override
-            public void run() {
-                if (!bluetoothLEHelper.connect(macAddress, bluetoothGattCallback)) {
-                    LogUtils.loge("ddong--->> connectDevice");
-                    sensoroConnectionCallback.onConnectedFailure(ResultCode.INVALID_PARAM);
-                    freshCache();
-                }
-            }
-        });
+        if (!bluetoothLEHelper.connect(macAddress, bluetoothGattCallback)) {
+            LogUtils.loge("ddong--->> connectDevice");
+            sensoroConnectionCallback.onConnectedFailure(ResultCode.INVALID_PARAM);
+            freshCache();
+        }
     }
 
 
