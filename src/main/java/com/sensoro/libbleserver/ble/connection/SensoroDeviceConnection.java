@@ -212,21 +212,10 @@ public class SensoroDeviceConnection {
                         bluetoothLEHelper.listenSignalChar(BluetoothLEHelper.GattInfo.SENSORO_DEVICE_SIGNAL_UUID);
                     }
                 } else if (bluetoothLEHelper.checkGattServices(gattServiceList, BluetoothLEHelper.GattInfo
-                        .SENSORO_DEVICE_SERVICE_UUID_ON_DFU_MODE)) {
-
-//                    if ( != null) {
+                        .SENSORO_DEVICE_SERVICE_UUID_ON_DFU_MODE) || bluetoothLEHelper.checkGattServices(gattServiceList, BluetoothLEHelper.GattInfo
+                        .SENSORO_DEVICE_SERVICE_UUID_ON_DFU_MODE_NEW)) {
                     LogUtils.loge("ddong--->>当前处于dfu模式");
                     sensoroConnectionCallback.onConnectedSuccess(sensoroDevice, CMD_ON_DFU_MODE);
-//                        return;
-//                    }
-//                    freshCache();
-//                    runOnMainThread(new Runnable() {
-//                        @Override
-//                        public void run() {
-//                            sensoroConnectionCallback.onConnectedFailure(ResultCode.SYSTEM_ERROR);
-//                            LogUtils.loge("ddong--->>不能升级");
-//                        }
-//                    });
                 } else if (bluetoothLEHelper.checkGattServices(gattServiceList, BluetoothLEHelper.GattInfo
                         .SENSORO_CAMERA_DEVICE_SERVICE_UUID)) {
                     sensoroConnectionCallback.onConnectedSuccess(sensoroDevice, CmdType.CMD_NULL);
@@ -900,7 +889,7 @@ public class SensoroDeviceConnection {
         @Override
         public void onError(final String deviceAddress, final int error, int errorType, final String message) {
             LogUtils.loge("ddong--->>DFU--onError: deviceAddress = " + deviceAddress);
-
+            LogUtils.loge("ddong--->>DFU--onError: error = " + error + "，errorType = " + errorType + "，message = " + message);
             runOnMainThread(new Runnable() {
                 @Override
                 public void run() {

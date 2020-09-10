@@ -568,6 +568,9 @@ public class BluetoothLEHelper implements Serializable {
                 ("DEAE0401-7A4E-1BA2-834A-50A30CCAE0E4");
         public static final UUID SENSORO_DEVICE_SERVICE_UUID_ON_DFU_MODE = UUID.fromString
                 ("00001530-1212-EFDE-1523-785FEABCD123");
+
+        public static final UUID SENSORO_DEVICE_SERVICE_UUID_ON_DFU_MODE_NEW = UUID.fromString
+                ("0000FE59-0000-1000-8000-00805F9B34FB");
         //bigbang 人员定位器
         public final static UUID UUID_HEART_RATE_MEASUREMENT =
                 UUID.fromString(SampleGattAttributes.HEART_RATE_MEASUREMENT);
