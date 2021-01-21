@@ -17,6 +17,7 @@ public class BLEFilter {
     public static final String DEVICE_SERVICE_DATA_UUID = "6CCE";
     public static final String STATION_SERVICE_DATA_UUID = "A418";
     public static final String CAMERA_SERVICE_DATA_UUID = "FEFC";
+    public static final String SENSOR_ALARM_SERVICE_DATA_UUID = "6CCF";
     public static final int MANUFACTURER_ID_APPLE = 0x004C;
 
 

@@ -5,14 +5,15 @@ import android.util.Log;
 
 import com.sensoro.libbleserver.ble.entity.BLEDevice;
 import com.sensoro.libbleserver.ble.entity.IBeacon;
+import com.sensoro.libbleserver.ble.entity.ScanBLEResult;
 import com.sensoro.libbleserver.ble.entity.SensoroCamera;
 import com.sensoro.libbleserver.ble.entity.SensoroData;
 import com.sensoro.libbleserver.ble.entity.SensoroDevice;
 import com.sensoro.libbleserver.ble.entity.SensoroSensor;
 import com.sensoro.libbleserver.ble.entity.SensoroStation;
 import com.sensoro.libbleserver.ble.scanner.BLEFilter;
-import com.sensoro.libbleserver.ble.entity.ScanBLEResult;
 import com.sensoro.libbleserver.ble.scanner.SensoroUUID;
+import com.sensoro.libbleserver.ble.utils.LogUtils;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -393,16 +394,69 @@ public class BLEDeviceFactory {
             ParcelUuid deviceParcelUuid = BLEFilter.createServiceDataUUID(BLEFilter.DEVICE_SERVICE_DATA_UUID);
             ParcelUuid sensorParcelUuid = BLEFilter.createServiceDataUUID(BLEFilter.SENSOR_SERVICE_UUID_E3412);
             ParcelUuid cameraParcelUuid = BLEFilter.createServiceDataUUID(BLEFilter.CAMERA_SERVICE_DATA_UUID);
+            ParcelUuid sensorAlarmUuid = BLEFilter.createServiceDataUUID(BLEFilter.SENSOR_ALARM_SERVICE_DATA_UUID);
 
 
             byte sensor_data[] = scanBLEResult.getScanRecord().getServiceData(sensorParcelUuid);
             byte device_data[] = scanBLEResult.getScanRecord().getServiceData(deviceParcelUuid);
             byte station_data[] = scanBLEResult.getScanRecord().getServiceData(stationParcelUuid);
             byte camera_data[] = scanBLEResult.getScanRecord().getServiceData(cameraParcelUuid);
+            byte sensor_alarm_data[] = scanBLEResult.getScanRecord().getServiceData(sensorAlarmUuid);
             IBeacon iBeacon = IBeacon.createIBeacon(scanBLEResult);
 
 
             SensoroSensor sensoroSensor = null;
+            if (sensor_alarm_data != null) {
+                sensoroSensor = new SensoroSensor();
+                String currentAddress = scanBLEResult.getDevice().getAddress();
+                sensoroSensor.setMacAddress(currentAddress);
+                sensoroSensor.setRssi(scanBLEResult.getRssi());
+                byte[] sn = new byte[8];
+                try {
+                    System.arraycopy(sensor_alarm_data, 0, sn, 0, sn.length);
+                    String parseSN = SensoroUUID.parseSN(sn);
+                    if (parseSN != null) {
+                        snMap.put(currentAddress, parseSN);
+                    }
+                    LogUtils.loge("sensor_alarm_data-->> parseSN = " + parseSN);
+                    sensoroSensor.setSn(snMap.get(currentAddress));
+                    sensoroSensor.setType(BLEDevice.TYPE_SENSOR);
+                    if (null != iBeacon) {
+                        sensoroSensor.iBeacon = iBeacon;
+                    }
+                    //TODO 声光报的开关 状态 暂时不需要
+//                    val status = AppUtils.ByteToBit(it[12])
+//                    if (bleAdvertisingData.isOpen) {
+//                        //设防
+//                        val open: Byte = 0x01
+//                        if (status.first() == open) {
+//                            //撤防成功
+//                            mHandler.removeCallbacks(taskOverTime)
+//                            BeaconManager.getInstance().stopAdvertising()
+//                            BeaconManager.getInstance().removeListener(mListener)
+//                            mHandler.post { listener?.onSuccess() }
+//
+//                        }
+//                    } else {
+//                        //撤防
+//                        val close: Byte = 0x00
+//                        if (status.first() == close) {
+//                            //撤防成功
+//                            mHandler.removeCallbacks(taskOverTime)
+//                            BeaconManager.getInstance().stopAdvertising()
+//                            BeaconManager.getInstance().removeListener(mListener)
+//                            mHandler.post { listener?.onSuccess() }
+//                        }
+//                    }
+                    if (sensoroSensor.getSn() == null) {
+                        sensoroSensor = null;
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    return null;
+                }
+                return sensoroSensor;
+            }
             if (sensor_data != null) {
                 E3214 e3214 = E3214.parseE3214(sensor_data);
                 if (e3214 != null) {
@@ -600,7 +654,7 @@ public class BLEDeviceFactory {
                     sensoroSensor.waterPressure.data_float = pressureMap.get(sensoroSensor.macAddress);
                     //
                     sensoroSensor.setType(BLEDevice.TYPE_SENSOR);
-                    if (null!=iBeacon) {
+                    if (null != iBeacon) {
                         sensoroSensor.iBeacon = iBeacon;
                     }
                     if (sensoroSensor.getSn() == null) {
@@ -690,7 +744,7 @@ public class BLEDeviceFactory {
                 bleDevice.setRssi(scanBLEResult.getRssi());
                 bleDevice.setMacAddress(scanBLEResult.getDevice().getAddress());
                 bleDevice.setType(BLEDevice.TYPE_STATION);
-                if (null!=iBeacon) {
+                if (null != iBeacon) {
                     sensoroSensor.iBeacon = iBeacon;
                 }
                 return bleDevice;
