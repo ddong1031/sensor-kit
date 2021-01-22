@@ -239,14 +239,14 @@ public class BLEDeviceManager {
     /**
      * 进入后台停止扫描
      */
-    private void stopScan() {
+    public void stopScan() {
         if (bleDeviceService != null) {
             bleDeviceService.stopScan();
         }
     }
 
     //进入前台开始扫描
-    private void startScan() {
+    public void startScan() {
         if (bleDeviceService != null) {
             bleDeviceService.startScan();
         }
