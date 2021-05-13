@@ -10,7 +10,7 @@ import java.util.ArrayList;
  * Created by sensoro on 17/1/19.
  */
 
-public class SensoroSensor extends BLEDevice implements Parcelable, Cloneable {
+public class SensoroSensor extends SensoroDevice implements Parcelable, Cloneable {
 
 
     public SensoroData temperature;// 温度
