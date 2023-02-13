@@ -29,7 +29,7 @@ import java.util.UUID;
 
 public class SensoroCameraConnection {
     private static final String TAG = SensoroCameraConnection.class.getSimpleName();
-    private static final long CONNECT_TIME_OUT = 15000; // 30s connect timeout
+    private static final long CONNECT_TIME_OUT = 60000; // 60s connect timeout
     private static final long DATA_SEND_TIME_OUT = 30000; //
     private static final long DATA_RECEIVE_TIME_OUT = 60000; //
     private Context context;
@@ -40,6 +40,8 @@ public class SensoroCameraConnection {
     private String password;
     private BluetoothLEHelper bluetoothLEHelper4;
     private SensoroCameraNetConfigListener mSensoroCameraNetConfigListener;
+    private int retryCount = 0;
+    private static final int GATT_CONNECT_RETRY_MAX_COUNT = 3;
 
     public SensoroCameraConnection(Context context, BLEDevice bleDevice) {
         this.context = context;
@@ -115,8 +117,13 @@ public class SensoroCameraConnection {
                     disconnect();
                 }
             } else {
-                sensoroConnectionCallback.onConnectedFailure(ResultCode.BLUETOOTH_ERROR);
-                disconnect();
+                if (status == 133 && retryCount < GATT_CONNECT_RETRY_MAX_COUNT) {
+                    retryCount++;
+                    bluetoothLEHelper4.connect(bleDevice.getMacAddress(), bluetoothGattCallback);
+                } else {
+                    sensoroConnectionCallback.onConnectedFailure(ResultCode.BLUETOOTH_ERROR);
+                    disconnect();
+                }
             }
         }
 
@@ -215,7 +222,7 @@ public class SensoroCameraConnection {
         if (uuid.equals(BluetoothLEHelper.GattInfo.SENSORO_CAMERA_WRITE_CHAR_UUID)) { //出现先change后read情况
             if (mSensoroCameraNetConfigListener != null) {
                 boolean isReceiveComplete = mSensoroCameraNetConfigListener.onReceiveCameraNetConfigResult(data);
-                if(isReceiveComplete){
+                if (isReceiveComplete) {
                     handler.removeCallbacks(dataReceiveTimeoutRunnable);
                 }
             }
