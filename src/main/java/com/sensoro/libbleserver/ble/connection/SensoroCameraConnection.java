@@ -110,6 +110,7 @@ public class SensoroCameraConnection {
         public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
             super.onConnectionStateChange(gatt, status, newState);
             if (newState == BluetoothProfile.STATE_CONNECTED) {//连接成功
+                retryCount = 0;
                 if (status == BluetoothGatt.GATT_SUCCESS) {
                     gatt.discoverServices();
                 } else {
@@ -117,10 +118,12 @@ public class SensoroCameraConnection {
                     disconnect();
                 }
             } else {
+                //133 蓝牙链路被当前链接占用 重连
                 if (status == 133 && retryCount < GATT_CONNECT_RETRY_MAX_COUNT) {
                     retryCount++;
                     bluetoothLEHelper4.connect(bleDevice.getMacAddress(), bluetoothGattCallback);
                 } else {
+                    retryCount = 0;
                     sensoroConnectionCallback.onConnectedFailure(ResultCode.BLUETOOTH_ERROR);
                     disconnect();
                 }
@@ -133,8 +136,7 @@ public class SensoroCameraConnection {
 
             if (status == BluetoothGatt.GATT_SUCCESS) {//发现服务
                 List<BluetoothGattService> gattServiceList = gatt.getServices();
-                if (bluetoothLEHelper4.checkGattServices(gattServiceList, BluetoothLEHelper.GattInfo
-                        .SENSORO_CAMERA_DEVICE_SERVICE_UUID)) {
+                if (bluetoothLEHelper4.checkGattServices(gattServiceList, BluetoothLEHelper.GattInfo.SENSORO_CAMERA_DEVICE_SERVICE_UUID)) {
                     bluetoothLEHelper4.listenDescriptor(BluetoothLEHelper.GattInfo.SENSORO_CAMERA_WRITE_CHAR_UUID);
                 } else {
                     sensoroConnectionCallback.onConnectedFailure(ResultCode.SYSTEM_ERROR);
@@ -234,8 +236,7 @@ public class SensoroCameraConnection {
     public void writeBytes(byte[] totalData, SensoroWriteCallback writeCallback) {
         handler.postDelayed(dataSendTimeoutRunnable, DATA_SEND_TIME_OUT);
         writeCallbackHashMap.put(CmdType.CMD_CAMERA_NETCONFIG, writeCallback);
-        int resultCode = bluetoothLEHelper4.writeConfigurations(totalData, CmdType.CMD_CAMERA_NETCONFIG,
-                BluetoothLEHelper.GattInfo.SENSORO_CAMERA_WRITE_CHAR_UUID);
+        int resultCode = bluetoothLEHelper4.writeConfigurations(totalData, CmdType.CMD_CAMERA_NETCONFIG, BluetoothLEHelper.GattInfo.SENSORO_CAMERA_WRITE_CHAR_UUID);
         if (resultCode != ResultCode.SUCCESS) {
             writeCallback.onWriteFailure(resultCode, CmdType.CMD_CAMERA_NETCONFIG);
         } else {
