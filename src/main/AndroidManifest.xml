@@ -20,7 +20,8 @@
         <service
             android:name=".ble.service.DfuService"
             android:exported="true" />
-        <service android:name=".ble.service.BLEDeviceService" />
+        <service android:name=".ble.service.BLEDeviceService"
+            android:exported="true"/>
 
         <activity android:name=".ble.NotificationActivity" />
     </application>
