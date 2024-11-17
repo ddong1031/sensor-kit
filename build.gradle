@@ -53,7 +53,7 @@ publishing {
     publications {
         release(MavenPublication) {
             from components.findByName("release")
-            groupId = 'com.ddong1031.sensor-kit' // 替换为你的 Group ID
+            groupId = 'com.sensoro.libbleserver' // 替换为你的 Group ID
             artifactId = 'sensor-kit' // 替换为你的库名称
             version = '1.7.6' // 设置库版本
 
@@ -65,6 +65,7 @@ publishing {
     repositories {
         maven {
             url = uri("https://maven.pkg.github.com/ddong1031/sensor-kit")
+//            url = uri("https://github.com/ddong1031/sensor-kit")
             credentials {
                 username = project.findProperty("gpr.user") ?: System.getenv("USERNAME")
                 password = project.findProperty("gpr.token") ?: System.getenv("TOKEN")
